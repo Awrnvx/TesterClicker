@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Колесо Фортуны | Dilic Clicker</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0c15 0%, #121520 50%, #0a0c15 100%);
+            padding: 20px;
+        }
+
+        .wheel-page {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .wheel-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-radius: 60px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .wheel-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #fff, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .user-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 10px 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .user-info {
+            display: flex;
+            gap: 20px;
+            color: white;
+        }
+
+        .user-info span {
+            color: gold;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin: 20px auto;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 50%;
+            box-shadow: 0 30px 40px -15px rgba(0, 0, 0, 0.7), 0 0 0 3px rgba(255, 215, 0, 0.4);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-top: 45px solid gold;
+            filter: drop-shadow(0 10px 8px #00000099);
+            z-index: 10;
+        }
+
+        .wheel-pointer::after {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: -12px;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, #ffd966, #b8860b);
+            border-radius: 50%;
+            box-shadow: 0 0 30px gold;
+        }
+
+        .wheel-controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spin-btn {
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid gold;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .spin-btn:hover {
+            background: rgba(255, 215, 0, 0.25);
+            transform: scale(1.02);
+        }
+
+        .spin-btn:active {
+            transform: scale(0.98);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .wheel-balance {
+            text-align: center;
+            margin-top: 15px;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .wheel-balance span {
+            color: gold;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .result-card {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .result-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: gold;
+            text-shadow: 0 0 20px gold;
+        }
+
+        .prizes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .prize-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 30px;
+            padding: 8px 10px;
+        }
+
+        .prize-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+        }
+
+        .prize-text {
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .prize-text strong {
+            color: gold;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: gold;
+            text-decoration: none;
+        }
+
+        @media (max-width: 550px) {
+            .wheel-wrapper {
+                width: 280px;
+                height: 280px;
+            }
+            .prizes-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .wheel-header h1 {
+                font-size: 1.8rem;
+            }
+            .spin-btn {
+                font-size: 1.2rem;
+                padding: 12px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wheel-page">
+        <div class="wheel-header liquid-glass">
+            <h1>🎡 КОЛЕСО ФОРТУНЫ 🎡</h1>
+            <p>Испытай удачу и выиграй легендарный скин!</p>
+        </div>
+        
+        <div class="user-panel liquid-glass">
+            <div class="user-info">
+                <span>👤 <span id="usernameDisplay">Загрузка...</span></span>
+                <span>💎 Дилики: <span id="dilicksDisplay">0</span></span>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Выйти</button>
+        </div>
+        
+        <div class="wheel-wrapper">
+            <canvas id="wheelCanvas" width="500" height="500"></canvas>
+            <div class="wheel-pointer"></div>
+        </div>
+        
+        <div class="wheel-controls">
+            <button class="spin-btn" id="spinBtn">🎲 КРУТИТЬ (2500💎)</button>
+        </div>
+        
+        <div class="wheel-balance">
+            💎 Твой баланс: <span id="balanceDisplay">0</span> 💎
+        </div>
+        
+        <div class="result-card">
+            <div class="result-label">ТВОЙ ВЫИГРЫШ</div>
+            <div class="result-value" id="resultDisplay">НАЖМИ КРУТИТЬ</div>
+        </div>
+        
+        <div class="prizes-grid">
+            <div class="prize-item"><span class="prize-dot" style="background:#2e7d32;"></span><span class="prize-text"><strong>50%</strong> 2500💰</span></div>
+            <div class="prize-item"><span class="prize-dot" style="background:#f9a825;"></span><span class="prize-text"><strong>35%</strong> 5500💰</span></div>
+            <div class="prize-item"><span class="prize-dot" style="background:#ef6c00;"></span><span class="prize-text"><strong>25%</strong> 8500💰</span></div>
+            <div class="prize-item"><span class="prize-dot" style="background:#d32f2f;"></span><span class="prize-text"><strong>15%</strong> 11500💰</span></div>
+            <div class="prize-item"><span class="prize-dot" style="background:#7b1fa2;"></span><span class="prize-text"><strong>5%</strong> 5000💎</span></div>
+            <div class="prize-item"><span class="prize-dot" style="background:#c2185b;"></span><span class="prize-text"><strong>2.5%</strong> СКИН ✨</span></div>
+        </div>
+        
+        <a href="events.html" class="back-link">← Назад к ивентам</a>
+    </div>
+    
+    <script>
+        const userId = localStorage.getItem('userId');
+        const currentUser = localStorage.getItem('currentUser');
+        
+        if (!userId || !currentUser) {
+            window.location.href = 'register.html';
+        }
+        
+        const MONEY_ICON = 'https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';
+        const DILICKS_ICON = 'https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';
+        const SKIN_ID = 'wheel_dragon_skin';
+        const SPIN_COST = 2500;
+        
+        const PRIZES = [
+            { name: '2500 МОНЕТ', value: 2500, type: 'money', prob: 50, color: '#2e7d32' },
+            { name: '5500 МОНЕТ', value: 5500, type: 'money', prob: 35, color: '#f9a825' },
+            { name: '8500 МОНЕТ', value: 8500, type: 'money', prob: 25, color: '#ef6c00' },
+            { name: '11500 МОНЕТ', value: 11500, type: 'money', prob: 15, color: '#d32f2f' },
+            { name: '5000 ДИЛИКОВ', value: 5000, type: 'dilicks', prob: 5, color: '#7b1fa2' },
+            { name: 'ОСОБЕННЫЙ СКИН', value: 'skin', type: 'skin', prob: 2.5, color: '#c2185b' }
+        ];
+        
+        let userData = null;
+        let isSpinning = false;
+        let rotation = 0;
+        let spinVelocity = 0;
+        let spinActive = false;
+        let animationFrame = null;
+        
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const usernameSpan = document.getElementById('usernameDisplay');
+        const dilicksSpan = document.getElementById('dilicksDisplay');
+        
+        const userRef = firebase.database().ref('users/' + userId);
+        
+        function updateUI() {
+            if (userData) {
+                const displayName = userData.settings?.displayName || userData.username;
+                usernameSpan.textContent = displayName;
+                dilicksSpan.textContent = userData.dilicks?.toLocaleString() || 0;
+                balanceDisplay.textContent = userData.dilicks?.toLocaleString() || 0;
+            }
+        }
+        
+        userRef.on('value', (snapshot) => {
+            userData = snapshot.val();
+            if (userData) {
+                updateUI();
+            }
+        });
+        
+        function drawWheel() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const r = Math.min(w, h) * 0.4;
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            let startAngle = rotation - Math.PI / 2;
+            
+            for (let i = 0; i < PRIZES.length; i++) {
+                const prize = PRIZES[i];
+                const sliceAngle = (prize.prob / 100) * 2 * Math.PI;
+                const endAngle = startAngle + sliceAngle;
+                
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, startAngle, endAngle);
+                ctx.closePath();
+                
+                ctx.fillStyle = prize.color;
+                ctx.shadowColor = 'rgba(255,255,255,0.3)';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                startAngle = endAngle;
+            }
+            
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * 0.15, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            ctx.shadowColor = 'rgba(255,215,0,0.5)';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        function spinAnimation() {
+            if (!spinActive) return;
+            
+            rotation += spinVelocity;
+            spinVelocity *= 0.985;
+            drawWheel();
+            
+            if (spinVelocity < 0.002) {
+                spinActive = false;
+                isSpinning = false;
+                spinBtn.disabled = false;
+                
+                const normalized = ((rotation % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+                let angle = (normalized + Math.PI/2) % (2*Math.PI);
+                
+                let cumulative = 0;
+                let selectedPrize = PRIZES[0];
+                
+                for (let prize of PRIZES) {
+                    const slice = (prize.prob / 100) * 2 * Math.PI;
+                    if (angle >= cumulative && angle < cumulative + slice) {
+                        selectedPrize = prize;
+                        break;
+                    }
+                    cumulative += slice;
+                }
+                
+                givePrize(selectedPrize);
+                return;
+            }
+            
+            animationFrame = requestAnimationFrame(spinAnimation);
+        }
+        
+        async function givePrize(prize) {
+            let resultHTML = '';
+            
+            if (prize.type === 'skin') {
+                if (!userData.inventory.includes(SKIN_ID)) {
+                    userData.inventory.push(SKIN_ID);
+                    resultHTML = '✨ ОСОБЕННЫЙ СКИН ✨';
+                    await firebase.database().ref('users/' + userId).update({ inventory: userData.inventory });
+                    alert('🎉 Поздравляем! Вы получили легендарный скин дракона с множителем x250!');
+                } else {
+                    userData.dilicks += 10000;
+                    resultHTML = '🎉 +10000 💎 (скин уже был)';
+                    await firebase.database().ref('users/' + userId).update({ dilicks: userData.dilicks });
+                }
+            } else if (prize.type === 'money') {
+                userData.money += prize.value;
+                resultHTML = `🎉 +${prize.value.toLocaleString()} 🪙`;
+                await firebase.database().ref('users/' + userId).update({ money: userData.money });
+            } else {
+                userData.dilicks += prize.value;
+                resultHTML = `🎉 +${prize.value.toLocaleString()} 💎`;
+                await firebase.database().ref('users/' + userId).update({ dilicks: userData.dilicks });
+            }
+            
+            resultDisplay.innerHTML = resultHTML;
+            updateUI();
+            
+            if (navigator.vibrate) navigator.vibrate(100);
+        }
+        
+        async function startSpin() {
+            if (isSpinning) return;
+            if (!userData || userData.dilicks < SPIN_COST) {
+                resultDisplay.innerHTML = '❌ Недостаточно диликов!';
+                return;
+            }
+            
+            userData.dilicks -= SPIN_COST;
+            await firebase.database().ref('users/' + userId).update({ dilicks: userData.dilicks });
+            updateUI();
+            
+            spinVelocity = 0.45 + Math.random() * 0.3;
+            spinActive = true;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            
+            resultDisplay.innerHTML = '⏳ КРУТИТСЯ...';
+            
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+            animationFrame = requestAnimationFrame(spinAnimation);
+            
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+        
+        drawWheel();
+        spinBtn.addEventListener('click', startSpin);
+        
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'register.html';
+        });
+    </script>
+</body>
+</html>

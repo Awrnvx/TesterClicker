@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <title>Dilic Clicker - Игра с кликерами</title>
+        <link rel="stylesheet" href="style.css">
+        
+        <!-- Telegram Web App -->
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        
+        <!-- Firebase SDK -->
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+        <script src="firebase-config.js"></script>
+        
+        <script>
+            // Инициализация Telegram Mini App
+            const telegram = window.Telegram.WebApp;
+            telegram.ready();
+            telegram.expand();
+        </script>
+    </head>
+    <body>
+        <!-- ===== ГЛОБАЛЬНЫЕ АНОНСЫ (ПО СЕРЕДИНЕ) ===== -->
+        <div id="globalAnnouncements" class="global-announcements"></div>
+
+        <!-- ===== ЭКРАН БАНА ===== -->
+        <div id="banOverlay" class="ban-overlay" style="display: none;">
+            <div class="ban-card">
+                <div class="ban-icon">⛔</div>
+                <h2 class="ban-title">ДОСТУП ЗАБЛОКИРОВАН</h2>
+                <div class="ban-reason" id="banReasonText">Вы были забанены за нарушение правил</div>
+                <div id="banTimerDisplay" class="ban-timer" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН ТЕХНИЧЕСКИХ РАБОТ (обычный) -->
+        <div id="techWorkOverlay" class="maintenance-overlay" style="display: none;">
+            <div class="maintenance-card glass-card liquid-glass">
+                <div class="maintenance-icon">🔧</div>
+                <h2 class="maintenance-title">Технические работы</h2>
+                <p class="maintenance-text">Ведутся технические работы. Скоро всё заработает!</p>
+                <div id="techWorkTimer" class="maintenance-timer" style="display: none;"></div>
+                <div class="maintenance-progress">
+                    <div class="maintenance-progress-bar" id="techWorkProgressBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН ОБНОВЛЕНИЙ (таймер до обновы) -->
+        <div id="updateOverlay" class="maintenance-overlay" style="display: none;">
+            <div class="maintenance-card glass-card liquid-glass">
+                <div class="maintenance-icon">🆙</div>
+                <h2 class="maintenance-title">До обновы</h2>
+                <p class="maintenance-text">Ведутся технические работы. Скоро обнова появится!</p>
+                <div id="updateTimer" class="maintenance-timer" style="display: none;"></div>
+                <div class="maintenance-progress">
+                    <div class="maintenance-progress-bar" id="updateProgressBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <!-- Навигация -->
+            <nav class="glass-nav liquid-glass">
+                <button class="nav-toggle-btn liquid-glass" id="navToggleBtn">
+                    <span class="toggle-icon">◀</span>
+                </button>
+                
+                <div class="nav-links">
+                    <button class="nav-btn liquid-glass active" data-tab="main">
+                        <span class="nav-text">Главная</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="shop">
+                        <span class="nav-text">Магазин</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="inventory">
+                        <span class="nav-text">Инвентарь</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="upgrades">
+                        <span class="nav-text">Улучшения</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="profile">
+                        <span class="nav-text">Профиль</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="settings">
+                        <span class="nav-text">Настройки</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="season">
+                        <span class="nav-text">Сезон</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="promocodes">
+                        <span class="nav-text">Промо</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="leaderboard">
+                        <span class="nav-text">Лидеры</span>
+                    </button>
+                    <button class="nav-btn liquid-glass" data-tab="events">
+                        <span class="nav-text">Ивенты 📅</span>
+                    </button>
+                </div>
+                
+                <div class="user-info">
+                    <div class="user-info-top">
+                        <a href="admin.html" id="adminLinkBtn" class="glass-btn small liquid-glass admin-btn" style="display: none;">🛠️</a>
+                        <button id="logoutBtn" class="glass-btn small liquid-glass">Выйти</button>
+                    </div>
+                    <div class="user-info-bottom">
+                        <span id="usernameDisplay"></span>
+                        <span class="currency liquid-glass currency-clickable" id="moneyCurrencyBtn" title="Обменять золото на дилики">
+                            <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" alt="Money" class="currency-icon">
+                            <span id="money">0</span>
+                        </span>
+                        <span class="dilic liquid-glass currency-clickable" id="dilicksCurrencyBtn" title="Обменять дилики на золото">
+                            <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" alt="Dilicks" class="currency-icon">
+                            <span id="dilicks">0</span>
+                        </span>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- АДМИН-КОНСОЛЬ (только для создателя) -->
+            <div id="adminConsole" class="admin-console glass-card liquid-glass" style="display: none;">
+                <div class="admin-header">
+                    <h2>🛠️ АДМИН-КОНСОЛЬ</h2>
+                    <button class="admin-close-btn" id="adminCloseBtn">✕</button>
+                </div>
+                <div class="admin-content">
+                    <div class="admin-section">
+                        <h3>📢 ГЛОБАЛЬНЫЕ АНОНСЫ</h3>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/announce &lt;текст&gt;</div>
+                            <div class="admin-description">Отправить сообщение всем игрокам</div>
+                            <div class="admin-input-group">
+                                <textarea id="announceText" rows="2" class="glass-input" placeholder="Текст анонса..."></textarea>
+                                <button class="admin-execute-btn" id="sendAnnounceBtn">ОТПРАВИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">АКТИВНЫЕ АНОНСЫ</div>
+                            <div id="adminAnnouncementsList" class="admin-announcements-list">Загрузка...</div>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>🔨 УПРАВЛЕНИЕ БАНАМИ</h3>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/ban &lt;ID&gt; [причина] [часы]</div>
+                            <div class="admin-description">Забанить игрока (0 часов = навсегда)</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="banUserId" class="glass-input" placeholder="ID игрока">
+                                <input type="text" id="banReason" class="glass-input" placeholder="Причина">
+                                <input type="number" id="banHours" class="glass-input" placeholder="Часы (0=навсегда)" value="0">
+                                <button class="admin-execute-btn" id="banUserBtn">ЗАБАНИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/unban &lt;ID&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="unbanUserId" class="glass-input" placeholder="ID игрока">
+                                <button class="admin-execute-btn" id="unbanUserBtn">РАЗБАНИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">ЗАБАНЕННЫЕ ИГРОКИ</div>
+                            <div id="adminBanList" class="admin-ban-list">Загрузка...</div>
+                        </div>
+                    </div>
+
+                    <div class="admin-section">
+                        <h3>Технические работы</h3>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/technical work</div>
+                            <div class="admin-description">Включить бесконечный экран техработ</div>
+                            <button class="admin-execute-btn" data-command="tech_work">ВЫПОЛНИТЬ</button>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/technical work time &lt;секунды&gt;</div>
+                            <div class="admin-description">Включить экран техработ на время</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="techWorkTimeInput" class="glass-input" placeholder="секунды" value="60">
+                                <button class="admin-execute-btn" data-command="tech_work_time">ВЫПОЛНИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/update screen &lt;секунды&gt;</div>
+                            <div class="admin-description">Показать экран обновления с таймером</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="updateSeconds" class="glass-input" placeholder="секунды" value="300">
+                                <button class="admin-execute-btn" id="updateScreenBtn">ПОКАЗАТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/not technical work</div>
+                            <div class="admin-description">Выключить экран техработ</div>
+                            <button class="admin-execute-btn" data-command="tech_work_off">ВЫПОЛНИТЬ</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>💎 ДИЛИКОВЫЙ УРАГАН</h3>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/start event dilicks &lt;дней&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="uraganDays" placeholder="дней" value="7">
+                                <button class="admin-execute-btn" data-command="start_uragan">ЗАПУСТИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/stop event dilicks</div>
+                            <button class="admin-execute-btn" data-command="stop_uragan">ОСТАНОВИТЬ</button>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/set multiplier &lt;x&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="multiplierValue" class="glass-input" placeholder="множитель" value="2">
+                                <button class="admin-execute-btn" data-command="set_multiplier">УСТАНОВИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/uragan pool &lt;сумма&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="poolAmount" class="glass-input" placeholder="сумма" value="1000000">
+                                <button class="admin-execute-btn" data-command="add_pool">ДОБАВИТЬ</button>
+                                <button class="admin-execute-btn" data-command="set_pool">УСТАНОВИТЬ</button>
+                                <button class="admin-execute-btn" data-command="reset_pool">СБРОСИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/uragan force refresh quests</div>
+                            <button class="admin-execute-btn" data-command="force_refresh_quests">ПРИНУДИТЕЛЬНО ОБНОВИТЬ ЗАДАНИЯ</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>🎡 КОЛЕСО ФОРТУНЫ</h3>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/start event wheel &lt;дней&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="wheelDays" placeholder="дней" value="150">
+                                <button class="admin-execute-btn" data-command="start_wheel">ЗАПУСТИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/stop event wheel</div>
+                            <button class="admin-execute-btn" data-command="stop_wheel">ОСТАНОВИТЬ</button>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/set spin cost &lt;стоимость&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="spinCostInput" placeholder="стоимость" value="2500">
+                                <button class="admin-execute-btn" data-command="set_spin_cost">УСТАНОВИТЬ</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>🎁 ВЫДАЧА НАГРАД</h3>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/give &lt;ID&gt; &lt;предмет&gt; &lt;количество&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="giveUserId" class="glass-input" placeholder="ID игрока">
+                                <select id="giveType" class="glass-input">
+                                    <option value="dilicks">💎 Дилики</option>
+                                    <option value="money">🪙 Деньги</option>
+                                    <option value="skin">✨ Скин</option>
+                                </select>
+                                <input type="text" id="giveAmount" class="glass-input" placeholder="количество/ID скина">
+                                <button class="admin-execute-btn" id="giveRewardBtn">ВЫДАТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command-group">
+                            <div class="admin-command">/give all &lt;предмет&gt; &lt;количество&gt;</div>
+                            <div class="admin-description">ВНИМАНИЕ! Выдать всем игрокам</div>
+                            <div class="admin-input-group">
+                                <select id="giveAllType" class="glass-input">
+                                    <option value="dilicks">💎 Дилики</option>
+                                    <option value="money">🪙 Деньги</option>
+                                </select>
+                                <input type="number" id="giveAllAmount" class="glass-input" placeholder="количество">
+                                <button class="admin-execute-btn" id="giveAllBtn" style="background:rgba(244,67,54,0.2);color:#f44336;">ВЫДАТЬ ВСЕМ</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-section">
+                        <h3>📊 СТАТУС ИВЕНТОВ</h3>
+                        <div id="eventsStatus" class="admin-events-status">Загрузка...</div>
+                        <button class="admin-execute-btn" data-command="refresh_status" style="margin-top: 10px;">ОБНОВИТЬ</button>
+                    </div>
+                </div>
+                <div class="admin-footer">
+                    <p>Твой ID: <span id="adminUserId"></span></p>
+                    <p class="admin-hint">💡 Используй Tab для навигации, Enter для выполнения</p>
+                </div>
+            </div>
+
+            <!-- Основной контент (вкладки) -->
+            <div class="content">
+                <!-- Главная вкладка -->
+                <div id="main" class="tab active">
+                    <div class="clicker-section">
+                        <div class="glass-card clicker-card liquid-glass">
+                            <h1>Dilic Clicker</h1>
+                            <div class="click-effects" id="clickEffects"></div>
+                            <button id="clickButton" class="click-btn liquid-glass">
+                                <img src="https://cdn-icons-png.flaticon.com/512/4366/4366891.png" alt="Click" id="clickIcon">
+                            </button>
+                            <div class="stats liquid-glass">
+                                <p>Кликов: <span id="clicks">0</span></p>
+                                <p>Сила клика: <span id="clickPower">1</span></p>
+                                <p>Время в игре: <span id="playtime">00:00:00</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Магазин -->
+                <div id="shop" class="tab">
+                    <h2 class="section-title">Магазин скинов</h2>
+                    <div class="shop-grid">
+                        <div class="glass-card shop-item liquid-glass" data-item="classic" data-skin="classic">
+                            <div class="skin-preview"><img src="https://cdn-icons-png.flaticon.com/512/4366/4366891.png"></div>
+                            <h3>Классический скин</h3>
+                            <p class="skin-description">Стандартный курсор</p>
+                            <p class="skin-price"><img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="price-icon"><span class="price-value">0</span></p>
+                            <p class="skin-status" id="status-classic">В инвентаре</p>
+                            <button class="glass-btn buy-btn liquid-glass disabled" data-item="classic" data-price="0" disabled>Куплено</button>
+                        </div>
+                        <div class="glass-card shop-item liquid-glass" data-item="neon" data-skin="neon">
+                            <div class="skin-preview"><img src="https://img.freepik.com/premium-photo/neon-style-computer-cursor-arrow-design-vector_1018059-4.jpg?semt=ais_hybrid&w=740"></div>
+                            <h3>Неоновый скин</h3>
+                            <p class="skin-description">Яркий неоновый курсор</p>
+                            <p class="skin-price"><img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="price-icon"><span class="price-value">1000</span></p>
+                            <p class="skin-status" id="status-neon">Не куплено</p>
+                            <button class="glass-btn buy-btn liquid-glass" data-item="neon" data-price="1000">Купить</button>
+                        </div>
+                        <div class="glass-card shop-item liquid-glass" data-item="monsters_skin" data-skin="monsters_skin">
+                            <div class="skin-preview"><img src="https://static.wikia.nocookie.net/d72429a0-efb9-4e95-bde1-dc811f2bfccf/scale-to-width/755"></div>
+                            <h3>Монстр скин</h3>
+                            <p class="skin-description">Эксклюзивный скин монстра</p>
+                            <p class="skin-price"><img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="price-icon"><span class="price-value">0</span></p>
+                            <p class="skin-status" id="status-monsters_skin">Не куплено</p>
+                            <button class="glass-btn buy-btn liquid-glass" data-item="monsters_skin" data-price="0">Купить</button>
+                        </div>
+                        <div class="glass-card shop-item liquid-glass" data-item="dragon_skin" data-skin="dragon_skin">
+                            <div class="skin-preview"><img src="https://avatars.mds.yandex.net/i?id=78aac0954c4f305798014e687e3d7f1d_l-6327735-images-thumbs&n=13"></div>
+                            <h3>Драконий скин</h3>
+                            <p class="skin-description">Мощный скин дракона</p>
+                            <p class="skin-price"><img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" class="price-icon"><span class="price-value">15000</span></p>
+                            <p class="skin-status" id="status-dragon_skin">Не куплено</p>
+                            <button class="glass-btn buy-btn liquid-glass" data-item="dragon_skin" data-price="15000">Купить</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Инвентарь -->
+                <div id="inventory" class="tab">
+                    <h2 class="section-title">Инвентарь скинов</h2>
+                    <div class="inventory-grid" id="inventoryGrid"></div>
+                </div>
+
+                <!-- Улучшения (расширенные) -->
+                <div id="upgrades" class="tab">
+                    <h2 class="section-title">Улучшения</h2>
+                    <div class="upgrades-grid" id="upgradesGrid"></div>
+                </div>
+
+                <!-- Профиль игрока -->
+                <div id="profile" class="tab">
+                    <div class="profile-container">
+                        <div class="profile-header glass-card liquid-glass">
+                            <div class="profile-avatar"><div class="avatar-ring"><img src="https://cdn-icons-png.flaticon.com/512/4366/4366891.png" alt="Avatar" id="profileAvatar"></div></div>
+                            <div class="profile-info">
+                                <h2 id="profileUsername">Игрок</h2>
+                                <p class="profile-level">Уровень: <span id="profileLevel">1</span></p>
+                                <div class="profile-stats-grid">
+                                    <div class="profile-stat-item liquid-glass"><span class="stat-label">Всего кликов</span><span class="stat-value" id="profileClicks">0</span></div>
+                                    <div class="profile-stat-item liquid-glass"><span class="stat-label">Денег</span><span class="stat-value" id="profileMoney">0</span></div>
+                                    <div class="profile-stat-item liquid-glass"><span class="stat-label">Диликов</span><span class="stat-value" id="profileDilicks">0</span></div>
+                                    <div class="profile-stat-item liquid-glass"><span class="stat-label">В игре</span><span class="stat-value" id="profilePlaytime">00:00</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <h2 class="section-title">Достижения</h2>
+                        <div class="achievements-grid" id="achievementsGrid"></div>
+                        <div class="skin-stats glass-card liquid-glass">
+                            <h3>🎨 Коллекция скинов</h3>
+                            <div class="skin-progress">
+                                <div class="skin-progress-bar"><div class="skin-progress-fill" id="skinProgressFill"></div></div>
+                                <div class="skin-progress-text"><span>Собрано:</span><span><span class="progress-current" id="ownedSkins">1</span> / <span class="progress-total" id="totalSkins">5</span></span></div>
+                            </div>
+                            <div class="owned-skins-list" id="ownedSkinsList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Настройки профиля -->
+                <div id="settings" class="tab">
+                    <div class="settings-container">
+                        <h2 class="section-title">⚙️ Настройки профиля</h2>
+                        <div class="settings-grid">
+                            <div class="settings-card glass-card liquid-glass">
+                                <h3>👤 Основное</h3>
+                                <div class="settings-field"><label>👑 Отображаемое имя</label><div class="settings-input-group"><input type="text" id="displayName" class="glass-input" placeholder="Введите никнейм" maxlength="20"><button class="glass-btn settings-save-btn liquid-glass" id="saveDisplayName">Сохранить</button></div><p class="settings-hint">Будет отображаться в профиле и лидерборде</p></div>
+                                <div class="settings-field"><label>📧 Логин</label><input type="text" id="username" class="glass-input" readonly disabled><p class="settings-hint">Логин нельзя изменить</p></div>
+                            </div>
+                            <div class="settings-card glass-card liquid-glass">
+                                <h3>🔒 Безопасность</h3>
+                                <div class="settings-field"><label>🔑 Смена пароля</label><input type="password" id="oldPassword" class="glass-input" placeholder="Старый пароль"><input type="password" id="newPassword" class="glass-input" placeholder="Новый пароль (мин. 4 символа)"><input type="password" id="confirmPassword" class="glass-input" placeholder="Подтвердите пароль"><button class="glass-btn settings-save-btn liquid-glass" id="changePasswordBtn">Изменить пароль</button></div>
+                            </div>
+                            <div class="settings-card glass-card liquid-glass">
+                                <h3>🎨 Интерфейс</h3>
+                                <div class="settings-field"><label>🌙 Тема</label><select id="themeSelect" class="glass-input"><option value="dark">Тёмная</option><option value="light">Светлая</option><option value="auto">Как в системе</option></select></div>
+                                <div class="settings-field"><label>🎮 Производительность</label><div class="settings-checkbox"><input type="checkbox" id="performanceMode"><label for="performanceMode">Режим экономии (отключить Liquid Glass анимации)</label></div><p class="settings-hint">Включите если игра тормозит на вашем устройстве</p></div>
+                                <div class="settings-field"><label>🔔 Уведомления</label><div class="settings-checkbox"><input type="checkbox" id="notificationsEnabled" checked><label for="notificationsEnabled">Включить уведомления</label></div><div class="settings-checkbox"><input type="checkbox" id="soundEnabled" checked><label for="soundEnabled">Звуковые эффекты</label></div><div class="settings-checkbox"><input type="checkbox" id="animationsEnabled" checked><label for="animationsEnabled">Анимации</label></div></div>
+                                <div class="settings-field"><label>🌐 Язык</label><select id="languageSelect" class="glass-input"><option value="ru">Русский</option><option value="en">English</option><option value="tr">Türkçe</option><option value="es">Español</option></select></div>
+                            </div>
+                            <div class="settings-card glass-card liquid-glass">
+                                <h3>💾 Управление данными</h3>
+                                <div class="settings-field"><label>📊 Резервное копирование</label><div style="display: flex; gap: 10px; flex-wrap: wrap;"><button class="glass-btn settings-warning-btn liquid-glass" id="exportDataBtn">📥 Экспорт</button><button class="glass-btn settings-warning-btn liquid-glass" id="importDataBtn">📤 Импорт</button></div><p class="settings-hint">Сохраните свои данные или восстановите из резервной копии</p></div>
+                                <div class="settings-field"><label>⚠️ Опасная зона</label><div style="display: flex; gap: 10px; flex-wrap: wrap;"><button class="glass-btn settings-danger-btn liquid-glass" id="resetProgressBtn">🔄 Сброс прогресса</button><button class="glass-btn settings-danger-btn liquid-glass" id="deleteAccountBtn">🗑️ Удалить аккаунт</button></div><p class="settings-hint">Эти действия необратимы</p></div>
+                            </div>
+                            <div class="settings-card glass-card liquid-glass">
+                                <h3>ℹ️ О приложении</h3>
+                                <div class="settings-field"><p><strong>Версия:</strong> 2.0.1 BETA!</p><p><strong>Разработчик:</strong> Dilic Team</p><p><strong>Telegram:</strong> @DilicClicker_bot</p><button class="glass-btn liquid-glass" id="checkUpdatesBtn" style="width: 100%;">🔄 Проверить обновления</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Сезонный пропуск -->
+                <div id="season" class="tab">
+                    <div class="season-pass glass-card liquid-glass">
+                        <h2>Сезонный пропуск</h2>
+                        <div class="season-progress"><div class="progress-bar"><div class="progress-fill" id="seasonProgress"></div></div><p>Уровень: <span id="seasonLevel">1</span>/50</p></div>
+                        <div class="season-rewards"><div class="reward-tier glass-card liquid-glass"><h3>Бесплатный уровень</h3><p class="reward-price"><img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="price-icon"><span>100</span></p></div><div class="reward-tier glass-card premium liquid-glass"><h3>Премиум уровень</h3><p>Награда: Скин "Сезонный"</p><p class="reward-price"><img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" class="price-icon"><span>500</span></p><button class="glass-btn liquid-glass" id="buyPremiumBtn">Купить премиум</button></div></div>
+                    </div>
+                </div>
+
+                <!-- Промокоды -->
+                <div id="promocodes" class="tab">
+                    <div class="promocodes-container">
+                        <div class="promocodes-header glass-card liquid-glass"><h2 class="section-title">Промокоды</h2><p class="promocodes-subtitle">Вводи промокоды и получай бонусы!</p></div>
+                        <div class="promocode-input-section glass-card liquid-glass"><div class="promocode-input-wrapper"><input type="text" id="promocodeInput" class="glass-input promocode-input" placeholder="ВВЕДИ ПРОМОКОД" maxlength="20"><button class="glass-btn promocode-activate-btn liquid-glass" id="activatePromocodeBtn"><span class="btn-text">Активировать</span></button></div><div id="promocodeMessage" class="promocode-message"></div></div>
+                        <div class="active-promocodes glass-card liquid-glass"><h3>Доступные промокоды</h3><div class="promocodes-list" id="promocodesList"></div></div>
+                        <div class="promocodes-history glass-card liquid-glass"><h3>История активаций</h3><div class="history-list" id="promocodesHistory"></div></div>
+                    </div>
+                </div>
+
+                <!-- Лидерборд -->
+                <div id="leaderboard" class="tab">
+                    <div class="leaderboard-container glass-card liquid-glass">
+                        <h2>Таблица лидеров</h2>
+                        <div class="leaderboard-tabs"><button class="glass-btn small active liquid-glass" data-leaderboard="clicks">По кликам</button><button class="glass-btn small liquid-glass" data-leaderboard="money">По деньгам</button><button class="glass-btn small liquid-glass" data-leaderboard="playtime">По времени</button></div>
+                        <table class="leaderboard-table"><thead><tr><th>Место</th><th>Игрок</th><th>Показатель</th></tr></thead><tbody id="leaderboardBody"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Ивенты (вкладка) -->
+                <div id="events" class="tab">
+                    <div id="eventsList" class="events-fullscreen">
+                        <div class="events-header glass-card liquid-glass">
+                            <h1 class="section-title">🎉 ИВЕНТЫ 🎉</h1>
+                            <p class="events-subtitle">Участвуй в событиях и получай уникальные награды!</p>
+                        </div>
+                        
+                        <div class="user-panel-mini glass-card liquid-glass">
+                            <div class="user-info-mini">
+                                <span>👤 <span id="eventsUsername">Загрузка...</span></span>
+                                <span><img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 18px; height: 18px; border-radius: 50%; vertical-align: middle; margin-right: 4px;"> Дилики: <span id="eventsDilicks">0</span></span>
+                                <span><img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" style="width: 18px; height: 18px; border-radius: 50%; vertical-align: middle; margin-right: 4px;"> Деньги: <span id="eventsMoney">0</span></span>
+                            </div>
+                            <button class="glass-btn small" id="eventsLogoutBtn">Выйти</button>
+                        </div>
+
+                        <div class="events-grid" id="eventsGrid">
+                            <div class="event-card" id="uraganEventCard">
+                                <div class="event-icon"><img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle;"> 💨</div>
+                                <h2><img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 24px; height: 24px; border-radius: 50%; vertical-align: middle; margin-right: 8px;"> ДИЛИКОВЫЙ УРАГАН</h2>
+                                <p class="event-description">x2 → x3 → x5 диликов за клик! Соревнуйся в топе, собирай копилку и получай эксклюзивные скины!</p>
+                                <div class="event-timer-block"><div class="event-timer-label">⏰ ДО КОНЦА ИВЕНТА</div><div class="event-timer-value" id="uraganTimer">-- дн -- ч -- мин</div></div>
+                                <div class="event-status active" id="uraganStatus">АКТИВЕН</div>
+                                <div class="event-bonus">🔥 x5 диликов в последний день!</div>
+                            </div> 
+                            
+                            <div class="event-card" id="wheelEventCard">
+                                <div class="event-icon">🎡✨</div>
+                                <h2>🎡 КОЛЕСО ФОРТУНЫ</h2>
+                                <p class="event-description">Крути колесо и выигрывай монеты, дилики и легендарный скин дракона с множителем x250!</p>
+                                <div class="event-timer-block"><div class="event-timer-label">⏰ ДО КОНЦА ИВЕНТА</div><div class="event-timer-value" id="wheelTimer">-- дн -- ч -- мин</div></div>
+                                <div class="event-status active" id="wheelStatus">АКТИВЕН</div>
+                                <div class="event-bonus">🎁 Особый скин +250 множитель!</div>
+                            </div>
+                            
+                            <div class="event-card disabled">
+                                <div class="event-icon">❓✨</div>
+                                <h2>СКОРО</h2>
+                                <p class="event-description">Новый ивент уже готовится! Следи за обновлениями и не пропусти уникальные награды!</p>
+                                <div class="event-timer-block"><div class="event-timer-label">⏰ СТАРТ</div><div class="event-timer-value">Скоро</div></div>
+                                <div class="event-status coming">СКОРО</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ДИЛИКОВЫЙ УРАГАН (с вишлистом и таймером обновления) -->
+                    <div id="uraganContent" style="display: none;">
+                        <div class="uragan-page">
+                            <div class="uragan-header liquid-glass">
+                                <h1>💎 ДИЛИКОВЫЙ УРАГАН 💨</h1>
+                                <p style="color: #888; opacity: 0.7;">Самый мощный ивент! Зарабатывай дилики x5 и становись легендой!</p>
+                            </div>
+                            
+                            <div class="user-panel-mini liquid-glass">
+                                <div class="user-info-mini">
+                                    <span>👤 <span id="uraganUsername">Загрузка...</span></span>
+                                    <span><img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 18px; height: 18px; border-radius: 50%; vertical-align: middle; margin-right: 4px;"> Дилики: <span id="uraganDilicks">0</span></span>
+                                    <span>📊 Мой вклад: <span id="userContribution">0</span> <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 16px; height: 16px; border-radius: 50%; vertical-align: middle;"></span>
+                                </div>
+                                <button class="glass-btn small" id="uraganBackBtn">← Назад к ивентам</button>
+                            </div>
+                            
+                            <div class="event-info liquid-glass">
+                                <div class="multiplier-box" id="multiplierDisplay" style="animation: pulse 2s infinite;">x2 ДИЛИКОВ</div>
+                                <div class="multiplier-label" style="color: gold;">🔥 множитель диликов за клик</div>
+                                <div class="timer-box" id="eventTimer">-- дн -- ч -- мин</div>
+                                <div class="day-badge" id="dayBadge" style="color: gold;">ДЕНЬ 1</div>
+                            </div>
+                            
+                            <div class="pool-section liquid-glass">
+                                <div class="pool-title"><img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 6px;"> ОБЩАЯ КОПИЛКА ИВЕНТА</div>
+                                <div class="progress-bar"><div class="progress-fill" id="poolProgress" style="width: 0%"></div></div>
+                                <div class="pool-stats">
+                                    <span>Собрано: <span id="totalPool">0</span> <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 16px; height: 16px; border-radius: 50%; vertical-align: middle;"></span>
+                                    <span>Цель: 100 000 000 <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 16px; height: 16px; border-radius: 50%; vertical-align: middle;"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- ===== ВИШЛИСТ (НОВЫЙ) ===== -->
+                            <div class="wishlist-section liquid-glass">
+                                <div class="wishlist-title">🎁 МОЙ ВИШЛИСТ (выбери желаемую награду)</div>
+                                <div class="wishlist-grid" id="wishlistGrid">
+                                    <div class="wishlist-item" data-wish="dilicks_10000"><div class="reward-name">10 000 💎</div></div>
+                                    <div class="wishlist-item" data-wish="dilicks_50000"><div class="reward-name">50 000 💎</div></div>
+                                    <div class="wishlist-item" data-wish="dilicks_100000"><div class="reward-name">100 000 💎</div></div>
+                                    <div class="wishlist-item" data-wish="money_50000"><div class="reward-name">50 000 🪙</div></div>
+                                    <div class="wishlist-item" data-wish="money_100000"><div class="reward-name">100 000 🪙</div></div>
+                                    <div class="wishlist-item" data-wish="skin_dragon"><div class="reward-name">Скин Дракона ✨</div></div>
+                                    <div class="wishlist-item" data-wish="upgrade_boost"><div class="reward-name">Усилитель x10 ⚡</div></div>
+                                </div>
+                            </div>
+                            
+                            <div class="quests-section liquid-glass">
+                                <div class="quests-title">🎯 ЗАДАНИЯ ИВЕНТА (обновляются каждые 4 часа)</div>
+                                <div id="questsList"></div>
+                                <!-- ===== ТАЙМЕР ОБНОВЛЕНИЯ ЗАДАНИЙ (НОВЫЙ) ===== -->
+                                <div id="questsRefreshTimer" class="quests-refresh-timer">Следующее обновление: --:--:--</div>
+                            </div>
+                            
+                            <div class="top-section liquid-glass">
+                                <div class="top-title">🏆 ТОП-10 УЧАСТНИКОВ 🏆</div>
+                                <div class="top-list" id="topList"></div>
+                            </div>
+                            
+                            <div class="rewards-section liquid-glass">
+                                <div class="rewards-title">🎁 НАГРАДЫ ЗА ВКЛАД</div>
+                                <div class="rewards-grid">
+                                    <div class="reward-item"><div class="reward-value">1 000 <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" style="width: 18px; height: 18px; border-radius: 50%; vertical-align: middle;"></div><div class="reward-desc">за 10 000 <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 14px; height: 14px; border-radius: 50%; vertical-align: middle;"></div></div>
+                                    <div class="reward-item"><div class="reward-value">5 000 <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" style="width: 18px; height: 18px; border-radius: 50%; vertical-align: middle;"></div><div class="reward-desc">за 50 000 <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 14px; height: 14px; border-radius: 50%; vertical-align: middle;"></div></div>
+                                    <div class="reward-item"><div class="reward-value">25 000 <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" style="width: 18px; height: 18px; border-radius: 50%; vertical-align: middle;"></div><div class="reward-desc">за 100 000 <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" style="width: 14px; height: 14px; border-radius: 50%; vertical-align: middle;"></div></div>
+                                    <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК" ✨</div><div class="reward-desc">Топ-100</div></div>
+                                    <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК МАСТЕР" ✨</div><div class="reward-desc">Топ-50</div></div>
+                                    <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК ЛОРД" ✨</div><div class="reward-desc">Топ-10</div></div>
+                                    <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК КОРОЛЬ" ✨</div><div class="reward-desc">Топ-3 + копилка</div></div>
+                                    <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК ДРАКОН" ✨</div><div class="reward-desc">Колесо ивента</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Контент Колеса фортуны -->
+                    <div id="wheelContent" style="display: none;">
+                        <div class="wheel-card">
+                            <div class="wheel-header">
+                                <h2>✦ КОЛЕСО ФОРТУНЫ ✦</h2>
+                                <p class="wheel-subtitle">Испытай удачу!</p>
+                                <div class="wheel-price">
+                                    <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" class="wheel-price-icon">
+                                    <span id="wheelSpinCost" style="color: gold; font-weight: 600;">2500</span> 
+                                    <span style="color: gold; font-weight: 600;">за крутку</span>
+                                </div>
+                            </div>
+                            
+                            <div class="wheel-wrapper">
+                                <canvas id="wheelCanvas" width="450" height="450" class="wheel-canvas"></canvas>
+                                <div class="wheel-pointer"></div>
+                                <div class="wheel-pointer-center"></div>
+                            </div>
+                            
+                            <div class="wheel-controls">
+                                <button class="wheel-spin-btn" id="wheelSpinBtn">
+                                    <span>🎡</span> КРУТИТЬ <span>🎡</span>
+                                </button>
+                                <div class="wheel-balance">
+                                    Твой баланс: 
+                                    <span id="wheelBalance">0</span>
+                                    <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" class="wheel-balance-icon">
+                                </div>
+                            </div>
+                            
+                            <div class="wheel-prizes">
+                                <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #2e7d32;"></span><span class="wheel-prize-text"><strong class="wheel-prize-percent">50%</strong><span class="wheel-prize-value">2.5k <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="wheel-prize-icon"></span></span></div>
+                                <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #f9a825;"></span><span class="wheel-prize-text"><strong class="wheel-prize-percent">35%</strong><span class="wheel-prize-value">5.5k <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="wheel-prize-icon"></span></span></div>
+                                <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #ef6c00;"></span><span class="wheel-prize-text"><strong class="wheel-prize-percent">25%</strong><span class="wheel-prize-value">8.5k <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="wheel-prize-icon"></span></span></div>
+                                <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #d32f2f;"></span><span class="wheel-prize-text"><strong class="wheel-prize-percent">15%</strong><span class="wheel-prize-value">11.5k <img src="https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13" class="wheel-prize-icon"></span></span></div>
+                                <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #7b1fa2;"></span><span class="wheel-prize-text"><strong class="wheel-prize-percent">5%</strong><span class="wheel-prize-value">5k <img src="https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg" class="wheel-prize-icon"></span></span></div>
+                                <div class="wheel-prize-item skin-prize"><div class="wheel-prize-skin-content"><span class="wheel-prize-dot" style="background: #c2185b;"></span><span class="wheel-prize-text"><strong class="wheel-prize-percent">2.5%</strong><span class="wheel-prize-value">СКИН ✨</span></span></div><div class="wheel-skin-btn" id="showSkinBtn">?</div></div>
+                            </div>
+                            
+                            <div class="wheel-result" id="wheelResult">
+                                <div class="wheel-result-label">ТВОЙ ВЫИГРЫШ</div>
+                                <div class="wheel-result-value" id="wheelResultDisplay">НАЖМИ КРУТИТЬ</div>
+                            </div>
+                        </div>
+                        
+                        <div class="wheel-skin-modal" id="skinModal">
+                            <div class="wheel-modal-content">
+                                <span class="wheel-modal-close" id="closeModal">✕</span>
+                                <h2 class="wheel-modal-title">✦ ОСОБЕННЫЙ СКИН ✦</h2>
+                                <div class="wheel-skin-preview"><img src="https://static.wikia.nocookie.net/59310fd4-7c46-4895-930e-6cea7982a142/scale-to-width/755" alt="Special Skin"></div>
+                                <p class="wheel-skin-description">✨ Легендарный скин дракона<br><strong>×250 МНОЖИТЕЛЬ</strong><br>ко всем кликам</p>
+                                <div class="wheel-multiplier">×250</div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="glass-btn" id="wheelBackBtn">← Назад к ивентам</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== МОДАЛЬНОЕ ОКНО ПРОФИЛЯ ДЛЯ ЛИДЕРБОРДА ===== -->
+        <div id="playerProfileModal" class="player-profile-modal">
+            <div class="player-profile-card glass-card liquid-glass">
+                <button class="profile-close" id="closeProfileModal">✕</button>
+                <div class="profile-avatar"><div class="avatar-ring"><img id="modalAvatar" src="https://cdn-icons-png.flaticon.com/512/4366/4366891.png" alt="Avatar"></div></div>
+                <h2 id="modalUsername">Игрок</h2>
+                <div class="profile-stats-grid" style="margin-top: 20px;">
+                    <div class="profile-stat-item"><span class="stat-label">Клики</span><span class="stat-value" id="modalClicks">0</span></div>
+                    <div class="profile-stat-item"><span class="stat-label">Деньги</span><span class="stat-value" id="modalMoney">0</span></div>
+                    <div class="profile-stat-item"><span class="stat-label">Дилики</span><span class="stat-value" id="modalDilicks">0</span></div>
+                    <div class="profile-stat-item"><span class="stat-label">Уровень</span><span class="stat-value" id="modalLevel">1</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== МОДАЛКА ОБМЕНА ВАЛЮТ ===== -->
+        <div id="exchangeModal" class="exchange-modal">
+            <div class="exchange-card liquid-glass">
+                <button class="exchange-close" id="exchangeCloseBtn">✕</button>
+                <h2 class="exchange-title" id="exchangeTitle">ОБМЕН ВАЛЮТ</h2>
+                <div class="exchange-rate" id="exchangeRate">1 💎 = 500 🪙</div>
+                
+                <div class="exchange-direction" id="exchangeDirection"></div>
+
+                <div class="exchange-input-group">
+                    <label id="exchangeInputLabel">Сколько отдаёшь:</label>
+                    <input type="number" id="exchangeInput" class="glass-input" placeholder="0" min="0">
+                    <div class="exchange-quick-btns">
+                        <button class="exchange-quick-btn" data-quick="100">100</button>
+                        <button class="exchange-quick-btn" data-quick="1000">1K</button>
+                        <button class="exchange-quick-btn" data-quick="10000">10K</button>
+                        <button class="exchange-quick-btn" data-quick="100000">100K</button>
+                        <button class="exchange-quick-btn" data-quick="max">MAX</button>
+                    </div>
+                </div>
+
+                <div class="exchange-result">
+                    <div class="exchange-result-label">Получишь:</div>
+                    <div class="exchange-result-value" id="exchangeResultValue">0</div>
+                </div>
+
+                <div class="exchange-balance">
+                    <span>У тебя: <strong id="exchangeBalanceFrom">0</strong></span>
+                </div>
+
+                <button class="exchange-confirm-btn" id="exchangeConfirmBtn">ОБМЕНЯТЬ</button>
+            </div>
+        </div>
+        
+        <script src="script.js"></script>
+    </body>
+    </html>

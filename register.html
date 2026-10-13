@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Dilic Clicker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="glass-card auth-card liquid-glass">
+            <h1>Dilic Clicker</h1>
+            <div class="auth-tabs">
+                <button class="auth-tab liquid-glass active" id="loginTab">Вход</button>
+                <button class="auth-tab liquid-glass" id="registerTab">Регистрация</button>
+            </div>
+            
+            <form id="loginForm" class="auth-form active">
+                <div class="input-group">
+                    <label for="loginUsername">Логин</label>
+                    <input type="text" id="loginUsername" class="glass-input liquid-glass" required>
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Пароль</label>
+                    <input type="password" id="loginPassword" class="glass-input liquid-glass" required>
+                </div>
+                <button type="submit" class="glass-btn auth-btn liquid-glass">Войти</button>
+            </form>
+
+            <form id="registerForm" class="auth-form">
+                <div class="input-group">
+                    <label for="regUsername">Логин</label>
+                    <input type="text" id="regUsername" class="glass-input liquid-glass" required>
+                </div>
+                <div class="input-group">
+                    <label for="regPassword">Пароль</label>
+                    <input type="password" id="regPassword" class="glass-input liquid-glass" required>
+                </div>
+                <div class="input-group">
+                    <label for="regConfirmPassword">Подтвердите пароль</label>
+                    <input type="password" id="regConfirmPassword" class="glass-input liquid-glass" required>
+                </div>
+                <button type="submit" class="glass-btn auth-btn liquid-glass">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+    <script src="register.js"></script>
+</body>
+</html>

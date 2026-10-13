@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dilic Admin | Панель управления</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0c15 0%, #121520 50%, #0a0c15 100%);
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+        }
+
+        /* ===== ОСНОВНЫЕ СТИЛИ ===== */
+        .admin-page { min-height: 100vh; }
+        .admin-panel { max-width: 1200px; margin: 0 auto; }
+
+        .admin-header {
+            text-align: center;
+            padding: 30px;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        .admin-header h1 { color: gold; font-size: 2.2rem; margin-bottom: 10px; }
+        .admin-header p { color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; }
+        .admin-info {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 40px;
+            display: inline-block;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: monospace;
+        }
+
+        /* Карточки */
+        .admin-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .admin-card h2 {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 18px;
+            border-left: 3px solid gold;
+            padding-left: 12px;
+        }
+        .admin-card h2 span {
+            font-size: 0.7rem;
+            background: rgba(76, 175, 80, 0.2);
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 8px;
+            color: #4CAF50;
+        }
+
+        /* Команды */
+        .admin-command {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+        .admin-command-code {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: gold;
+            background: rgba(255, 215, 0, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .admin-command-desc {
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Группы ввода */
+        .admin-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .admin-input-group input,
+        .admin-input-group select,
+        .admin-input-group textarea {
+            flex: 1;
+            min-width: 120px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 14px;
+        }
+        .admin-input-group input:focus,
+        .admin-input-group select:focus,
+        .admin-input-group textarea:focus {
+            outline: none;
+            border-color: gold;
+        }
+        .admin-input-group textarea { resize: vertical; min-height: 60px; }
+
+        /* Множители */
+        .multiplier-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .multiplier-btn {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: gold;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s ease;
+        }
+        .multiplier-btn:hover { background: rgba(255, 215, 0, 0.2); transform: scale(1.02); }
+
+        /* Кнопки */
+        .glass-btn {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .glass-btn:hover { background: rgba(255, 215, 0, 0.2); transform: translateY(-1px); }
+        .glass-btn:active { transform: translateY(1px); }
+
+        .danger-btn { background: rgba(244, 67, 54, 0.15); border-color: rgba(244, 67, 54, 0.3); color: #ff6b6b; }
+        .danger-btn:hover { background: rgba(244, 67, 54, 0.25); }
+        .success-btn { background: rgba(76, 175, 80, 0.15); border-color: rgba(76, 175, 80, 0.3); color: #4CAF50; }
+        .success-btn:hover { background: rgba(76, 175, 80, 0.25); }
+        .warning-btn { background: rgba(255, 193, 7, 0.15); border-color: rgba(255, 193, 7, 0.3); color: #ffc107; }
+        .warning-btn:hover { background: rgba(255, 193, 7, 0.25); }
+
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
+
+        /* Списки */
+        .announcements-list, .ban-list, .top-list, .polls-list {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .announcements-list::-webkit-scrollbar, .ban-list::-webkit-scrollbar,
+        .top-list::-webkit-scrollbar, .polls-list::-webkit-scrollbar { width: 5px; }
+        .announcements-list::-webkit-scrollbar-track, .ban-list::-webkit-scrollbar-track,
+        .top-list::-webkit-scrollbar-track, .polls-list::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .announcements-list::-webkit-scrollbar-thumb, .ban-list::-webkit-scrollbar-thumb,
+        .top-list::-webkit-scrollbar-thumb, .polls-list::-webkit-scrollbar-thumb { background: gold; border-radius: 10px; }
+
+        /* Анонсы */
+        .announcement-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        .announcement-text { flex: 1; font-size: 13px; color: white; word-break: break-word; }
+        .announcement-date { font-size: 10px; color: rgba(255, 255, 255, 0.4); }
+        .announcement-delete {
+            background: rgba(244, 67, 54, 0.15);
+            border: none;
+            color: #ff6b6b;
+            padding: 5px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .announcement-delete:hover { background: rgba(244, 67, 54, 0.3); }
+
+        /* Баны */
+        .ban-item {
+            background: rgba(244, 67, 54, 0.1);
+            border-radius: 16px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+        .ban-info { flex: 1; font-size: 12px; color: rgba(255, 255, 255, 0.8); }
+        .ban-unban {
+            background: rgba(76, 175, 80, 0.15);
+            border: none;
+            color: #4CAF50;
+            padding: 4px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .ban-unban:hover { background: rgba(76, 175, 80, 0.3); }
+
+        /* Топ */
+        .top-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 12px;
+        }
+        .top-rank { width: 35px; color: gold; }
+        .top-name { flex: 1; color: white; }
+        .top-value { color: gold; }
+
+        /* Статус */
+        .admin-status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .admin-status.active { background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.3); color: #ff6b6b; }
+        .admin-status.inactive { background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); color: #4CAF50; }
+        .admin-timer { font-family: monospace; font-size: 1.2rem; font-weight: bold; color: gold; text-align: center; margin-top: 10px; }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.15);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #ff6b6b;
+            padding: 20px;
+            border-radius: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .events-status-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 15px;
+            line-height: 1.8;
+            color: white;
+            font-size: 13px;
+        }
+        .realtime-badge {
+            display: inline-block;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 9px;
+            color: #4CAF50;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        .debug-console {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
+            padding: 10px 12px;
+            margin-bottom: 20px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #0f0;
+            max-height: 100px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .debug-console::-webkit-scrollbar { width: 4px; }
+        .debug-console::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .debug-console::-webkit-scrollbar-thumb { background: gold; border-radius: 10px; }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: gold;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 30px;
+            transition: all 0.2s ease;
+        }
+        .back-link:hover { background: rgba(255, 215, 0, 0.2); transform: translateY(-1px); }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(20, 25, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid gold;
+            border-radius: 50px;
+            padding: 12px 24px;
+            color: white;
+            font-size: 0.9rem;
+            z-index: 20001;
+            transition: transform 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+            pointer-events: none;
+        }
+        .toast-notification.show { transform: translateX(-50%) translateY(0); }
+        .toast-notification.success { border-color: #4CAF50; color: #4CAF50; }
+        .toast-notification.error { border-color: #ff6b6b; color: #ff6b6b; }
+        .toast-notification.warning { border-color: #ffc107; color: #ffc107; }
+
+        hr { border-color: rgba(255, 215, 0, 0.2); margin: 15px 0; }
+        .custom-multiplier-group { display: flex; gap: 10px; margin-top: 10px; }
+        .custom-multiplier-group input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 16px;
+        }
+
+        /* ===== СТИЛИ ДЛЯ ОПРОСОВ ===== */
+        .poll-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        .poll-question { font-size: 14px; font-weight: bold; color: gold; margin-bottom: 12px; }
+        .poll-options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+        .poll-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+        .poll-option-text { flex: 1; font-size: 12px; color: white; }
+        .poll-option-votes { font-size: 11px; color: gold; min-width: 70px; text-align: right; }
+        .poll-option-bar { width: 100px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; }
+        .poll-option-bar-fill { height: 100%; background: linear-gradient(90deg, gold, #ffaa00); width: 0%; border-radius: 2px; transition: width 0.3s ease; }
+        .poll-total-votes { font-size: 10px; color: rgba(255, 255, 255, 0.4); margin-top: 10px; text-align: right; }
+        .poll-delete {
+            background: rgba(244, 67, 54, 0.15);
+            border: none;
+            color: #ff6b6b;
+            padding: 4px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+        .poll-delete:hover { background: rgba(244, 67, 54, 0.3); }
+
+        /* ===== МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ===== */
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            z-index: 30000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .confirm-modal.active { opacity: 1; visibility: visible; }
+        .confirm-modal-content {
+            max-width: 400px;
+            width: 90%;
+            background: rgba(20, 25, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid #ff6b6b;
+            border-radius: 30px;
+            padding: 25px;
+            text-align: center;
+            animation: modalAppear 0.3s ease;
+        }
+        @keyframes modalAppear { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .confirm-modal-content h3 { color: #ff6b6b; font-size: 1.5rem; margin-bottom: 15px; }
+        .confirm-modal-content p { color: white; margin-bottom: 20px; line-height: 1.5; }
+        .confirm-modal-buttons { display: flex; gap: 15px; justify-content: center; }
+        .confirm-btn {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+            padding: 10px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .confirm-btn:hover { background: rgba(244, 67, 54, 0.4); transform: scale(1.02); }
+        .cancel-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .cancel-btn:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.02); }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .admin-grid { grid-template-columns: 1fr; }
+            .admin-header h1 { font-size: 1.6rem; }
+            .admin-card { padding: 15px; }
+            .admin-input-group { flex-direction: column; align-items: stretch; }
+            .admin-input-group input, .admin-input-group select, .admin-input-group textarea, .glass-btn { width: 100%; }
+            .multiplier-buttons { justify-content: center; }
+            .custom-multiplier-group { flex-direction: column; }
+            .poll-option { flex-direction: column; align-items: flex-start; }
+            .poll-option-votes { text-align: left; }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <div class="admin-page">
+        <div class="admin-panel">
+            <div class="admin-header">
+                <h1>🛠️ DILIC ADMIN</h1>
+                <p>Расширенная панель управления техническими работами, ивентами и игроками</p>
+                <div class="admin-info">🔐 Твой ID: <span id="adminUserId">-</span></div>
+            </div>
+            
+            <div class="debug-console" id="debugConsole">
+                🔍 Ожидание инициализации...<br>
+            </div>
+            
+            <div id="accessError" class="error-message" style="display: none;"></div>
+            
+            <div id="adminContent" style="display: none;">
+                <div class="admin-grid">
+                    <!-- ГЛОБАЛЬНЫЕ АНОНСЫ -->
+                    <div class="admin-card">
+                        <h2>📢 ГЛОБАЛЬНЫЕ АНОНСЫ <span class="realtime-badge">LIVE</span></h2>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/announce &lt;текст&gt;</div>
+                            <div class="admin-command-desc">Отправить сообщение всем игрокам (появится вверху экрана сразу)</div>
+                            <div class="admin-input-group">
+                                <textarea id="announceText" rows="2" placeholder="Текст анонса..."></textarea>
+                                <button class="glass-btn success-btn" id="sendAnnounceBtn">📢 ОТПРАВИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">АКТИВНЫЕ АНОНСЫ (обновляются автоматически)</div>
+                            <div id="announcementsList" class="announcements-list">Загрузка...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- ОПРОСЫ -->
+                    <div class="admin-card">
+                        <h2>📊 ОПРОСЫ <span class="realtime-badge">LIVE</span></h2>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/poll &lt;вопрос&gt; | &lt;вариант1&gt; | &lt;вариант2&gt;</div>
+                            <div class="admin-command-desc">Создать опрос (варианты через | )</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="pollQuestion" placeholder="Вопрос опроса...">
+                                <input type="text" id="pollOptions" placeholder="Варианты через | (Да|Нет|Возможно)">
+                                <button class="glass-btn success-btn" id="createPollBtn">📊 СОЗДАТЬ ОПРОС</button>
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">АКТИВНЫЕ ОПРОСЫ (обновляются автоматически)</div>
+                            <div id="pollsList" class="polls-list">Загрузка...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- УПРАВЛЕНИЕ БАНАМИ -->
+                    <div class="admin-card">
+                        <h2>🔨 УПРАВЛЕНИЕ БАНАМИ <span class="realtime-badge">LIVE</span></h2>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/ban &lt;ID игрока&gt; [причина] [часы]</div>
+                            <div class="admin-command-desc">Забанить игрока (0 часов = навсегда)</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="banUserId" placeholder="ID игрока">
+                                <input type="text" id="banReason" placeholder="Причина (опционально)">
+                                <input type="number" id="banHours" placeholder="Часы (0=навсегда)" value="0">
+                                <button class="glass-btn danger-btn" id="banUserBtn">⛔ ЗАБАНИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/unban &lt;ID игрока&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="unbanUserId" placeholder="ID игрока">
+                                <button class="glass-btn success-btn" id="unbanUserBtn">✅ РАЗБАНИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">ЗАБАНЕННЫЕ ИГРОКИ (обновляются автоматически)</div>
+                            <div id="bannedList" class="ban-list">Загрузка...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- ТЕХНИЧЕСКИЕ РАБОТЫ -->
+                    <div class="admin-card">
+                        <h2>🔧 ТЕХНИЧЕСКИЕ РАБОТЫ</h2>
+                        <div id="maintenanceStatus" class="admin-status inactive">✅ Технические работы ОТКЛЮЧЕНЫ</div>
+                        <div id="maintenanceTimerDisplay" class="admin-timer" style="display: none;"></div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/technical work</div>
+                            <div class="admin-command-desc">🔧 Включить бесконечный экран техработ</div>
+                            <button class="glass-btn warning-btn" id="techWorkBtn">ВЫПОЛНИТЬ</button>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/technical work time &lt;секунды&gt;</div>
+                            <div class="admin-command-desc">⏱️ Включить экран обновления с таймером</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="techWorkSeconds" placeholder="секунды" value="30" min="1" max="86400">
+                                <button class="glass-btn" id="updateTimeBtn">ВЫПОЛНИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/update screen &lt;секунды&gt;</div>
+                            <div class="admin-command-desc">🆙 Показать экран обновления с прогресс-баром</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="updateScreenSeconds" placeholder="секунды" value="60">
+                                <button class="glass-btn warning-btn" id="updateScreenBtn">ПОКАЗАТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/not technical work</div>
+                            <div class="admin-command-desc">✅ Выключить все экраны техработ</div>
+                            <button class="glass-btn danger-btn" id="notTechWorkBtn">ВЫПОЛНИТЬ</button>
+                        </div>
+                    </div>
+                    
+                    <!-- ДИЛИКОВЫЙ УРАГАН -->
+                    <div class="admin-card">
+                        <h2>💎 ДИЛИКОВЫЙ УРАГАН</h2>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">/start event dilicks</div>
+                            <div class="admin-command-desc">🚀 Запустить ивент на N дней</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="uraganDays" placeholder="дней" value="7" min="1" max="365">
+                                <button class="glass-btn success-btn" id="startDilicksEventBtn">ЗАПУСТИТЬ</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">/stop event dilicks</div>
+                            <div class="admin-command-desc">⏹️ Остановить ивент</div>
+                            <button class="glass-btn danger-btn" id="stopDilicksEventBtn">ОСТАНОВИТЬ</button>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">/set multiplier</div>
+                            <div class="multiplier-buttons" id="multiplierButtons">
+                                <button class="multiplier-btn" data-mult="2">x2</button>
+                                <button class="multiplier-btn" data-mult="3">x3</button>
+                                <button class="multiplier-btn" data-mult="5">x5</button>
+                                <button class="multiplier-btn" data-mult="10">x10</button>
+                                <button class="multiplier-btn" data-mult="20">x20</button>
+                                <button class="multiplier-btn" data-mult="30">x30</button>
+                                <button class="multiplier-btn" data-mult="50">x50</button>
+                                <button class="multiplier-btn" data-mult="100">x100</button>
+                                <button class="multiplier-btn" data-mult="200">x200</button>
+                                <button class="multiplier-btn" data-mult="500">x500</button>
+                                <button class="multiplier-btn" data-mult="1000">x1000</button>
+                                <button class="multiplier-btn" data-mult="2500">x2500</button>
+                                <button class="multiplier-btn" data-mult="5000">x5000</button>
+                                <button class="multiplier-btn" data-mult="10000">x10000</button>
+                                <button class="multiplier-btn" data-mult="100000">x100K</button>
+                                <button class="multiplier-btn" data-mult="1000000">x1M</button>
+                                <button class="multiplier-btn" data-mult="10000000">x10M</button>
+                            </div>
+                            <div class="custom-multiplier-group">
+                                <input type="number" id="customMultiplier" placeholder="Свой множитель" value="100" min="1">
+                                <button class="glass-btn" id="setCustomMultiplierBtn">УСТАНОВИТЬ</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">💰 КОПИЛКА</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="poolAmount" placeholder="количество" value="1000000">
+                                <button class="glass-btn success-btn" id="addPoolBtn">➕ ДОБАВИТЬ</button>
+                            </div>
+                            <div class="admin-input-group" style="margin-top: 8px;">
+                                <input type="number" id="setPoolAmount" placeholder="установить значение">
+                                <button class="glass-btn" id="setPoolBtn">🎯 УСТАНОВИТЬ</button>
+                            </div>
+                            <div class="admin-input-group" style="margin-top: 8px;">
+                                <input type="number" id="removePoolAmount" placeholder="вычесть">
+                                <button class="glass-btn danger-btn" id="removePoolBtn">➖ ВЫЧЕСТЬ</button>
+                                <button class="glass-btn danger-btn" id="resetPoolBtn">🗑️ СБРОСИТЬ</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">📅 ДЕНЬ ИВЕНТА</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="eventDay" placeholder="день" value="1" min="1" max="30">
+                                <button class="glass-btn" id="setEventDayBtn">УСТАНОВИТЬ ДЕНЬ</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">🔄 ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ</div>
+                            <div class="admin-command-desc">Обновить задания ивента для всех игроков</div>
+                            <button class="glass-btn warning-btn" id="forceRefreshQuestsBtn">ОБНОВИТЬ ЗАДАНИЯ</button>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">🌍 ГЛОБАЛЬНЫЙ ВИШЛИСТ</div>
+                            <div class="admin-input-group">
+                                <select id="globalWishlistItem">
+                                    <option value="dilicks_10000">10 000 💎</option>
+                                    <option value="dilicks_50000">50 000 💎</option>
+                                    <option value="dilicks_100000">100 000 💎</option>
+                                    <option value="money_50000">50 000 🪙</option>
+                                    <option value="money_100000">100 000 🪙</option>
+                                    <option value="skin_dragon">Скин Дракона ✨</option>
+                                    <option value="upgrade_boost">Усилитель x10 ⚡</option>
+                                </select>
+                                <button class="glass-btn" id="setGlobalWishlistBtn">УСТАНОВИТЬ</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">🏆 ТОП УЧАСТНИКОВ</div>
+                            <button class="glass-btn" id="loadTopBtn" style="width: 100%;">🔄 ЗАГРУЗИТЬ ТОП</button>
+                            <div id="topList" class="top-list" style="display: none;"></div>
+                        </div>
+                        
+                        <!-- ОЧИСТКА ТОПА -->
+                        <div class="admin-command">
+                            <div class="admin-command-code">/uragan clear top</div>
+                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ ТОП УЧАСТНИКОВ ИВЕНТА (обнулить вклад всех игроков)</div>
+                            <button class="glass-btn danger-btn" id="clearUraganTopBtn" style="background:rgba(244,67,54,0.2);width:100%;">⚠️ ОЧИСТИТЬ ВЕСЬ ТОП ИВЕНТА</button>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">/uragan clear player &lt;ID&gt;</div>
+                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ ВКЛАД КОНКРЕТНОГО ИГРОКА</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="clearPlayerId" placeholder="ID игрока">
+                                <button class="glass-btn warning-btn" id="clearPlayerBtn">ОЧИСТИТЬ ИГРОКА</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-command">
+                            <div class="admin-command-code">/uragan clear admin</div>
+                            <div class="admin-command-desc">👑 ОЧИСТИТЬ ВКЛАД АДМИНИСТРАТОРА</div>
+                            <button class="glass-btn danger-btn" id="clearAdminBtn" style="background:rgba(244,67,54,0.3);">👑 ОЧИСТИТЬ АДМИНА</button>
+                        </div>
+                    </div>
+                    
+                    <!-- ВЫДАЧА НАГРАД -->
+                    <div class="admin-card">
+                        <h2>🎁 ВЫДАЧА НАГРАД</h2>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/give &lt;ID&gt; &lt;предмет&gt; &lt;количество&gt;</div>
+                            <div class="admin-input-group">
+                                <input type="text" id="rewardUserId" placeholder="ID игрока">
+                                <select id="rewardType">
+                                    <option value="dilicks">💎 Дилики</option>
+                                    <option value="money">🪙 Деньги</option>
+                                    <option value="skin">✨ Скин</option>
+                                </select>
+                            </div>
+                            <div class="admin-input-group">
+                                <input type="text" id="rewardAmount" placeholder="количество / ID скина">
+                                <button class="glass-btn success-btn" id="giveRewardBtn">ВЫДАТЬ</button>
+                            </div>
+                            <div class="admin-command-desc" style="margin-top: 8px; font-size: 11px;">
+                                📝 Скины: classic, neon, monsters_skin, dragon_skin, wheel_dragon_skin
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/give all &lt;предмет&gt; &lt;количество&gt;</div>
+                            <div class="admin-command-desc">⚠️ ВНИМАНИЕ! Выдать ВСЕМ игрокам</div>
+                            <div class="admin-input-group">
+                                <select id="giveAllType">
+                                    <option value="dilicks">💎 Дилики</option>
+                                    <option value="money">🪙 Деньги</option>
+                                </select>
+                                <input type="number" id="giveAllAmount" placeholder="количество">
+                                <button class="glass-btn warning-btn" id="giveAllBtn">⚠️ ВЫДАТЬ ВСЕМ</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- КОЛЕСО ФОРТУНЫ -->
+                    <div class="admin-card">
+                        <h2>🎡 КОЛЕСО ФОРТУНЫ</h2>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/start event wheel</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="wheelDays" placeholder="дней" value="150" min="1" max="365">
+                                <button class="glass-btn success-btn" id="startWheelEventBtn">ЗАПУСТИТЬ</button>
+                            </div>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/stop event wheel</div>
+                            <button class="glass-btn danger-btn" id="stopWheelEventBtn">ОСТАНОВИТЬ</button>
+                        </div>
+                        <div class="admin-command">
+                            <div class="admin-command-code">/set spin cost</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="spinCostInput" placeholder="стоимость" value="2500" min="1">
+                                <button class="glass-btn" id="setSpinCostBtn">УСТАНОВИТЬ</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- СТАТУС ИВЕНТОВ -->
+                    <div class="admin-card">
+                        <h2>📊 СТАТУС ИВЕНТОВ</h2>
+                        <div id="eventsStatus" class="events-status-info">Загрузка...</div>
+                        <button class="glass-btn" id="refreshStatusBtn" style="margin-top: 15px; width: 100%;">🔄 ОБНОВИТЬ СТАТУС</button>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="index.html" class="back-link">← Вернуться в игру</a>
+        </div>
+    </div>
+    
+    <script>
+        (function() {
+            let attempts = 0;
+            const maxAttempts = 20;
+            let adminTimerInterval = null;
+            let maintRef = null;
+            let eventsRef = null;
+            let usersRef = null;
+            let announcementsRef = null;
+            let banRef = null;
+            let pollsRef = null;
+            
+            function addDebugMessage(msg) {
+                const debugDiv = document.getElementById('debugConsole');
+                if (debugDiv) {
+                    const time = new Date().toLocaleTimeString();
+                    debugDiv.innerHTML += `<div>[${time}] ${msg}</div>`;
+                    debugDiv.scrollTop = debugDiv.scrollHeight;
+                    while (debugDiv.children.length > 30) {
+                        debugDiv.removeChild(debugDiv.firstChild);
+                    }
+                }
+                console.log(msg);
+            }
+            
+            function showToast(message, type) {
+                addDebugMessage(`TOAST [${type}]: ${message}`);
+                const existingToast = document.querySelector('.toast-notification');
+                if (existingToast) existingToast.remove();
+                
+                const toast = document.createElement('div');
+                toast.className = `toast-notification ${type}`;
+                toast.innerHTML = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => toast.classList.add('show'), 10);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+            
+            function showConfirmModal(title, message, onConfirm) {
+                const modal = document.createElement('div');
+                modal.className = 'confirm-modal';
+                modal.innerHTML = `
+                    <div class="confirm-modal-content">
+                        <h3>${title}</h3>
+                        <p>${message}</p>
+                        <div class="confirm-modal-buttons">
+                            <button class="confirm-btn">✅ ДА, ОЧИСТИТЬ</button>
+                            <button class="cancel-btn">❌ ОТМЕНА</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                setTimeout(() => modal.classList.add('active'), 10);
+                
+                modal.querySelector('.confirm-btn').onclick = () => {
+                    onConfirm();
+                    modal.classList.remove('active');
+                    setTimeout(() => modal.remove(), 300);
+                };
+                modal.querySelector('.cancel-btn').onclick = () => {
+                    modal.classList.remove('active');
+                    setTimeout(() => modal.remove(), 300);
+                };
+            }
+            
+            const waitForConfig = setInterval(() => {
+                attempts++;
+                if (typeof firebase !== 'undefined' && firebase.database && typeof CREATOR_ID !== 'undefined') {
+                    clearInterval(waitForConfig);
+                    addDebugMessage('✅ Firebase загружен, проверяем доступ...');
+                    checkAccess();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(waitForConfig);
+                    addDebugMessage('❌ Ошибка: Firebase не загрузился');
+                    const errorDiv = document.getElementById('accessError');
+                    if (errorDiv) {
+                        errorDiv.style.display = 'block';
+                        errorDiv.innerHTML = '⚠️ Ошибка загрузки конфигурации. Проверьте firebase-config.js и подключение Firebase.';
+                    }
+                }
+            }, 500);
+            
+            function checkAccess() {
+                const userId = localStorage.getItem('userId');
+                addDebugMessage(`Проверка доступа: userId=${userId}, CREATOR_ID=${CREATOR_ID}`);
+                
+                if (!userId) {
+                    document.getElementById('accessError').style.display = 'block';
+                    document.getElementById('accessError').innerHTML = '⚠️ Вы не авторизованы. Сначала войдите в игру';
+                    addDebugMessage('❌ Доступ запрещен: нет userId');
+                    return;
+                }
+                if (userId !== CREATOR_ID) {
+                    document.getElementById('accessError').style.display = 'block';
+                    document.getElementById('accessError').innerHTML = `⚠️ У вас нет доступа.<br><br>Ваш ID: ${userId}<br>ID создателя: ${CREATOR_ID}<br><br>Только создатель игры может заходить в админ-панель.`;
+                    addDebugMessage(`❌ Доступ запрещен: userId ${userId} не равен CREATOR_ID`);
+                    return;
+                }
+                document.getElementById('adminContent').style.display = 'block';
+                document.getElementById('adminUserId').textContent = userId;
+                addDebugMessage('✅ Доступ разрешен, инициализируем админ-панель');
+                initAdminControls();
+            }
+            
+            function initAdminControls() {
+                maintRef = firebase.database().ref('maintenance');
+                eventsRef = firebase.database().ref('events');
+                usersRef = firebase.database().ref('users');
+                announcementsRef = firebase.database().ref('announcements');
+                banRef = firebase.database().ref('ban');
+                pollsRef = firebase.database().ref('polls');
+                
+                addDebugMessage('📡 Firebase ссылки инициализированы');
+                
+                // ===== АНОНСЫ (РЕАЛЬНОЕ ВРЕМЯ) =====
+                function initRealtimeAnnouncements() {
+                    const container = document.getElementById('announcementsList');
+                    if (!container) return;
+                    
+                    announcementsRef.on('value', (snapshot) => {
+                        const announcements = snapshot.val();
+                        addDebugMessage(`📢 Анонсы обновлены: ${announcements ? Object.keys(announcements).length : 0} шт.`);
+                        if (!announcements) {
+                            container.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center;">Нет анонсов</div>';
+                            return;
+                        }
+                        container.innerHTML = '';
+                        const sorted = Object.entries(announcements).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+                        for (const [id, ann] of sorted) {
+                            const div = document.createElement('div');
+                            div.className = 'announcement-item';
+                            div.innerHTML = `
+                                <div class="announcement-text">${(ann.text || '').substring(0, 100)}</div>
+                                <div class="announcement-date">${ann.date || 'неизвестно'}</div>
+                                <button class="announcement-delete" data-id="${id}">🗑️</button>
+                            `;
+                            container.appendChild(div);
+                        }
+                        document.querySelectorAll('.announcement-delete').forEach(btn => {
+                            btn.onclick = async () => {
+                                await announcementsRef.child(btn.dataset.id).remove();
+                                showToast('🗑️ Анонс удален', 'success');
+                            };
+                        });
+                    });
+                }
+                
+                // ===== БАНЫ (РЕАЛЬНОЕ ВРЕМЯ) =====
+                function initRealtimeBans() {
+                    const container = document.getElementById('bannedList');
+                    if (!container) return;
+                    
+                    banRef.on('value', (snapshot) => {
+                        const bans = snapshot.val();
+                        addDebugMessage(`🔨 Баны обновлены: ${bans ? Object.keys(bans).length : 0} шт.`);
+                        if (!bans) {
+                            container.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center;">Нет забаненных игроков</div>';
+                            return;
+                        }
+                        container.innerHTML = '';
+                        for (const [id, ban] of Object.entries(bans)) {
+                            if (!ban.active) continue;
+                            let info = `${id.substring(0, 12)}...: ${ban.reason || 'Нарушение правил'}`;
+                            if (!ban.isPermanent && ban.endTime) {
+                                const remaining = Math.max(0, Math.floor((ban.endTime - Date.now()) / 1000));
+                                const hours = Math.floor(remaining / 3600);
+                                const mins = Math.floor((remaining % 3600) / 60);
+                                info += ` (осталось: ${hours}ч ${mins}м)`;
+                            } else {
+                                info += ' (НАВСЕГДА)';
+                            }
+                            const div = document.createElement('div');
+                            div.className = 'ban-item';
+                            div.innerHTML = `<div class="ban-info">${info}</div><button class="ban-unban" data-id="${id}">Разбан</button>`;
+                            container.appendChild(div);
+                        }
+                        document.querySelectorAll('.ban-unban').forEach(btn => {
+                            btn.onclick = async () => {
+                                await banRef.child(btn.dataset.id).remove();
+                                showToast(`✅ Игрок разбанен`, 'success');
+                            };
+                        });
+                    });
+                }
+                
+                // ===== ОПРОСЫ (РЕАЛЬНОЕ ВРЕМЯ) =====
+                function initRealtimePolls() {
+                    const container = document.getElementById('pollsList');
+                    if (!container) return;
+                    
+                    pollsRef.on('value', (snapshot) => {
+                        const polls = snapshot.val();
+                        addDebugMessage(`📊 Опросы обновлены: ${polls ? Object.keys(polls).length : 0} шт.`);
+                        if (!polls) {
+                            container.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center;">Нет активных опросов</div>';
+                            return;
+                        }
+                        container.innerHTML = '';
+                        const sorted = Object.entries(polls).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+                        for (const [id, poll] of sorted) {
+                            const totalVotes = poll.options ? Object.values(poll.options).reduce((sum, opt) => sum + (opt.votes || 0), 0) : 0;
+                            const div = document.createElement('div');
+                            div.className = 'poll-item';
+                            div.innerHTML = `
+                                <div class="poll-question">📊 ${poll.question || 'Без вопроса'}</div>
+                                <div class="poll-options">
+                                    ${poll.options ? Object.entries(poll.options).map(([optId, opt]) => {
+                                        const percent = totalVotes > 0 ? ((opt.votes || 0) / totalVotes * 100).toFixed(1) : 0;
+                                        return `
+                                            <div class="poll-option">
+                                                <div class="poll-option-text">${opt.text}</div>
+                                                <div class="poll-option-votes">${(opt.votes || 0).toLocaleString()} гол. (${percent}%)</div>
+                                                <div class="poll-option-bar"><div class="poll-option-bar-fill" style="width: ${percent}%"></div></div>
+                                            </div>
+                                        `;
+                                    }).join('') : 'Нет вариантов'}
+                                </div>
+                                <div class="poll-total-votes">Всего голосов: ${totalVotes.toLocaleString()}</div>
+                                <button class="poll-delete" data-id="${id}">🗑️ Удалить опрос</button>
+                            `;
+                            container.appendChild(div);
+                        }
+                        document.querySelectorAll('.poll-delete').forEach(btn => {
+                            btn.onclick = async () => {
+                                if (confirm('Удалить этот опрос?')) {
+                                    await pollsRef.child(btn.dataset.id).remove();
+                                    showToast('📊 Опрос удален', 'success');
+                                }
+                            };
+                        });
+                    });
+                }
+                
+                // ===== ОТПРАВКА АНОНСА =====
+                document.getElementById('sendAnnounceBtn')?.addEventListener('click', async () => {
+                    const text = document.getElementById('announceText').value.trim();
+                    if (!text) {
+                        showToast('❌ Введите текст анонса', 'error');
+                        return;
+                    }
+                    try {
+                        await announcementsRef.push().set({
+                            text: text,
+                            date: new Date().toLocaleString(),
+                            timestamp: Date.now(),
+                            isPinned: false
+                        });
+                        document.getElementById('announceText').value = '';
+                        showToast('✅ Анонс отправлен всем игрокам!', 'success');
+                        addDebugMessage(`✅ Анонс отправлен: ${text}`);
+                    } catch (error) {
+                        showToast(`❌ Ошибка: ${error.message}`, 'error');
+                    }
+                });
+                
+                // ===== СОЗДАНИЕ ОПРОСА =====
+                document.getElementById('createPollBtn')?.addEventListener('click', async () => {
+                    const question = document.getElementById('pollQuestion').value.trim();
+                    const optionsStr = document.getElementById('pollOptions').value.trim();
+                    
+                    if (!question) {
+                        showToast('❌ Введите вопрос опроса', 'error');
+                        return;
+                    }
+                    if (!optionsStr) {
+                        showToast('❌ Введите варианты ответов через |', 'error');
+                        return;
+                    }
+                    
+                    const optionsList = optionsStr.split('|').map(opt => opt.trim()).filter(opt => opt);
+                    if (optionsList.length < 2) {
+                        showToast('❌ Добавьте минимум 2 варианта ответа через |', 'error');
+                        return;
+                    }
+                    
+                    const options = {};
+                    optionsList.forEach((opt, index) => {
+                        options[`opt_${index}`] = { text: opt, votes: 0 };
+                    });
+                    
+                    try {
+                        await pollsRef.push().set({
+                            question: question,
+                            options: options,
+                            timestamp: Date.now(),
+                            createdAt: new Date().toLocaleString()
+                        });
+                        showToast('✅ Опрос создан! Игроки видят его в реальном времени', 'success');
+                        addDebugMessage(`✅ Опрос создан: ${question} (${optionsList.length} вариантов)`);
+                        document.getElementById('pollQuestion').value = '';
+                        document.getElementById('pollOptions').value = '';
+                    } catch (error) {
+                        showToast('❌ Ошибка создания опроса', 'error');
+                        addDebugMessage(`❌ Ошибка создания опроса: ${error.message}`);
+                    }
+                });
+                
+                // ===== БАНЫ =====
+                document.getElementById('banUserBtn')?.addEventListener('click', async () => {
+                    const userId = document.getElementById('banUserId').value.trim();
+                    const reason = document.getElementById('banReason').value.trim() || 'Нарушение правил';
+                    const hours = parseInt(document.getElementById('banHours').value) || 0;
+                    if (!userId) {
+                        showToast('❌ Введите ID игрока', 'error');
+                        return;
+                    }
+                    const banData = { active: true, reason: reason, bannedAt: Date.now(), isPermanent: hours === 0 };
+                    if (hours > 0) banData.endTime = Date.now() + (hours * 60 * 60 * 1000);
+                    try {
+                        await banRef.child(userId).set(banData);
+                        showToast(`⛔ Игрок ${userId} забанен${hours > 0 ? ` на ${hours} часов` : ' навсегда'}`, 'warning');
+                        document.getElementById('banUserId').value = '';
+                        document.getElementById('banReason').value = '';
+                        document.getElementById('banHours').value = '0';
+                    } catch (error) {
+                        showToast(`❌ Ошибка: ${error.message}`, 'error');
+                    }
+                });
+                
+                document.getElementById('unbanUserBtn')?.addEventListener('click', async () => {
+                    const userId = document.getElementById('unbanUserId').value.trim();
+                    if (!userId) {
+                        showToast('❌ Введите ID игрока', 'error');
+                        return;
+                    }
+                    try {
+                        await banRef.child(userId).remove();
+                        showToast(`✅ Игрок ${userId} разбанен`, 'success');
+                        document.getElementById('unbanUserId').value = '';
+                    } catch (error) {
+                        showToast(`❌ Ошибка: ${error.message}`, 'error');
+                    }
+                });
+                
+                // ===== ТЕХРАБОТЫ =====
+                function updateStatusDisplay() {
+                    maintRef.once('value').then(snapshot => {
+                        const data = snapshot.val();
+                        const statusDiv = document.getElementById('maintenanceStatus');
+                        if (data && data.active === true) {
+                            statusDiv.className = 'admin-status active';
+                            statusDiv.innerHTML = data.endTime ? '🔧 ЭКРАН АКТИВЕН' : '🔧 ТЕХРАБОТЫ ВКЛЮЧЕНЫ';
+                        } else {
+                            statusDiv.className = 'admin-status inactive';
+                            statusDiv.innerHTML = '✅ Технические работы ОТКЛЮЧЕНЫ';
+                        }
+                    });
+                }
+                
+                document.getElementById('updateTimeBtn')?.addEventListener('click', async () => {
+                    const seconds = parseInt(document.getElementById('techWorkSeconds').value);
+                    if (!seconds || seconds < 1) return showToast('❌ Введите корректное время', 'error');
+                    await maintRef.set({ active: true, startTime: Date.now(), endTime: Date.now() + seconds * 1000, duration: seconds, type: 'timer' });
+                    updateStatusDisplay();
+                    showToast(`🆙 Экран обновления включен на ${seconds} сек`, 'success');
+                });
+                
+                document.getElementById('techWorkBtn')?.addEventListener('click', async () => {
+                    await maintRef.set({ active: true, startTime: Date.now(), endTime: null, type: 'infinite' });
+                    updateStatusDisplay();
+                    showToast('🔧 Технические работы включены', 'warning');
+                });
+                
+                document.getElementById('updateScreenBtn')?.addEventListener('click', async () => {
+                    const seconds = parseInt(document.getElementById('updateScreenSeconds').value);
+                    if (!seconds || seconds < 1) return showToast('❌ Введите корректное время', 'error');
+                    await maintRef.set({ active: true, type: 'timer', startTime: Date.now(), endTime: Date.now() + seconds * 1000, duration: seconds });
+                    showToast(`🆙 Экран обновы включен на ${seconds} секунд`, 'success');
+                    updateStatusDisplay();
+                });
+                
+                document.getElementById('notTechWorkBtn')?.addEventListener('click', async () => {
+                    await maintRef.set({ active: false });
+                    updateStatusDisplay();
+                    showToast('✅ Все экраны техработ отключены', 'success');
+                });
+                
+                // ===== ДИЛИКОВЫЙ УРАГАН =====
+                document.getElementById('startDilicksEventBtn')?.addEventListener('click', async () => {
+                    const days = parseInt(document.getElementById('uraganDays').value) || 7;
+                    await eventsRef.child('dilicksHurricane').set({ active: true, startTime: Date.now(), endTime: Date.now() + days * 24 * 60 * 60 * 1000, duration: days, multiplier: 2, day: 1, totalPool: 0 });
+                    showToast(`💎 Ивент запущен на ${days} дней!`, 'success');
+                });
+                
+                document.getElementById('stopDilicksEventBtn')?.addEventListener('click', async () => {
+                    await eventsRef.child('dilicksHurricane').set({ active: false });
+                    showToast('⏹️ Ивент остановлен', 'success');
+                });
+                
+                document.querySelectorAll('.multiplier-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        await eventsRef.child('dilicksHurricane').update({ multiplier: parseInt(btn.dataset.mult) });
+                        showToast(`⚡ Множитель изменен на x${parseInt(btn.dataset.mult)}`, 'success');
+                    });
+                });
+                
+                document.getElementById('setCustomMultiplierBtn')?.addEventListener('click', async () => {
+                    const mult = parseInt(document.getElementById('customMultiplier').value);
+                    if (!mult || mult < 1) return showToast('❌ Введите корректный множитель', 'error');
+                    await eventsRef.child('dilicksHurricane').update({ multiplier: mult });
+                    showToast(`⚡ Множитель изменен на x${mult}`, 'success');
+                });
+                
+                document.getElementById('addPoolBtn')?.addEventListener('click', async () => {
+                    const amount = parseInt(document.getElementById('poolAmount').value);
+                    if (!amount || amount < 1) return showToast('❌ Введите сумму', 'error');
+                    const snap = await eventsRef.child('dilicksHurricane').once('value');
+                    await eventsRef.child('dilicksHurricane').update({ totalPool: (snap.val()?.totalPool || 0) + amount });
+                    showToast(`💰 Добавлено ${amount.toLocaleString()} 💎`, 'success');
+                });
+                
+                document.getElementById('setPoolBtn')?.addEventListener('click', async () => {
+                    const amount = parseInt(document.getElementById('setPoolAmount').value);
+                    if (isNaN(amount) || amount < 0) return showToast('❌ Введите корректную сумму', 'error');
+                    await eventsRef.child('dilicksHurricane').update({ totalPool: amount });
+                    showToast(`💰 Копилка установлена на ${amount.toLocaleString()} 💎`, 'success');
+                });
+                
+                document.getElementById('removePoolBtn')?.addEventListener('click', async () => {
+                    const amount = parseInt(document.getElementById('removePoolAmount').value);
+                    if (!amount || amount < 1) return showToast('❌ Введите сумму', 'error');
+                    const snap = await eventsRef.child('dilicksHurricane').once('value');
+                    await eventsRef.child('dilicksHurricane').update({ totalPool: Math.max(0, (snap.val()?.totalPool || 0) - amount) });
+                    showToast(`➖ Вычтено ${amount.toLocaleString()} 💎`, 'success');
+                });
+                
+                document.getElementById('resetPoolBtn')?.addEventListener('click', async () => {
+                    if (confirm('⚠️ Сбросить копилку в 0?')) {
+                        await eventsRef.child('dilicksHurricane').update({ totalPool: 0 });
+                        showToast('💰 Копилка сброшена', 'success');
+                    }
+                });
+                
+                document.getElementById('setEventDayBtn')?.addEventListener('click', async () => {
+                    const day = parseInt(document.getElementById('eventDay').value);
+                    if (!day || day < 1 || day > 30) return showToast('❌ Введите день от 1 до 30', 'error');
+                    await eventsRef.child('dilicksHurricane').update({ day: day });
+                    showToast(`📅 День ивента изменен на ${day}`, 'success');
+                });
+                
+                document.getElementById('forceRefreshQuestsBtn')?.addEventListener('click', async () => {
+                    await eventsRef.child('dilicksHurricane').update({ lastQuestReset: Date.now() });
+                    showToast('🔄 Задания обновлены', 'success');
+                });
+                
+                document.getElementById('setGlobalWishlistBtn')?.addEventListener('click', async () => {
+                    await eventsRef.child('dilicksHurricane').child('globalWishlist').set(document.getElementById('globalWishlistItem').value);
+                    showToast(`🌍 Вишлист установлен`, 'success');
+                });
+                
+                document.getElementById('loadTopBtn')?.addEventListener('click', async () => {
+                    const topListDiv = document.getElementById('topList');
+                    topListDiv.style.display = 'block';
+                    topListDiv.innerHTML = '<div class="top-item">Загрузка...</div>';
+                    try {
+                        const snapshot = await usersRef.once('value');
+                        const users = snapshot.val();
+                        const topPlayers = [];
+                        for (const [id, user] of Object.entries(users)) {
+                            const contribution = user.eventContribution || 0;
+                            if (contribution > 0) {
+                                topPlayers.push({ name: user.settings?.displayName || user.username, contribution, id });
+                            }
+                        }
+                        topPlayers.sort((a, b) => b.contribution - a.contribution);
+                        topListDiv.innerHTML = '';
+                        topPlayers.slice(0, 10).forEach((player, index) => {
+                            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+                            topListDiv.innerHTML += `<div class="top-item"><div class="top-rank">${medal}</div><div class="top-name">${player.name} ${player.id === CREATOR_ID ? '👑' : ''}</div><div class="top-value">${player.contribution.toLocaleString()} 💎</div></div>`;
+                        });
+                        if (topPlayers.length === 0) topListDiv.innerHTML = '<div class="top-item">Пока нет участников</div>';
+                        addDebugMessage(`🏆 Топ загружен: ${topPlayers.length} участников`);
+                    } catch (error) {
+                        topListDiv.innerHTML = '<div class="top-item">Ошибка загрузки</div>';
+                        addDebugMessage(`❌ Ошибка загрузки топа: ${error.message}`);
+                    }
+                });
+                
+                // ===== ОЧИСТКА ВСЕГО ТОПА =====
+                document.getElementById('clearUraganTopBtn')?.addEventListener('click', () => {
+                    showConfirmModal(
+                        '⚠️ ОЧИСТКА ТОПА ИВЕНТА',
+                        'Вы уверены, что хотите ОБНУЛИТЬ вклад ВСЕХ игроков в ивенте "Диликовый ураган"?\n\nВключая админа! Это действие НЕЛЬЗЯ отменить!'
+                    , async () => {
+                        showToast('🔄 Очистка топа ивента...', 'warning');
+                        addDebugMessage('🗑️ Начинаем очистку топа ивента');
+                        try {
+                            const snapshot = await usersRef.once('value');
+                            const users = snapshot.val();
+                            let count = 0;
+                            for (const [id, user] of Object.entries(users)) {
+                                if (user.eventContribution && user.eventContribution > 0) {
+                                    await usersRef.child(id).update({ eventContribution: 0 });
+                                    count++;
+                                    if (count % 10 === 0) await new Promise(r => setTimeout(r, 50));
+                                }
+                            }
+                            // Принудительно обнуляем админа
+                            await usersRef.child(CREATOR_ID).update({ eventContribution: 0 });
+                            await eventsRef.child('dilicksHurricane').update({ totalPool: 0 });
+                            showToast(`✅ Очищено ${count + 1} игроков! Копилка сброшена.`, 'success');
+                            addDebugMessage(`✅ Очищено ${count + 1} игроков, копилка сброшена`);
+                            const topList = document.getElementById('topList');
+                            if (topList && topList.style.display === 'block') document.getElementById('loadTopBtn')?.click();
+                        } catch (error) {
+                            showToast('❌ Ошибка при очистке топа', 'error');
+                            addDebugMessage(`❌ Ошибка очистки топа: ${error.message}`);
+                        }
+                    });
+                });
+                
+                // ===== ОЧИСТКА КОНКРЕТНОГО ИГРОКА =====
+                document.getElementById('clearPlayerBtn')?.addEventListener('click', async () => {
+                    const playerId = document.getElementById('clearPlayerId').value.trim();
+                    if (!playerId) {
+                        showToast('❌ Введите ID игрока', 'error');
+                        return;
+                    }
+                    
+                    let message = `Вы уверены, что хотите ОБНУЛИТЬ вклад игрока с ID: ${playerId}?\n\nЭто действие НЕЛЬЗЯ отменить!`;
+                    if (playerId === CREATOR_ID) {
+                        message = `⚠️ ВНИМАНИЕ! Вы собираетесь обнулить АДМИНИСТРАТОРА (${playerId})!\n\nВы уверены?`;
+                    }
+                    
+                    showConfirmModal('⚠️ ОЧИСТКА ИГРОКА', message, async () => {
+                        showToast(`🔄 Очистка игрока ${playerId}...`, 'warning');
+                        addDebugMessage(`🗑️ Очистка игрока ${playerId}`);
+                        try {
+                            const playerRef = usersRef.child(playerId);
+                            const snapshot = await playerRef.once('value');
+                            if (!snapshot.exists()) {
+                                showToast('❌ Игрок с таким ID не найден', 'error');
+                                return;
+                            }
+                            const userData = snapshot.val();
+                            const username = userData.settings?.displayName || userData.username;
+                            await playerRef.update({ eventContribution: 0 });
+                            showToast(`✅ Очищен вклад игрока ${username} (${playerId})`, 'success');
+                            addDebugMessage(`✅ Очищен вклад игрока ${username} (${playerId})`);
+                            document.getElementById('clearPlayerId').value = '';
+                            const topList = document.getElementById('topList');
+                            if (topList && topList.style.display === 'block') document.getElementById('loadTopBtn')?.click();
+                        } catch (error) {
+                            showToast('❌ Ошибка при очистке игрока', 'error');
+                            addDebugMessage(`❌ Ошибка очистки игрока: ${error.message}`);
+                        }
+                    });
+                });
+                
+                // ===== ОЧИСТКА АДМИНА =====
+                document.getElementById('clearAdminBtn')?.addEventListener('click', () => {
+                    showConfirmModal(
+                        '👑 ОЧИСТКА АДМИНИСТРАТОРА',
+                        `Вы уверены, что хотите ОБНУЛИТЬ вклад администратора (${CREATOR_ID})?\n\nЭто действие НЕЛЬЗЯ отменить!`
+                    , async () => {
+                        try {
+                            await usersRef.child(CREATOR_ID).update({ eventContribution: 0 });
+                            showToast(`✅ Вклад администратора обнулен!`, 'success');
+                            addDebugMessage(`✅ Обнулен администратор ${CREATOR_ID}`);
+                            const topList = document.getElementById('topList');
+                            if (topList && topList.style.display === 'block') document.getElementById('loadTopBtn')?.click();
+                        } catch (error) {
+                            showToast('❌ Ошибка при очистке', 'error');
+                            addDebugMessage(`❌ Ошибка очистки админа: ${error.message}`);
+                        }
+                    });
+                });
+                
+                // ===== ВЫДАЧА НАГРАД =====
+                document.getElementById('giveRewardBtn')?.addEventListener('click', async () => {
+                    const userId = document.getElementById('rewardUserId').value.trim();
+                    const rewardType = document.getElementById('rewardType').value;
+                    const amount = document.getElementById('rewardAmount').value;
+                    if (!userId) {
+                        showToast('❌ Введите ID игрока', 'error');
+                        return;
+                    }
+                    try {
+                        const userSnapshot = await firebase.database().ref('users/' + userId).once('value');
+                        if (!userSnapshot.exists()) {
+                            showToast('❌ Игрок не найден', 'error');
+                            return;
+                        }
+                        const userData = userSnapshot.val();
+                        const username = userData.settings?.displayName || userData.username;
+                        if (rewardType === 'dilicks') {
+                            const dilicksAmount = parseInt(amount);
+                            if (isNaN(dilicksAmount) || dilicksAmount < 1) return showToast('❌ Введите количество', 'error');
+                            await firebase.database().ref('users/' + userId).update({ dilicks: (userData.dilicks || 0) + dilicksAmount });
+                            showToast(`✅ Выдано ${dilicksAmount.toLocaleString()} 💎 игроку ${username}`, 'success');
+                        } else if (rewardType === 'money') {
+                            const moneyAmount = parseInt(amount);
+                            if (isNaN(moneyAmount) || moneyAmount < 1) return showToast('❌ Введите количество', 'error');
+                            await firebase.database().ref('users/' + userId).update({ money: (userData.money || 0) + moneyAmount });
+                            showToast(`✅ Выдано ${moneyAmount.toLocaleString()} 🪙 игроку ${username}`, 'success');
+                        } else if (rewardType === 'skin') {
+                            const skinId = amount.trim();
+                            if (!skinId) return showToast('❌ Введите ID скина', 'error');
+                            const inventory = userData.inventory || [];
+                            if (!inventory.includes(skinId)) {
+                                inventory.push(skinId);
+                                await firebase.database().ref('users/' + userId).update({ inventory: inventory });
+                                showToast(`✅ Выдан скин "${skinId}" игроку ${username}`, 'success');
+                            } else {
+                                showToast(`⚠️ У игрока уже есть скин "${skinId}"`, 'warning');
+                            }
+                        }
+                        document.getElementById('rewardUserId').value = '';
+                        document.getElementById('rewardAmount').value = '';
+                    } catch (error) {
+                        showToast('❌ Ошибка при выдаче', 'error');
+                    }
+                });
+                
+                document.getElementById('giveAllBtn')?.addEventListener('click', async () => {
+                    const type = document.getElementById('giveAllType').value;
+                    const amount = parseInt(document.getElementById('giveAllAmount').value);
+                    if (isNaN(amount) || amount < 1) return showToast('❌ Введите количество', 'error');
+                    if (!confirm(`⚠️ Выдать ВСЕМ ${amount.toLocaleString()} ${type === 'dilicks' ? '💎' : '🪙'}?`)) return;
+                    const snapshot = await usersRef.once('value');
+                    const users = snapshot.val();
+                    let count = 0;
+                    for (const [id, user] of Object.entries(users)) {
+                        if (type === 'dilicks') {
+                            await usersRef.child(id).update({ dilicks: (user.dilicks || 0) + amount });
+                        } else {
+                            await usersRef.child(id).update({ money: (user.money || 0) + amount });
+                        }
+                        count++;
+                        if (count % 10 === 0) await new Promise(r => setTimeout(r, 100));
+                    }
+                    showToast(`✅ Выдано ${count} игрокам`, 'success');
+                });
+                
+                // ===== КОЛЕСО ФОРТУНЫ =====
+                document.getElementById('startWheelEventBtn')?.addEventListener('click', async () => {
+                    const days = parseInt(document.getElementById('wheelDays').value) || 150;
+                    await eventsRef.child('wheelEvent').set({ active: true, startTime: Date.now(), endTime: Date.now() + days * 24 * 60 * 60 * 1000, duration: days, spinCost: 2500 });
+                    showToast(`🎡 Ивент запущен на ${days} дней!`, 'success');
+                });
+                
+                document.getElementById('stopWheelEventBtn')?.addEventListener('click', async () => {
+                    await eventsRef.child('wheelEvent').set({ active: false });
+                    showToast('⏹️ Ивент остановлен', 'success');
+                });
+                
+                document.getElementById('setSpinCostBtn')?.addEventListener('click', async () => {
+                    const cost = parseInt(document.getElementById('spinCostInput').value);
+                    if (!cost || cost < 1) return showToast('❌ Введите стоимость', 'error');
+                    await eventsRef.child('wheelEvent').update({ spinCost: cost });
+                    showToast(`🎡 Стоимость крутки: ${cost} 💎`, 'success');
+                });
+                
+                document.getElementById('refreshStatusBtn')?.addEventListener('click', () => {
+                    showToast('📊 Статус обновлен', 'success');
+                });
+                
+                // ЗАПУСК ВСЕХ СЛУШАТЕЛЕЙ
+                initRealtimeAnnouncements();
+                initRealtimeBans();
+                initRealtimePolls();
+                updateStatusDisplay();
+                
+                addDebugMessage('✅ Админ-панель инициализирована с опросами и очисткой топа');
+                showToast('✅ Админ-панель загружена', 'success');
+            }
+        })();
+    </script>
+</body>
+</html>

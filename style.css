@@ -1,0 +1,5528 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    outline: none;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0c15 0%, #121520 50%, #0a0c15 100%);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+}
+
+/* ===== ЭКРАН ТЕХНИЧЕСКИХ РАБОТ ===== */
+.maintenance-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: maintenanceFadeIn 0.3s ease;
+}
+
+@keyframes maintenanceFadeIn {
+    from { opacity: 0; backdrop-filter: blur(0); }
+    to { opacity: 1; backdrop-filter: blur(12px); }
+}
+
+.maintenance-card {
+    max-width: 400px;
+    width: 90%;
+    padding: 35px 25px;
+    text-align: center;
+    background: rgba(20, 25, 35, 0.95);
+    border: 2px solid gold;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+    animation: maintenancePulse 2s infinite;
+}
+
+@keyframes maintenancePulse {
+    0% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.5); }
+    100% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.3); }
+}
+
+.maintenance-icon {
+    font-size: 5rem;
+    margin-bottom: 15px;
+    animation: maintenanceSpin 3s linear infinite;
+}
+
+@keyframes maintenanceSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.maintenance-title {
+    color: gold;
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-shadow: 0 0 15px gold;
+}
+
+.maintenance-text {
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.maintenance-timer {
+    color: gold;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px gold;
+    font-family: monospace;
+}
+
+.maintenance-progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 15px;
+}
+
+.maintenance-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, gold, #ffaa00, gold);
+    width: 0%;
+    transition: width 1s linear;
+    border-radius: 10px;
+    box-shadow: 0 0 10px gold;
+}
+
+/* ===== АДМИН-КОНСОЛЬ ===== */
+.admin-btn {
+    background: rgba(255, 215, 0, 0.2) !important;
+    border: 1px solid gold !important;
+    color: gold !important;
+    font-size: 18px !important;
+    padding: 8px 15px !important;
+    margin-right: 10px;
+    animation: adminGlow 2s infinite;
+}
+
+@keyframes adminGlow {
+    0% { box-shadow: 0 0 5px gold; }
+    50% { box-shadow: 0 0 20px gold; }
+    100% { box-shadow: 0 0 5px gold; }
+}
+
+.admin-console {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 400px;
+    max-width: calc(100% - 40px);
+    background: rgba(10, 15, 25, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 2px solid gold;
+    border-radius: 20px;
+    padding: 20px;
+    z-index: 15000;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px gold;
+    animation: adminSlideIn 0.3s ease;
+}
+
+@keyframes adminSlideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid gold;
+}
+
+.admin-header h2 {
+    color: gold;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px gold;
+}
+
+.admin-close-btn {
+    background: none;
+    border: none;
+    color: gold;
+    font-size: 24px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.admin-close-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: scale(1.1);
+}
+
+.admin-content {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.admin-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.admin-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.admin-content::-webkit-scrollbar-thumb {
+    background: gold;
+    border-radius: 10px;
+}
+
+.admin-section {
+    margin-bottom: 25px;
+}
+
+.admin-section h3 {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    border-left: 3px solid gold;
+    padding-left: 10px;
+}
+
+.admin-command-group {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.admin-command {
+    color: gold;
+    font-family: monospace;
+    font-size: 1rem;
+    margin-bottom: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.admin-description {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.admin-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.admin-input-group .glass-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.admin-execute-btn {
+    width: 100%;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid gold;
+    color: gold;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.admin-execute-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.admin-execute-btn:active {
+    transform: translateY(0);
+}
+
+.admin-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+}
+
+#adminUserId {
+    color: gold;
+    font-family: monospace;
+}
+
+/* ===== УЛУЧШЕНИЯ ДЛЯ ТАБ-НАВИГАЦИИ ===== */
+.admin-execute-btn:focus {
+    outline: 2px solid gold;
+    outline-offset: 2px;
+}
+
+.admin-execute-btn.tab-focused {
+    background: rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 20px gold;
+}
+
+/* Убираем желтый фон при нажатии в Telegram WebApp */
+button, 
+.glass-btn, 
+.nav-btn, 
+.buy-btn, 
+.upgrade-btn, 
+.equip-btn,
+.click-btn,
+.promocode-activate-btn,
+.settings-save-btn,
+.settings-warning-btn,
+.settings-danger-btn,
+.auth-btn,
+.auth-tab,
+.nav-toggle-btn,
+.leaderboard-tabs .glass-btn,
+.promocode-item,
+.skin-tag,
+.history-item,
+.modal-btn,
+.nav-links .nav-btn,
+.user-info button,
+.glass-card button,
+.profile-stat-item,
+.achievement-card,
+.shop-item,
+.upgrade-item,
+.inventory-item,
+.season-rewards .glass-btn,
+.promocode-input-wrapper button,
+.settings-field button,
+.modal-buttons button,
+.glass-input,
+select,
+input[type="checkbox"],
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+    -webkit-focus-ring-color: transparent !important;
+    outline: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+/* Убираем любой стандартный фон при нажатии в Telegram */
+*:active,
+*:focus,
+*:hover {
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+input,
+textarea,
+button,
+select,
+a {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== LIQUID GLASS ЭФФЕКТ (iOS 26 STYLE) ===== */
+
+/* Базовый класс для жидкого стекла */
+.liquid-glass {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 5px 15px -5px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+/* Внутреннее свечение (глянец) - ТОНЬШЕ И АККУРАТНЕЕ */
+.liquid-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 35%;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+/* Нижнее затемнение (глубина) - ТОНЬШЕ */
+.liquid-glass::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20%;
+    background: linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.02) 70%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+/* Эффект при наведении - БЕЗ ДВИЖЕНИЯ */
+.liquid-glass:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 8px 20px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: none;
+}
+
+/* Эффект при нажатии */
+.liquid-glass:active {
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 
+        0 2px 8px -4px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
+    transition: all 0.05s ease;
+    transform: none;
+}
+
+/* ===== ОСТРОВ ВОЗМОЖНОСТЕЙ - БЕЗ ДВИЖЕНИЯ ===== */
+.feature-island {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 15px 30px -10px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    padding: 30px;
+    overflow: hidden;
+    transform: none;
+    transition: none;
+}
+
+.feature-island:hover {
+    transform: none;
+    box-shadow: 
+        0 15px 30px -10px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.feature-island .feature-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 30px;
+    padding: 20px 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 
+        0 5px 10px -5px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+}
+
+.feature-island .feature-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 8px 15px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    transform: translateY(-2px);
+}
+
+.feature-island .feature-card:active {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(1px);
+}
+
+/* ===== КНОПКИ НАВИГАЦИИ ===== */
+.nav-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 10px 22px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.nav-btn.active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
+}
+
+.nav-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+    box-shadow: 
+        0 2px 4px -2px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* ===== КНОПКА СКРЫТИЯ НАВИГАЦИИ ===== */
+.nav-toggle-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.2s ease;
+    margin-right: 10px;
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    z-index: 3;
+    flex-shrink: 0;
+}
+
+.nav-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+}
+
+.nav-toggle-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.95);
+}
+
+.nav-toggle-btn .toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+/* ===== КНОПКА ВЫХОДА ===== */
+#logoutBtn {
+    margin: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    transition: all 0.15s ease;
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+#logoutBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+#logoutBtn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+/* ===== КНОПКА КЛИКЕРА ===== */
+.click-btn {
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    margin: 30px 0;
+    transition: transform 0.1s ease;
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    box-shadow: 
+        0 15px 30px -10px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.click-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 
+        0 20px 40px -15px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+}
+
+.click-btn:active {
+    transform: scale(0.98);
+}
+
+.click-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.6));
+}
+
+/* ===== КНОПКИ В МАГАЗИНЕ ===== */
+.buy-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    width: 100%;
+}
+
+.buy-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.buy-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+.buy-btn.disabled,
+.buy-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+}
+
+/* ===== КНОПКА ЭКИПИРОВКИ ===== */
+.equip-btn {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(76, 175, 80, 0.2) inset;
+    width: 100%;
+}
+
+.equip-btn:hover {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(76, 175, 80, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.equip-btn:active {
+    background: rgba(76, 175, 80, 0.2);
+    transform: translateY(1px);
+}
+
+/* ===== КНОПКИ УЛУЧШЕНИЙ ===== */
+.upgrade-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    width: 100%;
+}
+
+.upgrade-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.upgrade-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+/* ===== КНОПКИ В НАСТРОЙКАХ ===== */
+.settings-save-btn {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(76, 175, 80, 0.2) inset;
+    min-width: 100px;
+}
+
+.settings-save-btn:hover {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(76, 175, 80, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.settings-save-btn:active {
+    background: rgba(76, 175, 80, 0.2);
+    transform: translateY(1px);
+}
+
+.settings-warning-btn {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 193, 7, 0.2) inset;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.settings-warning-btn:hover {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.3);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 193, 7, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.settings-warning-btn:active {
+    background: rgba(255, 193, 7, 0.2);
+    transform: translateY(1px);
+}
+
+.settings-danger-btn {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(244, 67, 54, 0.2) inset;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.settings-danger-btn:hover {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: rgba(244, 67, 54, 0.3);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(244, 67, 54, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.settings-danger-btn:active {
+    background: rgba(244, 67, 54, 0.2);
+    transform: translateY(1px);
+}
+
+/* ===== КНОПКИ В ПРОМОКОДАХ ===== */
+.promocode-activate-btn {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    padding: 18px 35px;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 
+        0 8px 16px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 215, 0, 0.2) inset;
+}
+
+.promocode-activate-btn:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.3);
+    box-shadow: 
+        0 12px 24px -12px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 215, 0, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.promocode-activate-btn:active {
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(1px);
+}
+
+.promocode-activate-btn::before {
+    display: none;
+}
+
+/* ===== КНОПКИ В ЛИДЕРБОРДЕ ===== */
+.leaderboard-tabs .glass-btn.small {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    transition: all 0.15s ease;
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.leaderboard-tabs .glass-btn.small:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.leaderboard-tabs .glass-btn.small.active {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.25);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 215, 0, 0.2) inset;
+}
+
+.leaderboard-tabs .glass-btn.small:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+/* ===== КНОПКИ В АВТОРИЗАЦИИ ===== */
+.auth-tab {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.auth-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.auth-tab.active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.auth-tab:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    margin-top: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    transition: all 0.15s ease;
+    box-shadow: 
+        0 8px 16px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.auth-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 12px 24px -12px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.auth-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+/* ===== МОДАЛЬНЫЕ КНОПКИ ===== */
+.modal-btn {
+    padding: 12px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    border: none;
+    font-size: 15px;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+}
+
+.modal-btn.confirm {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    color: white;
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(244, 67, 54, 0.2) inset;
+}
+
+.modal-btn.confirm:hover {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: rgba(244, 67, 54, 0.3);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(244, 67, 54, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.modal-btn.confirm:active {
+    background: rgba(244, 67, 54, 0.2);
+    transform: translateY(1px);
+}
+
+.modal-btn.cancel {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.modal-btn.cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.modal-btn.cancel:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+/* ===== GLASS CARD ===== */
+.glass-effect {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+        0 10px 20px -10px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+    transform: translateZ(0);
+    overflow: hidden;
+}
+
+.glass-effect::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+}
+
+.glass-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border-radius: 24px;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    padding: 20px;
+    box-shadow: 
+        0 10px 20px -10px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+    transition: all 0.2s ease;
+    transform: translateZ(0);
+    overflow: hidden;
+}
+
+.glass-card:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 15px 30px -15px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+    transform: translateY(-2px);
+}
+
+/* ===== НАВИГАЦИЯ - ПК ВЕРСИЯ ===== */
+.glass-nav {
+    background: rgba(15, 18, 25, 0.6);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.3);
+    transform: translateZ(0);
+}
+
+.nav-links {
+    display: flex;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.nav-links.hidden {
+    display: none !important;
+}
+
+/* ===== USER-INFO - ПК ВЕРСИЯ ===== */
+.user-info {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.currency, .dilic {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    padding: 6px 12px;
+    border-radius: 30px;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+}
+
+.currency-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* На ПК скрываем лишние структуры */
+.user-info-top, .user-info-bottom {
+    display: contents;
+}
+
+.content {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.tab {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.tab.active {
+    display: block;
+    opacity: 1;
+}
+
+.clicker-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.clicker-card {
+    text-align: center;
+    color: white;
+    max-width: 500px;
+    width: 100%;
+}
+
+.click-effects {
+    position: relative;
+    height: 100px;
+    pointer-events: none;
+}
+
+.click-effect {
+    position: absolute;
+    color: #ffd966;
+    font-size: 24px;
+    font-weight: 600;
+    animation: floatUp 0.6s ease-out forwards;
+    pointer-events: none;
+    text-shadow: 0 0 15px #ffd966;
+    white-space: nowrap;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px) scale(1.3);
+    }
+}
+
+.stats {
+    font-size: 18px;
+    line-height: 2;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 20px;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===== ИНВЕНТАРЬ ===== */
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.inventory-item {
+    color: white;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-radius: 24px;
+    box-shadow: 
+        0 8px 16px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+    overflow: hidden;
+    position: relative;
+    padding: 20px;
+}
+
+.inventory-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 12px 24px -12px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+    transform: translateY(-2px);
+}
+
+.inventory-item.active {
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    box-shadow: 
+        0 0 20px rgba(255, 215, 0, 0.2),
+        0 0 0 0.5px rgba(255, 215, 0, 0.2) inset;
+    background: rgba(255, 215, 0, 0.03);
+}
+
+.skin-preview {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.inventory-item:hover .skin-preview {
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: scale(1.02);
+}
+
+.inventory-item.active .skin-preview {
+    border-color: gold;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.skin-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.skin-description {
+    font-size: 14px;
+    opacity: 0.8;
+    margin: 10px 0;
+    position: relative;
+    z-index: 2;
+}
+
+.skin-equipped {
+    color: gold;
+    font-weight: 600;
+    margin: 10px 0;
+    font-size: 16px;
+    text-shadow: 0 0 10px gold;
+    position: relative;
+    z-index: 2;
+}
+
+.section-title {
+    color: white;
+    text-align: center;
+    margin: 20px 0;
+    font-size: 32px;
+    font-weight: 600;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    letter-spacing: 0.5px;
+}
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.shop-item {
+    color: white;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-radius: 24px;
+    box-shadow: 
+        0 8px 16px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+    overflow: hidden;
+    position: relative;
+    padding: 20px;
+}
+
+.shop-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 12px 24px -12px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+    transform: translateY(-2px);
+}
+
+.shop-item .skin-preview {
+    width: 100px;
+    height: 100px;
+}
+
+.skin-price, .upgrade-price, .reward-price {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 18px;
+    font-weight: 600;
+    color: gold;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.price-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.skin-status {
+    font-size: 14px;
+    margin: 10px 0;
+    color: #4CAF50;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.upgrade-item {
+    color: white;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-radius: 24px;
+    box-shadow: 
+        0 8px 16px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+    overflow: hidden;
+    position: relative;
+    padding: 20px;
+}
+
+.upgrade-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 12px 24px -12px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+    transform: translateY(-2px);
+}
+
+.upgrade-level {
+    color: gold;
+    font-weight: 600;
+    font-size: 20px;
+    text-shadow: 0 0 10px gold;
+}
+
+.glass-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.glass-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+
+.glass-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(1px);
+}
+
+.glass-btn.small {
+    padding: 6px 16px;
+    font-size: 14px;
+}
+
+.glass-btn.disabled, .glass-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+}
+
+/* ===== СЕЗОННЫЙ ПРОПУСК ===== */
+.season-pass {
+    color: white;
+    max-width: 600px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-radius: 28px;
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    position: relative;
+    padding: 25px;
+}
+
+.season-progress {
+    margin: 20px 0;
+    position: relative;
+    z-index: 2;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 15px 0;
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    width: 0%;
+    transition: width 0.15s ease;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+.reward-tier {
+    margin: 20px 0;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.01);
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+    padding: 15px;
+}
+
+.reward-tier.premium {
+    border-color: rgba(255, 215, 0, 0.2);
+    background: rgba(255, 215, 0, 0.02);
+}
+
+/* ===== ПРОМОКОДЫ ===== */
+.promocodes-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.promocodes-header {
+    text-align: center;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 40px;
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.promocodes-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 18px;
+    margin-top: 10px;
+    position: relative;
+    z-index: 2;
+}
+
+.promocode-input-section {
+    margin-bottom: 30px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border-radius: 32px;
+    position: relative;
+    overflow: hidden;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.promocode-input-wrapper {
+    display: flex;
+    gap: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.promocode-input {
+    flex: 1;
+    font-size: 18px;
+    padding: 18px 25px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 40px;
+    color: white;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.promocode-input:focus {
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.promocode-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: normal;
+    text-transform: none;
+    font-weight: normal;
+}
+
+.promocode-message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.promocode-message.success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+
+.promocode-message.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.promocode-message.info {
+    background: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.2);
+    color: #2196F3;
+}
+
+.active-promocodes {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border-radius: 32px;
+    position: relative;
+    overflow: hidden;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.active-promocodes h3 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.promocodes-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.promocode-item {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.promocode-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 215, 0, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.3);
+}
+
+.promocode-item .promocode-code {
+    font-size: 18px;
+    font-weight: 700;
+    color: gold;
+    text-shadow: 0 0 10px gold;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+}
+
+.promocode-item .promocode-reward {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.promocode-item .promocode-reward img {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.promocodes-history {
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border-radius: 32px;
+    position: relative;
+    overflow: hidden;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.promocodes-history h3 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.history-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.history-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 10px;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 215, 0, 0.3);
+}
+
+.history-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: translateX(5px);
+}
+
+.history-item .history-code {
+    font-size: 16px;
+    font-weight: 600;
+    color: gold;
+    letter-spacing: 1px;
+}
+
+.history-item .history-reward {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    flex-wrap: wrap;
+}
+
+.history-item .history-reward img {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.history-item .history-date {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.empty-history {
+    text-align: center;
+    padding: 30px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 16px;
+    font-style: italic;
+}
+
+/* ===== ЛИДЕРБОРД ===== */
+.leaderboard-container {
+    color: white;
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border-radius: 28px;
+    padding: 25px;
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.4);
+    position: relative;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.leaderboard-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.leaderboard-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+.leaderboard-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.leaderboard-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #ffaa00, #ffd700);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    position: relative;
+    z-index: 2;
+    flex-wrap: wrap;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    position: relative;
+    z-index: 2;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-table th {
+    font-size: 16px;
+    color: gold;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 10px gold;
+    position: sticky;
+    top: 0;
+    background: rgba(15, 18, 25, 0.8);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    z-index: 5;
+}
+
+.leaderboard-table td {
+    font-size: 15px;
+}
+
+.leaderboard-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.leaderboard-table td:first-child {
+    font-weight: 600;
+    color: gold;
+    width: 60px;
+}
+
+/* ===== АВТОРИЗАЦИЯ ===== */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0a0c15 0%, #121520 50%, #0a0c15 100%);
+    padding: 20px;
+}
+
+.auth-card {
+    width: 400px;
+    color: white;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 32px;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    position: relative;
+    padding: 30px;
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 12px;
+    margin: 25px 0;
+    position: relative;
+    z-index: 2;
+}
+
+.auth-form {
+    display: none;
+    position: relative;
+    z-index: 2;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.glass-input {
+    width: 100%;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: white;
+    font-size: 16px;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.2);
+}
+
+.glass-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.glass-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== ЭФФЕКТ ПУЗЫРЬКОВ ===== */
+.bubble {
+    position: fixed;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+    border-radius: 50%;
+    pointer-events: none;
+    animation: bubbleFloat 8s linear forwards;
+    z-index: 9999;
+}
+
+@keyframes bubbleFloat {
+    0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0.2;
+    }
+    100% {
+        transform: translateY(-100px) scale(1);
+        opacity: 0;
+    }
+}
+
+/* ===== ПРОФИЛЬ ===== */
+.profile-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-header {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 40px;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-avatar {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+    z-index: 2;
+}
+
+.avatar-ring {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+        0 10px 20px -10px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+    overflow: hidden;
+    animation: avatarFloat 3s ease-in-out infinite;
+    position: relative;
+}
+
+@keyframes avatarFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.avatar-ring img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+}
+
+.profile-info {
+    flex: 1;
+    position: relative;
+    z-index: 2;
+}
+
+.profile-info h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.profile-level {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 15px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.profile-level span {
+    color: gold;
+    font-weight: 600;
+    text-shadow: 0 0 10px gold;
+}
+
+.profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.profile-stat-item {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-stat-item:hover {
+    transform: translateY(-2px);
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.3);
+}
+
+.stat-label {
+    display: block;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: gold;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.achievement-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.achievement-card:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+}
+
+.achievement-card.completed {
+    border-color: rgba(255, 215, 0, 0.2);
+    background: rgba(255, 215, 0, 0.02);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+.achievement-card.completed .achievement-icon {
+    filter: drop-shadow(0 0 10px gold);
+}
+
+.achievement-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.achievement-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
+}
+
+.achievement-icon.locked {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
+.achievement-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.achievement-desc {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.achievement-progress {
+    position: relative;
+    z-index: 2;
+}
+
+.achievement-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 5px;
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+}
+
+.achievement-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.achievement-progress-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.skin-stats {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border-radius: 28px;
+    padding: 25px;
+    margin-top: 30px;
+    position: relative;
+    overflow: hidden;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.skin-stats h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.skin-progress {
+    margin-bottom: 25px;
+    position: relative;
+    z-index: 2;
+}
+
+.skin-progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
+}
+
+.skin-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, gold, #ffd700, gold);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+    box-shadow: 0 0 15px gold;
+}
+
+.owned-skins-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
+}
+
+.skin-tag {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 30px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.skin-tag:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(1.02);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.skin-tag.active {
+    border-color: gold;
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.skin-tag img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.skin-tag span {
+    color: white;
+    font-weight: 500;
+}
+
+.skin-tag.active span {
+    color: gold;
+    text-shadow: 0 0 10px gold;
+}
+
+.achievement-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(20, 25, 35, 0.9);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 20px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.5);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    z-index: 10000;
+    max-width: 350px;
+}
+
+.achievement-notification.show {
+    transform: translateX(0);
+}
+
+.notification-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid gold;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+}
+
+.notification-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.notification-content {
+    position: relative;
+    z-index: 2;
+}
+
+.notification-content h4 {
+    color: gold;
+    font-size: 16px;
+    margin-bottom: 3px;
+    text-shadow: 0 0 10px gold;
+}
+
+.notification-content p {
+    color: white;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.notification-reward {
+    color: #4CAF50 !important;
+    font-weight: 600;
+    font-size: 13px !important;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+/* ===== НАСТРОЙКИ ПРОФИЛЯ ===== */
+.settings-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.settings-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.settings-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.3);
+}
+
+.settings-card h3 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 10px;
+}
+
+.settings-field {
+    margin-bottom: 20px;
+}
+
+.settings-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.settings-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.settings-input-group .glass-input {
+    flex: 1;
+}
+
+.settings-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.settings-field select {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+}
+
+.settings-field select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+.settings-field p {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.settings-field strong {
+    color: gold;
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-content {
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 32px;
+    padding: 30px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-content h3 {
+    color: gold;
+    font-size: 24px;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px gold;
+}
+
+.modal-content p {
+    color: white;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* ===== УВЕДОМЛЕНИЯ ===== */
+.settings-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 20px;
+    padding: 15px 25px;
+    color: white;
+    font-size: 16px;
+    z-index: 10001;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    max-width: 350px;
+    box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.4);
+}
+
+.settings-toast.show {
+    transform: translateX(0);
+}
+
+.settings-toast.success {
+    border-color: rgba(76, 175, 80, 0.3);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.2);
+}
+
+.settings-toast.error {
+    border-color: rgba(244, 67, 54, 0.3);
+    box-shadow: 0 0 20px rgba(244, 67, 54, 0.2);
+}
+
+.settings-toast.warning {
+    border-color: rgba(255, 193, 7, 0.3);
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.2);
+}
+
+/* ===== ИВЕНТЫ ===== */
+.events-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.events-header {
+    text-align: center;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border-radius: 60px;
+    padding: 30px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.events-header .section-title {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #fff, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+
+.events-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 25px;
+}
+
+.event-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px);
+    border-radius: 32px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    padding: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.event-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.event-card.disabled:hover {
+    transform: none;
+}
+
+.event-icon {
+    font-size: 4rem;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.event-card h2 {
+    color: gold;
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.event-description {
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.event-timer-block {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 40px;
+    padding: 12px;
+    text-align: center;
+    margin: 15px 0;
+}
+
+.event-timer-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.event-timer-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: gold;
+    font-family: monospace;
+}
+
+.event-status {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 10px;
+    width: 100%;
+    text-align: center;
+}
+
+.event-status.active {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+}
+
+.event-status.coming {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border: 1px solid #ffc107;
+}
+
+.event-status.ended {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+    border: 1px solid #f44336;
+}
+
+.event-bonus {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: gold;
+}
+
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
+@media (max-width: 768px) {
+    .glass-nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 10px;
+        position: relative;
+    }
+    
+    /* Кнопка ◀ видна и слева */
+    .nav-toggle-btn {
+        order: 1;
+        display: flex !important;
+        margin-right: 0;
+    }
+    
+    .nav-toggle-btn.hidden .toggle-icon {
+        transform: rotate(180deg);
+    }
+    
+    .user-info {
+        order: 2;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 5px;
+    }
+    
+    .user-info-top {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .user-info-bottom {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    #logoutBtn {
+        margin: 0;
+    }
+    
+    .nav-links {
+        order: 3;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-links.hidden {
+        display: none !important;
+    }
+    
+    /* Эмодзи для мобилок - ИСПРАВЛЕНО ЦЕНТРИРОВАНИЕ */
+    .nav-btn {
+        width: 50px;
+        height: 50px;
+        padding: 0 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        transition: transform 0.1s ease;
+        -webkit-tap-highlight-color: transparent !important;
+        tap-highlight-color: transparent !important;
+        margin: 0;
+        text-align: center;
+        line-height: 1;
+    }
+    
+    .nav-btn .nav-text {
+        display: none;
+    }
+    
+    .nav-btn::before {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        font-size: 24px;
+    }
+    
+    .nav-btn[data-tab="main"]::before {
+        content: "🏠";
+    }
+    .nav-btn[data-tab="shop"]::before {
+        content: "🛒";
+    }
+    .nav-btn[data-tab="inventory"]::before {
+        content: "📦";
+    }
+    .nav-btn[data-tab="upgrades"]::before {
+        content: "⚡";
+    }
+    .nav-btn[data-tab="profile"]::before {
+        content: "👤";
+    }
+    .nav-btn[data-tab="settings"]::before {
+        content: "⚙️";
+    }
+    .nav-btn[data-tab="season"]::before {
+        content: "🎫";
+    }
+    .nav-btn[data-tab="promocodes"]::before {
+        content: "🎁";
+    }
+    .nav-btn[data-tab="leaderboard"]::before {
+        content: "🏆";
+    }
+    .nav-btn[data-tab="events"]::before {
+        content: "📅";
+    }
+    
+    /* Убираем желтый фон полностью */
+    .nav-btn.active,
+    .nav-btn:active,
+    .nav-btn:focus,
+    .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
+        -webkit-tap-highlight-color: transparent !important;
+        tap-highlight-color: transparent !important;
+    }
+    
+    /* Эффект нажатия на кнопку (без желтого) */
+    .nav-btn:active {
+        transform: scale(0.9);
+        background: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Для всех кнопок на мобилках */
+    button, 
+    .glass-btn, 
+    .buy-btn, 
+    .upgrade-btn, 
+    .equip-btn,
+    .click-btn,
+    .promocode-activate-btn,
+    .settings-save-btn,
+    .settings-warning-btn,
+    .settings-danger-btn,
+    .auth-btn,
+    .auth-tab,
+    .leaderboard-tabs .glass-btn,
+    .promocode-item,
+    .skin-tag,
+    .history-item,
+    .modal-btn {
+        -webkit-tap-highlight-color: transparent !important;
+        tap-highlight-color: transparent !important;
+        -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+    }
+    
+    /* Принудительно убираем любой фон при нажатии */
+    *:active {
+        -webkit-tap-highlight-color: transparent !important;
+        tap-highlight-color: transparent !important;
+    }
+    
+    /* Контент с отступами */
+    .content {
+        padding: 15px;
+    }
+    
+    .glass-card {
+        padding: 15px;
+        margin: 0;
+    }
+    
+    /* Остров с отступами */
+    .feature-island {
+        max-width: calc(100% - 30px);
+        margin: 15px auto;
+        padding: 20px;
+    }
+    
+    .feature-grid {
+        gap: 10px;
+    }
+    
+    .shop-grid,
+    .upgrades-grid,
+    .inventory-grid,
+    .achievements-grid,
+    .settings-grid {
+        gap: 10px;
+        padding: 0;
+    }
+    
+    .profile-header {
+        padding: 15px;
+        gap: 15px;
+        margin: 0;
+    }
+    
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        margin: 0;
+    }
+    
+    .profile-stats-grid {
+        gap: 8px;
+    }
+    
+    .profile-stat-item {
+        padding: 10px;
+    }
+    
+    .leaderboard-container {
+        padding: 15px;
+        margin: 0;
+    }
+    
+    .promocodes-container {
+        padding: 10px;
+    }
+    
+    .promocodes-header,
+    .promocode-input-section,
+    .active-promocodes,
+    .promocodes-history {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .promocode-input {
+        padding: 12px 15px;
+    }
+    
+    .promocode-activate-btn {
+        padding: 12px 20px;
+    }
+    
+    .settings-container {
+        padding: 10px;
+    }
+    
+    .settings-card {
+        padding: 15px;
+        margin: 0;
+    }
+    
+    .settings-field {
+        margin-bottom: 15px;
+    }
+    
+    .settings-input-group {
+        gap: 8px;
+    }
+    
+    .modal-content {
+        width: 90%;
+        padding: 20px;
+    }
+    
+    .modal-buttons {
+        gap: 10px;
+    }
+
+    /* АДМИН-КОНСОЛЬ НА МОБИЛКАХ */
+    .admin-console {
+        top: 60px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-width: none;
+    }
+    
+    .admin-content {
+        max-height: 300px;
+    }
+    
+    .admin-btn {
+        font-size: 16px !important;
+        padding: 6px 12px !important;
+    }
+    
+    /* ЭКРАН ТЕХРАБОТ НА МОБИЛКАХ */
+    .maintenance-card {
+        width: 90%;
+        padding: 25px 15px;
+    }
+    
+    .maintenance-title {
+        font-size: 1.5rem;
+    }
+    
+    .maintenance-timer {
+        font-size: 2rem;
+    }
+    
+    /* Ивенты на мобилках */
+    .events-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .events-header .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .event-card h2 {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 500px) {
+    .profile-header {
+        padding: 12px;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .profile-info h2 {
+        font-size: 20px;
+    }
+    
+    .profile-level {
+        font-size: 14px;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+    }
+    
+    .skin-stats {
+        padding: 15px;
+    }
+    
+    .skin-tag {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ===== УЛУЧШЕНИЯ ДЛЯ СЕНСОРНЫХ ЭКРАНОВ ===== */
+* {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.nav-btn,
+.glass-btn,
+.buy-btn,
+.upgrade-btn,
+.equip-btn {
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.nav-btn:active,
+.glass-btn:active,
+.buy-btn:active,
+.upgrade-btn:active,
+.equip-btn:active {
+    transform: scale(0.95);
+}
+
+/* ===== БЕЛЫЙ ТЕКСТ ДЛЯ ВАЛЮТ И НИКА ===== */
+#usernameDisplay {
+    color: white !important;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.currency span, .dilic span,
+#money, #dilicks {
+    color: white !important;
+    font-weight: 600;
+}
+
+#logoutBtn {
+    color: white !important;
+}
+
+/* Цифры в статистике кликов */
+.stats p span,
+#clicks, #clickPower, #playtime {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Цифры в профиле */
+.profile-stat-item .stat-value,
+#profileMoney, #profileDilicks, #profileClicks, #profilePlaytime {
+    color: white !important;
+    font-weight: 700;
+}
+
+/* Цифры в магазине и улучшениях */
+.skin-price .price-value,
+.upgrade-price .price-value,
+.reward-price span {
+    color: white !important;
+}
+
+/* Цифры в инвентаре */
+.skin-tag span {
+    color: white !important;
+}
+
+.skin-tag.active span {
+    color: gold !important;
+}
+
+/* Цифры в лидерборде */
+.leaderboard-table td {
+    color: white !important;
+}
+
+/* Цифры в настройках */
+.settings-card p,
+.settings-card span {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Цифры в сезонном пропуске */
+.season-pass p,
+.season-pass span {
+    color: white !important;
+}
+
+/* Цифры в промокодах */
+.promocode-reward,
+.history-reward {
+    color: white !important;
+}
+
+/* Исправление цветов в статистике скинов */
+.skin-progress-text span {
+    color: gold !important;
+}
+.progress-current, 
+.progress-total {
+    color: white !important;
+}
+
+/* ===== КНОПКА АДМИНКИ ===== */
+.admin-btn {
+    background: rgba(255, 215, 0, 0.2) !important;
+    border: 1px solid gold !important;
+    color: gold !important;
+    font-size: 18px !important;
+    padding: 8px 15px !important;
+    margin-right: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.admin-btn:hover {
+    background: rgba(255, 215, 0, 0.3) !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px gold;
+}
+
+/* ===== СТРАНИЦА ИВЕНТОВ (ПОЛНОЭКРАННАЯ) ===== */
+.events-fullscreen {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.events-header {
+    text-align: center;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    border-radius: 60px;
+    padding: 30px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.events-header .section-title {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #fff, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+
+.events-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+}
+
+.user-panel-mini {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    padding: 12px 25px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.user-info-mini {
+    display: flex;
+    gap: 25px;
+    color: white;
+    font-size: 1rem;
+}
+
+.user-info-mini span {
+    color: gold;
+    font-weight: bold;
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.event-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(15px);
+    border-radius: 32px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    padding: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 215, 0, 0.4);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.event-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.event-card.disabled:hover {
+    transform: none;
+}
+
+.event-icon {
+    font-size: 4rem;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.event-card h2 {
+    color: gold;
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.event-description {
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.event-timer-block {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 40px;
+    padding: 12px;
+    text-align: center;
+    margin: 15px 0;
+}
+
+.event-timer-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.event-timer-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: gold;
+    font-family: monospace;
+}
+
+.event-status {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 10px;
+    width: 100%;
+    text-align: center;
+}
+
+.event-status.active {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+}
+
+.event-status.coming {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border: 1px solid #ffc107;
+}
+
+.event-status.ended {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+    border: 1px solid #f44336;
+}
+
+.event-bonus {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: gold;
+}
+
+@media (max-width: 768px) {
+    .events-grid {
+        grid-template-columns: 1fr;
+    }
+    .user-panel-mini {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .user-info-mini {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
+    .events-header .section-title {
+        font-size: 1.8rem;
+    }
+    .event-card h2 {
+        font-size: 1.3rem;
+    }
+}
+
+/* ===== СТИЛИ ДЛЯ ДИЛИКОВОГО УРАГАНА ===== */
+.uragan-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+.uragan-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 30px;
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(20px);
+    border-radius: 60px;
+    border: 1px solid rgba(255,215,0,0.2);
+}
+.uragan-header h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #fff, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.event-info {
+    background: rgba(0,0,0,0.3);
+    border-radius: 40px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+.multiplier-box {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: gold;
+    text-shadow: 0 0 20px gold;
+    margin-bottom: 15px;
+    animation: pulse 2s infinite;
+}
+.timer-box {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: gold;
+    font-family: monospace;
+    margin-top: 10px;
+}
+.day-badge {
+    display: inline-block;
+    background: rgba(255,215,0,0.2);
+    border: 1px solid gold;
+    border-radius: 30px;
+    padding: 5px 20px;
+    margin-top: 10px;
+    font-size: 1rem;
+}
+.pool-section {
+    background: rgba(0,0,0,0.3);
+    border-radius: 40px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+.pool-title {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: white;
+}
+.pool-title span { color: gold; font-weight: bold; }
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 30px;
+    overflow: hidden;
+    margin: 15px 0;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, gold, #ffaa00);
+    width: 0%;
+    border-radius: 30px;
+    transition: width 0.3s ease;
+}
+.pool-stats {
+    display: flex;
+    justify-content: space-between;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+}
+.quests-section {
+    background: rgba(0,0,0,0.3);
+    border-radius: 40px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+.quests-title {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: gold;
+    text-align: center;
+}
+.quest-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    border-radius: 30px;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+}
+.quest-info { flex: 1; }
+.quest-name { font-weight: bold; color: white; }
+.quest-progress { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+.quest-reward { color: gold; font-weight: bold; margin-right: 15px; }
+.quest-status {
+    padding: 5px 15px;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.quest-status.completed { background: rgba(76,175,80,0.2); color: #4CAF50; border: 1px solid #4CAF50; }
+.quest-status.active { background: rgba(255,215,0,0.2); color: gold; border: 1px solid gold; }
+.top-section {
+    background: rgba(0,0,0,0.3);
+    border-radius: 40px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+.top-title {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: gold;
+    text-align: center;
+}
+.top-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+.top-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.top-rank { width: 40px; font-weight: bold; color: gold; }
+.top-name { flex: 1; color: white; }
+.top-value { color: gold; font-weight: bold; }
+.rewards-section {
+    background: rgba(0,0,0,0.3);
+    border-radius: 40px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+.rewards-title {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: gold;
+    text-align: center;
+}
+.rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+.reward-item {
+    background: rgba(255,255,255,0.03);
+    border-radius: 20px;
+    padding: 10px;
+    text-align: center;
+}
+.reward-value { font-size: 1.2rem; font-weight: bold; color: gold; }
+.reward-desc { font-size: 0.7rem; color: rgba(255,255,255,0.6); }
+
+/* Адаптация для мобилок */
+@media (max-width: 768px) {
+    .uragan-header h1 { font-size: 1.8rem; }
+    .multiplier-box { font-size: 2rem; }
+    .timer-box { font-size: 1.4rem; }
+    .rewards-grid { grid-template-columns: repeat(2,1fr); }
+    .quest-item { flex-wrap: wrap; }
+    .quest-reward { margin-top: 5px; }
+}
+
+/* ===== КОЛЕСО ФОРТУНЫ (СТИЛЬНАЯ ВЕРСИЯ) ===== */
+.wheel-card {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px);
+    border-radius: 40px;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    padding: 25px 20px 30px;
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.4);
+}
+
+.wheel-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.wheel-header h2 {
+    font-size: 2.2rem;
+    background: linear-gradient(135deg, #fff, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 5px;
+}
+
+.wheel-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 8px;
+}
+
+.wheel-price {
+    display: inline-block;
+    background: rgba(255,215,0,0.15);
+    border: 1px solid gold;
+    border-radius: 40px;
+    padding: 6px 20px;
+}
+
+.wheel-price-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.wheel-price span {
+    font-size: 1rem;
+    color: gold;
+    font-weight: 600;
+}
+
+.wheel-wrapper {
+    width: 280px;
+    height: 280px;
+    margin: 10px auto;
+    position: relative;
+}
+
+.wheel-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,215,0,0.3);
+    background: rgba(0,0,0,0.3);
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 36px solid gold;
+    filter: drop-shadow(0 5px 5px #000);
+    z-index: 10;
+}
+
+.wheel-pointer-center {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle, #ffd700, #b8860b);
+    border-radius: 50%;
+    box-shadow: 0 0 15px gold;
+    z-index: 11;
+}
+
+.wheel-controls {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.wheel-spin-btn {
+    background: linear-gradient(145deg, rgba(255,215,0,0.2), rgba(255,215,0,0.1));
+    border: 1px solid gold;
+    color: white;
+    padding: 12px 35px;
+    border-radius: 50px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    backdrop-filter: blur(5px);
+    cursor: pointer;
+    width: 100%;
+    max-width: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.wheel-balance {
+    color: white;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 20px;
+    border-radius: 40px;
+    border: 1px solid rgba(255,215,0,0.2);
+}
+
+.wheel-balance span {
+    color: gold;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.wheel-balance-icon {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wheel-prizes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    border: 1px solid rgba(255,215,0,0.2);
+    padding: 12px;
+    margin: 15px 0;
+}
+
+.wheel-prize-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 30px;
+    border: 1px solid rgba(255,215,0,0.1);
+}
+
+.wheel-prize-dot {
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.wheel-prize-text {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.wheel-prize-percent {
+    color: gold;
+    font-size: 0.95rem;
+    background: rgba(255,215,0,0.15);
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.wheel-prize-value {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.wheel-prize-icon {
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.skin-prize {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.wheel-prize-skin-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wheel-skin-btn {
+    background: rgba(255,215,0,0.2);
+    border: 1.5px solid gold;
+    color: gold;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 10px gold;
+}
+
+.wheel-result {
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 40px;
+    border: 1px solid rgba(255,215,0,0.2);
+    padding: 15px;
+    text-align: center;
+    margin-top: 15px;
+}
+
+.wheel-result-label {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.wheel-result-value {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: gold;
+    text-shadow: 0 0 15px gold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 50px;
+}
+
+.wheel-result-icon {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wheel-skin-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(15px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.wheel-modal-content {
+    max-width: 380px;
+    width: 100%;
+    background: rgba(20,25,35,0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid gold;
+    border-radius: 50px;
+    padding: 25px 20px;
+    text-align: center;
+    position: relative;
+    animation: modalAppear 0.3s ease;
+}
+
+.wheel-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem;
+    color: gold;
+    cursor: pointer;
+}
+
+.wheel-modal-title {
+    color: gold;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px gold;
+}
+
+.wheel-skin-preview {
+    width: 150px;
+    height: 150px;
+    margin: 10px auto;
+    border-radius: 50%;
+    border: 4px solid gold;
+    overflow: hidden;
+    box-shadow: 0 0 40px gold;
+}
+
+.wheel-skin-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wheel-skin-description {
+    color: white;
+    font-size: 1.1rem;
+    margin: 15px 0;
+    line-height: 1.5;
+}
+
+.wheel-skin-description strong {
+    color: gold;
+    font-size: 1.3rem;
+}
+
+.wheel-multiplier {
+    display: inline-block;
+    background: linear-gradient(145deg, #ffd966, #b8860b);
+    padding: 8px 25px;
+    border-radius: 40px;
+    color: #1a0f00;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-top: 5px;
+    box-shadow: 0 4px 0 #7a4f00;
+}
+
+@keyframes modalAppear {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .wheel-wrapper { width: 220px !important; height: 220px !important; }
+    .wheel-prizes { grid-template-columns: repeat(2, 1fr) !important; }
+    .wheel-header h2 { font-size: 1.5rem !important; }
+    .wheel-spin-btn { font-size: 1.2rem !important; padding: 10px 20px !important; }
+}
+
+/* ===== ФИНАЛЬНЫЕ ПРАВКИ ДЛЯ КОЛЕСА ФОРТУНЫ ===== */
+
+/* 1. Слово "за крутку" — золотым цветом */
+.wheel-price {
+    color: gold !important;
+    font-weight: 600 !important;
+}
+.wheel-price-icon {
+    filter: brightness(1) !important;
+}
+.wheel-price span {
+    color: gold !important;
+    font-weight: 600 !important;
+}
+
+/* 2. Кнопка 🎡 КРУТИТЬ 🎡 — эффекты */
+.wheel-spin-btn {
+    animation: wheelPulse 2s infinite ease-in-out !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer;
+}
+
+/* При наведении — увеличение */
+.wheel-spin-btn:hover {
+    transform: scale(1.02) !important;
+    background: rgba(255, 215, 0, 0.15) !important;
+    border-color: rgba(255, 215, 0, 0.35) !important;
+    box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 215, 0, 0.4) inset !important;
+}
+
+/* При нажатии — фон темнеет, обводка становится чуть ярче */
+.wheel-spin-btn:active {
+    transform: scale(0.99) !important;
+    background: rgba(255, 215, 0, 0.2) !important;
+    border-color: rgba(255, 215, 0, 0.45) !important;
+    box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 215, 0, 0.45) inset !important;
+    transition: all 0.05s ease !important;
+}
+
+/* Когда кнопка заблокирована (крутится) — курсор обычный, нельзя нажать */
+.wheel-spin-btn:disabled {
+    cursor: default !important;
+    opacity: 0.6;
+    transform: none !important;
+    pointer-events: none;
+    animation: none !important;
+}
+
+@keyframes wheelPulse {
+    0% {
+        box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 215, 0, 0.2) inset;
+    }
+    50% {
+        box-shadow: 0 8px 20px -8px rgba(255, 215, 0, 0.3), 0 0 0 0.5px rgba(255, 215, 0, 0.35) inset;
+    }
+    100% {
+        box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 215, 0, 0.2) inset;
+    }
+}
+
+/* 3. Кнопка "?" — добавляем обводку и эффект нажатия */
+.wheel-skin-btn {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: gold;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-left: auto;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.wheel-skin-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.5);
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.wheel-skin-btn:active {
+    background: rgba(255, 215, 0, 0.25);
+    transform: scale(0.98);
+    border-color: rgba(255, 215, 0, 0.6);
+    transition: all 0.05s ease;
+}
+
+/* ===== АНИМАЦИЯ ДЛЯ МНОЖИТЕЛЯ ДИЛИКОВОГО УРАГАНА ===== */
+
+/* Анимация пульсации */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        text-shadow: 0 0 0px gold;
+    }
+    50% {
+        transform: scale(1.05);
+        text-shadow: 0 0 30px gold;
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 0 0 0px gold;
+    }
+}
+
+/* Применяем анимацию к множителю */
+.multiplier-box {
+    animation: pulse 2s infinite ease-in-out;
+    display: inline-block;
+    transform-origin: center;
+}
+
+/* ===== УВЕЛИЧЕННАЯ ОБВОДКА ДЛЯ КАРТОЧЕК ИВЕНТОВ ===== */
+
+/* Основные карточки ивентов на главной странице ивентов */
+.event-card {
+    border: 2px solid rgba(255, 215, 0, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+.event-card:hover {
+    border: 2px solid rgba(255, 215, 0, 0.6) !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+/* Карточка Диликового урагана */
+#uraganEventCard {
+    border: 2px solid rgba(255, 215, 0, 0.3) !important;
+}
+
+#uraganEventCard:hover {
+    border: 2px solid rgba(255, 215, 0, 0.6) !important;
+}
+
+/* Карточка Колеса фортуны */
+#wheelEventCard {
+    border: 2px solid rgba(255, 215, 0, 0.3) !important;
+}
+
+#wheelEventCard:hover {
+    border: 2px solid rgba(255, 215, 0, 0.6) !important;
+}
+
+/* Контент внутри урагана (если нужно) */
+.uragan-page .event-card,
+.uragan-page .wheel-card {
+    border: 2px solid rgba(255, 215, 0, 0.25) !important;
+}
+
+.uragan-page .event-card:hover,
+.uragan-page .wheel-card:hover {
+    border: 2px solid rgba(255, 215, 0, 0.5) !important;
+}
+
+/* Общий стиль для всех карточек в ивентах */
+.events-fullscreen .event-card {
+    border: 2px solid rgba(255, 215, 0, 0.3) !important;
+}
+
+.events-fullscreen .event-card:hover {
+    border: 2px solid rgba(255, 215, 0, 0.6) !important;
+    transform: translateY(-5px);
+}
+
+/* ===== НЕАКТИВНЫЕ КАРТОЧКИ ИВЕНТОВ ===== */
+
+/* Карточка ивента, когда ивент не активен */
+.event-card.disabled {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    filter: grayscale(0.3) !important;
+    transition: all 0.3s ease;
+}
+
+/* Дополнительно для карточки урагана, если ивент не активен */
+#uraganEventCard.disabled,
+#wheelEventCard.disabled {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    filter: grayscale(0.3) !important;
+}
+
+/* Убираем эффекты наведения у неактивных карточек */
+.event-card.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 215, 0, 0.2) !important;
+}
+
+/* Стиль для карточки, когда ивент активен */
+.event-card:not(.disabled) {
+    cursor: pointer !important;
+    transition: all 0.3s ease;
+}
+
+.event-card:not(.disabled):hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 215, 0, 0.6) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== НЕАКТИВНЫЕ КАРТОЧКИ ИВЕНТОВ ===== */
+
+/* Карточка ивента, когда ивент не активен */
+.event-card.disabled {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    filter: grayscale(0.3) !important;
+    transition: all 0.3s ease;
+}
+
+/* Дополнительно для карточки урагана и колеса, если ивент не активен */
+#uraganEventCard.disabled,
+#wheelEventCard.disabled {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+    filter: grayscale(0.3) !important;
+}
+
+/* Убираем эффекты наведения у неактивных карточек */
+.event-card.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 215, 0, 0.2) !important;
+}
+
+/* Стиль для карточки, когда ивент активен */
+.event-card:not(.disabled) {
+    cursor: pointer !important;
+    transition: all 0.3s ease;
+}
+
+.event-card:not(.disabled):hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 215, 0, 0.6) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ НОВЫХ ФУНКЦИЙ ===== */
+/* Добавь этот код в КОНЕЦ твоего существующего style.css */
+
+/* Отключение анимаций для слабых устройств */
+body.no-liquid-animations .liquid-glass,
+body.no-liquid-animations .glass-card,
+body.no-liquid-animations .glass-nav,
+body.no-liquid-animations .feature-island,
+body.no-liquid-animations .wheel-card,
+body.no-liquid-animations .admin-console,
+body.no-liquid-animations .event-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: none !important;
+}
+
+body.no-liquid-animations .liquid-glass::before,
+body.no-liquid-animations .liquid-glass::after {
+    display: none !important;
+}
+
+body.no-liquid-animations .click-btn:hover,
+body.no-liquid-animations .glass-btn:hover,
+body.no-liquid-animations .nav-btn:hover {
+    transform: none !important;
+}
+
+/* ===== ГЛОБАЛЬНЫЕ АНОНСЫ (ПО СЕРЕДИНЕ С АНИМАЦИЯМИ) ===== */
+.global-announcements {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.announcement-card {
+    background: rgba(10, 15, 25, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 4px solid gold;
+    border-radius: 20px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    pointer-events: auto;
+    animation: announcementSlideDown 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+@keyframes announcementSlideDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-80px) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.announcement-card:hover {
+    transform: scale(1.02);
+    transition: transform 0.2s ease;
+}
+
+.announcement-text {
+    flex: 1;
+    color: white;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.announcement-date {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 4px;
+}
+
+.announcement-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+.announcement-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1) rotate(90deg);
+}
+
+/* ===== ЭКРАН БАНА (НАВСЕГДА ИЛИ ПО ТАЙМЕРУ) ===== */
+.ban-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 30000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    animation: banFadeIn 0.3s ease;
+}
+
+@keyframes banFadeIn {
+    from { opacity: 0; backdrop-filter: blur(0); }
+    to { opacity: 1; backdrop-filter: blur(15px); }
+}
+
+.ban-card {
+    max-width: 450px;
+    width: 90%;
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid #f44336;
+    border-radius: 50px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(244, 67, 54, 0.3);
+    animation: banPulse 2s infinite;
+}
+
+@keyframes banPulse {
+    0% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.3); }
+    50% { box-shadow: 0 0 50px rgba(244, 67, 54, 0.6); }
+    100% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.3); }
+}
+
+.ban-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+}
+
+.ban-title {
+    color: #f44336;
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-shadow: 0 0 15px #f44336;
+}
+
+.ban-reason {
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.ban-timer {
+    color: gold;
+    font-size: 2rem;
+    font-family: monospace;
+    margin: 15px 0;
+    text-shadow: 0 0 20px gold;
+}
+
+/* ===== TOAST УВЕДОМЛЕНИЯ (ЗАМЕНА ALERT) ===== */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50px;
+    padding: 12px 24px;
+    color: white;
+    font-size: 0.9rem;
+    z-index: 20001;
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    max-width: 90%;
+    text-align: center;
+    pointer-events: none;
+    font-weight: 500;
+}
+
+.toast-notification.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-notification.success {
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+
+.toast-notification.error {
+    border-color: #f44336;
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.toast-notification.warning {
+    border-color: #ffc107;
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+/* ===== ВИШЛИСТ В ДИЛИКОВОМ УРАГАНЕ ===== */
+.wishlist-section {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 40px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.wishlist-title {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: gold;
+    text-align: center;
+    font-weight: 600;
+}
+
+.wishlist-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.wishlist-item {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 30px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.wishlist-item:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: scale(1.02);
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.wishlist-item.selected {
+    background: rgba(255, 215, 0, 0.3);
+    border-color: gold;
+    box-shadow: 0 0 20px gold;
+}
+
+.wishlist-item .reward-name {
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.wishlist-item .reward-value {
+    color: gold;
+    font-size: 0.8rem;
+}
+
+/* ===== ТАЙМЕР ОБНОВЛЕНИЯ ЗАДАНИЙ ===== */
+.quests-refresh-timer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 15px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 30px;
+}
+
+/* ===== ПРОФИЛЬ ИГРОКА В ЛИДЕРБОРДЕ (МОДАЛЬНОЕ ОКНО) ===== */
+.player-profile-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.player-profile-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.player-profile-card {
+    max-width: 400px;
+    width: 90%;
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid gold;
+    border-radius: 50px;
+    padding: 30px;
+    text-align: center;
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.player-profile-modal.active .player-profile-card {
+    transform: scale(1);
+}
+
+.profile-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+/* Стиль для строк лидерборда с курсором */
+.leaderboard-table tr {
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.leaderboard-table tr:hover {
+    background: rgba(255, 215, 0, 0.1);
+}
+
+/* ===== НОВЫЕ УЛУЧШЕНИЯ ===== */
+.upgrade-item[data-upgrade="rechargeBonus"] .upgrade-description,
+.upgrade-item[data-upgrade="clickerMastery"] .upgrade-description,
+.upgrade-item[data-upgrade="eventBooster"] .upgrade-description {
+    font-size: 12px;
+    color: rgba(255, 215, 0, 0.7);
+    margin-top: 5px;
+}
+
+.upgrade-badge {
+    display: inline-block;
+    background: rgba(255, 215, 0, 0.15);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: gold;
+    margin-top: 5px;
+}
+
+/* ===== УЛУЧШЕНИЯ ДЛЯ ТАБЛИЦЫ ЛИДЕРОВ ===== */
+.leaderboard-container {
+    overflow-x: auto;
+}
+
+.leaderboard-table td:first-child,
+.leaderboard-table th:first-child {
+    padding-left: 15px;
+}
+
+.leaderboard-table td:last-child,
+.leaderboard-table th:last-child {
+    padding-right: 15px;
+}
+
+/* ===== АДАПТАЦИЯ ДЛЯ ПЛАНШЕТОВ ===== */
+@media (max-width: 768px) {
+    .global-announcements {
+        top: 70px;
+        width: 95%;
+    }
+    
+    .announcement-card {
+        padding: 12px 15px;
+    }
+    
+    .announcement-text {
+        font-size: 0.85rem;
+    }
+    
+    .ban-card {
+        padding: 30px 20px;
+    }
+    
+    .ban-title {
+        font-size: 1.6rem;
+    }
+    
+    .ban-timer {
+        font-size: 1.5rem;
+    }
+    
+    .wishlist-grid {
+        gap: 8px;
+    }
+    
+    .wishlist-item {
+        padding: 8px 15px;
+    }
+    
+    .wishlist-item .reward-name {
+        font-size: 0.8rem;
+    }
+    
+    .player-profile-card {
+        padding: 20px;
+        width: 95%;
+    }
+    
+    .profile-close {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+        top: 10px;
+        right: 15px;
+    }
+}
+
+/* ===== ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ ДЛЯ АДМИНКИ ===== */
+.admin-announcements-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.admin-announcement-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-announcement-text {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-announcement-date {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-announcement-delete {
+    background: rgba(244, 67, 54, 0.2);
+    border: none;
+    color: #f44336;
+    padding: 4px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.admin-announcement-delete:hover {
+    background: rgba(244, 67, 54, 0.4);
+}
+
+/* ===== БАН-ЛИСТ В АДМИНКЕ ===== */
+.admin-ban-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.admin-ban-item {
+    background: rgba(244, 67, 54, 0.1);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-ban-info {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-ban-unban {
+    background: rgba(76, 175, 80, 0.2);
+    border: none;
+    color: #4CAF50;
+    padding: 4px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.admin-ban-unban:hover {
+    background: rgba(76, 175, 80, 0.4);
+}
+
+/* ===== СТАТУС ИВЕНТОВ В АДМИНКЕ ===== */
+.admin-events-status {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 12px;
+    margin-top: 10px;
+    line-height: 1.8;
+}
+
+/* ===== СТИЛИ ДЛЯ КНОПКИ "ПОКАЗАТЬ ВСЕХ" В ЛИДЕРБОРДЕ ===== */
+.show-more-btn {
+    width: 100%;
+    margin-top: 15px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.show-more-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+}
+
+/* ===== ГЛОБАЛЬНЫЕ АНОНСЫ (реальное время) ===== */
+.global-announcements {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.announcement-card {
+    background: rgba(10, 15, 25, 0.95);
+    backdrop-filter: blur(20px);
+    border-left: 4px solid gold;
+    border-radius: 20px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    pointer-events: auto;
+    animation: announcementSlideDown 0.4s ease-out;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+@keyframes announcementSlideDown {
+    from { opacity: 0; transform: translateY(-80px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.announcement-text {
+    flex: 1;
+    color: white;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.announcement-date {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 4px;
+}
+
+.announcement-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+.announcement-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1) rotate(90deg);
+}
+
+/* ===== ЭКРАН БАНА (реальное время) ===== */
+.ban-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(15px);
+    z-index: 30000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    animation: banFadeIn 0.3s ease;
+}
+
+@keyframes banFadeIn {
+    from { opacity: 0; backdrop-filter: blur(0); }
+    to { opacity: 1; backdrop-filter: blur(15px); }
+}
+
+.ban-card {
+    max-width: 450px;
+    width: 90%;
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid #f44336;
+    border-radius: 50px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(244, 67, 54, 0.3);
+}
+
+.ban-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+}
+
+.ban-title {
+    color: #f44336;
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-shadow: 0 0 15px #f44336;
+}
+
+.ban-reason {
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.ban-timer {
+    color: gold;
+    font-size: 1.8rem;
+    font-family: monospace;
+    margin: 15px 0;
+    text-shadow: 0 0 20px gold;
+}
+
+/* ===== TOAST УВЕДОМЛЕНИЯ (замена alert) ===== */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50px;
+    padding: 12px 24px;
+    color: white;
+    font-size: 0.9rem;
+    z-index: 20001;
+    transition: transform 0.3s ease;
+    max-width: 90%;
+    text-align: center;
+    pointer-events: none;
+}
+
+.toast-notification.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-notification.success {
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+
+.toast-notification.error {
+    border-color: #f44336;
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.toast-notification.warning {
+    border-color: #ffc107;
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+/* ===== РЕЖИМ ПРОИЗВОДИТЕЛЬНОСТИ ===== */
+/* Отключаем blur на кнопках при режиме производительности */
+body.no-liquid-animations .glass-btn,
+body.no-liquid-animations .admin-execute-btn,
+body.no-liquid-animations .buy-btn,
+body.no-liquid-animations .upgrade-btn,
+body.no-liquid-animations .equip-btn,
+body.no-liquid-animations .promocode-activate-btn,
+body.no-liquid-animations .settings-save-btn,
+body.no-liquid-animations .settings-warning-btn,
+body.no-liquid-animations .settings-danger-btn,
+body.no-liquid-animations .auth-btn,
+body.no-liquid-animations .auth-tab,
+body.no-liquid-animations .wheel-spin-btn,
+body.no-liquid-animations .modal-btn,
+body.no-liquid-animations .nav-toggle-btn {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.no-liquid-animations .glass-btn::before,
+body.no-liquid-animations .admin-execute-btn::before,
+body.no-liquid-animations .buy-btn::before,
+body.no-liquid-animations .upgrade-btn::before,
+body.no-liquid-animations .nav-toggle-btn::before {
+    display: none !important;
+}
+
+/* На мобилках в режиме производительности - эмодзи по центру */
+@media (max-width: 768px) {
+    body.no-liquid-animations .nav-btn {
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        margin: 0 5px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+    }
+    
+    body.no-liquid-animations .nav-btn .nav-text {
+        display: none !important;
+    }
+    
+    /* Убираем старые псевдоэлементы */
+    body.no-liquid-animations .nav-btn::before {
+        all: unset !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        font-size: 26px !important;
+        text-align: center !important;
+        line-height: 1 !important;
+        position: static !important;
+        transform: none !important;
+    }
+    
+    /* Эмодзи для каждой кнопки */
+    body.no-liquid-animations .nav-btn[data-tab="main"]::before { content: "🏠" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="shop"]::before { content: "🛒" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="inventory"]::before { content: "📦" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="upgrades"]::before { content: "⚡" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="profile"]::before { content: "👤" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="settings"]::before { content: "⚙️" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="season"]::before { content: "🎫" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="promocodes"]::before { content: "🎁" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="leaderboard"]::before { content: "🏆" !important; }
+    body.no-liquid-animations .nav-btn[data-tab="events"]::before { content: "📅" !important; }
+}
+
+/* На ПК в режиме производительности - показываем слова */
+@media (min-width: 769px) {
+    body.no-liquid-animations .nav-btn .nav-text {
+        display: inline-block !important;
+    }
+    
+    body.no-liquid-animations .nav-btn::before {
+        display: none !important;
+    }
+}
+
+/* ===== НОВЫЕ СКИНЫ ДЛЯ ИВЕНТА ДИЛИКОВЫЙ УРАГАН ===== */
+.skin-uragan-top3 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 100, 0, 0.2));
+    border: 2px solid #ff6600;
+    box-shadow: 0 0 30px rgba(255, 102, 0, 0.5);
+}
+
+.skin-uragan-top10 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(0, 255, 255, 0.15));
+    border: 2px solid #00ffff;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+}
+
+.skin-uragan-top50 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(255, 215, 0, 0.08));
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.skin-uragan-top100 {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.05));
+    border: 2px solid silver;
+    box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+}
+
+.toast-notification img {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    vertical-align: middle;
+    display: inline-block;
+    margin: 0 2px;
+}
+
+/* ===== СТИЛИ ДЛЯ ОЧИСТКИ ТОПА В АДМИНКЕ ===== */
+.danger-btn {
+    background: rgba(244, 67, 54, 0.15);
+    border-color: rgba(244, 67, 54, 0.3);
+    color: #ff6b6b;
+}
+
+.danger-btn:hover {
+    background: rgba(244, 67, 54, 0.25);
+    transform: translateY(-1px);
+}
+
+.warning-btn {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+}
+
+.warning-btn:hover {
+    background: rgba(255, 193, 7, 0.25);
+    transform: translateY(-1px);
+}
+
+.confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px);
+    z-index: 30000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.confirm-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.confirm-modal-content {
+    max-width: 400px;
+    width: 90%;
+    background: rgba(20, 25, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid #ff6b6b;
+    border-radius: 30px;
+    padding: 25px;
+    text-align: center;
+    animation: modalAppear 0.3s ease;
+}
+
+@keyframes modalAppear {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.confirm-modal-content h3 {
+    color: #ff6b6b;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.confirm-modal-content p {
+    color: white;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.confirm-modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.confirm-btn {
+    background: rgba(244, 67, 54, 0.2);
+    border: 1px solid #ff6b6b;
+    color: #ff6b6b;
+    padding: 10px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirm-btn:hover {
+    background: rgba(244, 67, 54, 0.4);
+    transform: scale(1.02);
+}
+
+.cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 10px 25px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.02);
+}
+
+/* ===== ОБМЕННИК ВАЛЮТ ===== */
+.currency-clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.currency-clickable:hover {
+    background: rgba(255, 215, 0, 0.15) !important;
+    border-color: rgba(255, 215, 0, 0.4) !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.exchange-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 25000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    padding: 20px;
+    margin: 0;
+}
+
+.exchange-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.exchange-card {
+    max-width: 420px;
+    width: 100%;
+    background: rgba(20, 25, 35, 0.97);
+    backdrop-filter: blur(20px);
+    border: 2px solid gold;
+    border-radius: 40px;
+    padding: 30px 25px;
+    text-align: center;
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.2);
+}
+
+.exchange-modal.active .exchange-card {
+    transform: scale(1);
+}
+
+.exchange-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.exchange-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.exchange-title {
+    color: gold;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px gold;
+    font-weight: 700;
+}
+
+.exchange-rate {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 30px;
+    display: inline-block;
+}
+
+.exchange-direction {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 30px;
+}
+
+.exchange-currency-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    object-fit: cover;
+}
+
+.exchange-arrow {
+    color: gold;
+    font-size: 1.5rem;
+    animation: exchangeArrowPulse 1.5s infinite;
+}
+
+@keyframes exchangeArrowPulse {
+    0%, 100% { transform: translateX(0); opacity: 1; }
+    50% { transform: translateX(5px); opacity: 0.6; }
+}
+
+.exchange-input-group {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.exchange-input-group label {
+    display: block;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.exchange-input-group input {
+    width: 100%;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 15px;
+    color: gold;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 20px;
+}
+
+.exchange-input-group input:focus {
+    border-color: gold;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    outline: none;
+}
+
+.exchange-quick-btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.exchange-quick-btn {
+    flex: 1;
+    min-width: 60px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: gold;
+    padding: 8px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+.exchange-quick-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+.exchange-quick-btn:active {
+    transform: translateY(1px);
+}
+
+.exchange-result {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 20px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.exchange-result-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.exchange-result-value {
+    color: #4CAF50;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.exchange-result-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.exchange-balance {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
+
+.exchange-balance strong {
+    color: gold;
+    font-size: 1rem;
+}
+
+.exchange-confirm-btn {
+    width: 100%;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid gold;
+    color: white;
+    padding: 15px;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.3);
+}
+
+.exchange-confirm-btn:hover {
+    background: rgba(255, 215, 0, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.exchange-confirm-btn:active {
+    transform: translateY(0);
+}
+
+.exchange-confirm-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@media (max-width: 500px) {
+    .exchange-card {
+        padding: 25px 20px;
+        border-radius: 30px;
+    }
+    .exchange-title { font-size: 1.3rem; }
+    .exchange-result-value { font-size: 1.3rem; }
+}

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Диликовый Ураган | Dilic Clicker</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0c15 0%, #121520 50%, #0a0c15 100%);
+            padding: 20px;
+        }
+
+        .uragan-page {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Хедер */
+        .uragan-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-radius: 60px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .uragan-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #fff, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .uragan-header p {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Панель пользователя */
+        .user-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 10px 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .user-info {
+            display: flex;
+            gap: 20px;
+            color: white;
+        }
+
+        .user-info span {
+            color: gold;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+
+        /* Таймер и множитель */
+        .event-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .multiplier-box {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: gold;
+            text-shadow: 0 0 20px gold;
+            margin-bottom: 15px;
+        }
+
+        .multiplier-label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .timer-box {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: gold;
+            font-family: monospace;
+            margin-top: 10px;
+        }
+
+        .day-badge {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid gold;
+            border-radius: 30px;
+            padding: 5px 20px;
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+
+        /* Прогресс-бар копилки */
+        .pool-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .pool-title {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .pool-title span {
+            color: gold;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, gold, #ffaa00);
+            width: 0%;
+            border-radius: 30px;
+            transition: width 0.3s ease;
+        }
+
+        .pool-stats {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        /* Задания */
+        .quests-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .quests-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: gold;
+            text-align: center;
+        }
+
+        .quest-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 30px;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+        }
+
+        .quest-info {
+            flex: 1;
+        }
+
+        .quest-name {
+            font-weight: bold;
+            color: white;
+        }
+
+        .quest-progress {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .quest-reward {
+            color: gold;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .quest-status {
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .quest-status.completed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        .quest-status.active {
+            background: rgba(255, 215, 0, 0.2);
+            color: gold;
+            border: 1px solid gold;
+        }
+
+        /* Топ игроков */
+        .top-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .top-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: gold;
+            text-align: center;
+        }
+
+        .top-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .top-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .top-rank {
+            width: 40px;
+            font-weight: bold;
+            color: gold;
+        }
+
+        .top-name {
+            flex: 1;
+            color: white;
+        }
+
+        .top-value {
+            color: gold;
+            font-weight: bold;
+        }
+
+        .top-medal {
+            font-size: 1.2rem;
+        }
+
+        /* Награды */
+        .rewards-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 40px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .rewards-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: gold;
+            text-align: center;
+        }
+
+        .rewards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .reward-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .reward-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: gold;
+        }
+
+        .reward-desc {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Кнопка назад */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: gold;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-shadow: 0 0 10px gold;
+        }
+
+        /* Анимация пульсации */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); text-shadow: 0 0 30px gold; }
+            100% { transform: scale(1); }
+        }
+
+        .multiplier-box {
+            animation: pulse 2s infinite;
+        }
+
+        /* Скролл */
+        .top-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .top-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .top-list::-webkit-scrollbar-thumb {
+            background: gold;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="uragan-page">
+        <div class="uragan-header liquid-glass">
+            <h1>💎 ДИЛИКОВЫЙ УРАГАН 💨</h1>
+            <p>Самый мощный ивент! Зарабатывай дилики x5 и становись легендой!</p>
+        </div>
+        
+        <div class="user-panel liquid-glass">
+            <div class="user-info">
+                <span>👤 <span id="usernameDisplay">Загрузка...</span></span>
+                <span>💎 Дилики: <span id="dilicksDisplay">0</span></span>
+                <span>📊 Мой вклад: <span id="userContribution">0</span> 💎</span>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Выйти</button>
+        </div>
+        
+        <!-- Информация об ивенте -->
+        <div class="event-info liquid-glass">
+            <div class="multiplier-box" id="multiplierDisplay">x2 ДИЛИКОВ</div>
+            <div class="multiplier-label">🔥 множитель диликов за клик</div>
+            <div class="timer-box" id="eventTimer">-- дн -- ч -- мин</div>
+            <div class="day-badge" id="dayBadge">ДЕНЬ 1</div>
+        </div>
+        
+        <!-- Общая копилка -->
+        <div class="pool-section liquid-glass">
+            <div class="pool-title">💰 ОБЩАЯ КОПИЛКА ИВЕНТА</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="poolProgress" style="width: 0%"></div>
+            </div>
+            <div class="pool-stats">
+                <span>Собрано: <span id="totalPool">0</span> 💎</span>
+                <span>Цель: 100 000 000 💎</span>
+            </div>
+        </div>
+        
+        <!-- Задания -->
+        <div class="quests-section liquid-glass">
+            <div class="quests-title">🎯 ЗАДАНИЯ ИВЕНТА</div>
+            <div id="questsList">
+                <!-- Задания будут загружаться динамически -->
+            </div>
+        </div>
+        
+        <!-- Топ игроков -->
+        <div class="top-section liquid-glass">
+            <div class="top-title">🏆 ТОП-10 УЧАСТНИКОВ 🏆</div>
+            <div class="top-list" id="topList">
+                <div class="top-item">Загрузка...</div>
+            </div>
+        </div>
+        
+        <!-- Награды -->
+        <div class="rewards-section liquid-glass">
+            <div class="rewards-title">🎁 НАГРАДЫ ЗА ВКЛАД</div>
+            <div class="rewards-grid">
+                <div class="reward-item"><div class="reward-value">1 000 💎</div><div class="reward-desc">за 10 000 диликов</div></div>
+                <div class="reward-item"><div class="reward-value">5 000 💎</div><div class="reward-desc">за 50 000 диликов</div></div>
+                <div class="reward-item"><div class="reward-value">25 000 💎</div><div class="reward-desc">за 100 000 диликов</div></div>
+                <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК"</div><div class="reward-desc">Топ-100</div></div>
+                <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК МАСТЕР"</div><div class="reward-desc">Топ-50</div></div>
+                <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК ЛОРД"</div><div class="reward-desc">Топ-10</div></div>
+                <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК КОРОЛЬ"</div><div class="reward-desc">Топ-3 + копилка</div></div>
+                <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК ДРАКОН"</div><div class="reward-desc">Колесо ивента</div></div>
+            </div>
+        </div>
+        
+        <a href="events.html" class="back-link">← Назад к ивентам</a>
+    </div>
+    
+    <script>
+        const userId = localStorage.getItem('userId');
+        const currentUser = localStorage.getItem('currentUser');
+        
+        if (!userId || !currentUser) {
+            window.location.href = 'register.html';
+        }
+        
+        let userData = null;
+        let eventData = null;
+        
+        // Элементы
+        const usernameSpan = document.getElementById('usernameDisplay');
+        const dilicksSpan = document.getElementById('dilicksDisplay');
+        const userContributionSpan = document.getElementById('userContribution');
+        const multiplierDisplay = document.getElementById('multiplierDisplay');
+        const eventTimerSpan = document.getElementById('eventTimer');
+        const dayBadgeSpan = document.getElementById('dayBadge');
+        const totalPoolSpan = document.getElementById('totalPool');
+        const poolProgressFill = document.getElementById('poolProgress');
+        
+        // Загрузка данных пользователя
+        const userRef = firebase.database().ref('users/' + userId);
+        userRef.on('value', (snapshot) => {
+            userData = snapshot.val();
+            if (userData) {
+                const displayName = userData.settings?.displayName || userData.username;
+                usernameSpan.textContent = displayName;
+                dilicksSpan.textContent = userData.dilicks?.toLocaleString() || 0;
+                userContributionSpan.textContent = userData.eventContribution?.toLocaleString() || 0;
+            }
+        });
+        
+        // Загрузка данных ивента
+        const eventRef = firebase.database().ref('events/dilicksHurricane');
+        
+        function updateEventDisplay() {
+            eventRef.on('value', (snapshot) => {
+                eventData = snapshot.val();
+                if (eventData && eventData.active === true) {
+                    // Множитель
+                    const multiplier = eventData.multiplier || 2;
+                    multiplierDisplay.textContent = `x${multiplier} ДИЛИКОВ`;
+                    
+                    // День ивента
+                    const day = eventData.day || 1;
+                    dayBadgeSpan.textContent = `ДЕНЬ ${day}`;
+                    
+                    // Таймер
+                    if (eventData.endTime) {
+                        const remaining = Math.max(0, eventData.endTime - Date.now());
+                        if (remaining <= 0) {
+                            eventTimerSpan.textContent = 'Ивент завершён';
+                        } else {
+                            const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+                            const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                            if (days > 0) eventTimerSpan.textContent = `${days}д ${hours}ч ${minutes}м`;
+                            else if (hours > 0) eventTimerSpan.textContent = `${hours}ч ${minutes}м`;
+                            else eventTimerSpan.textContent = `${minutes}м`;
+                        }
+                    }
+                    
+                    // Общая копилка
+                    const totalPool = eventData.totalPool || 0;
+                    const goalPool = 100000000;
+                    const progress = (totalPool / goalPool) * 100;
+                    totalPoolSpan.textContent = totalPool.toLocaleString();
+                    poolProgressFill.style.width = Math.min(100, progress) + '%';
+                }
+            });
+        }
+        
+        updateEventDisplay();
+        
+        // Задания ивента
+        const quests = [
+            { id: 'daily_clicks', name: 'Сделать 1000 кликов', target: 1000, reward: 5000, completed: false, current: 0 },
+            { id: 'daily_dilicks', name: 'Накопить 10 000 диликов', target: 10000, reward: 10000, completed: false, current: 0 },
+            { id: 'daily_wheel', name: 'Крутить колесо 5 раз', target: 5, reward: 5000, completed: false, current: 0 },
+            { id: 'daily_upgrade', name: 'Купить 3 улучшения', target: 3, reward: 5000, completed: false, current: 0 },
+            { id: 'daily_all', name: 'Выполнить все задания', target: 1, reward: 50000, completed: false, current: 0 }
+        ];
+        
+        function renderQuests() {
+            const questsList = document.getElementById('questsList');
+            if (!questsList) return;
+            
+            questsList.innerHTML = '';
+            
+            quests.forEach(quest => {
+                const questItem = document.createElement('div');
+                questItem.className = 'quest-item';
+                
+                const isCompleted = quest.completed;
+                const progressPercent = (quest.current / quest.target) * 100;
+                
+                questItem.innerHTML = `
+                    <div class="quest-info">
+                        <div class="quest-name">${quest.name}</div>
+                        <div class="quest-progress">${quest.current.toLocaleString()} / ${quest.target.toLocaleString()}</div>
+                        <div class="progress-bar" style="height: 4px; margin-top: 5px;">
+                            <div class="progress-fill" style="width: ${progressPercent}%; height: 4px;"></div>
+                        </div>
+                    </div>
+                    <div class="quest-reward">+${quest.reward.toLocaleString()} 💎</div>
+                    <div class="quest-status ${isCompleted ? 'completed' : 'active'}">
+                        ${isCompleted ? '✅ ВЫПОЛНЕНО' : '🏃 В ПРОЦЕССЕ'}
+                    </div>
+                `;
+                
+                questsList.appendChild(questItem);
+            });
+        }
+        
+        renderQuests();
+        
+        // Загрузка топа
+        async function loadTop() {
+            const topList = document.getElementById('topList');
+            topList.innerHTML = '<div class="top-item">Загрузка...</div>';
+            
+            try {
+                const snapshot = await firebase.database().ref('users').once('value');
+                const users = snapshot.val();
+                const topPlayers = [];
+                
+                for (const [id, user] of Object.entries(users)) {
+                    const contribution = user.eventContribution || 0;
+                    if (contribution > 0) {
+                        const displayName = user.settings?.displayName || user.username;
+                        topPlayers.push({ name: displayName, contribution, id });
+                    }
+                }
+                
+                topPlayers.sort((a, b) => b.contribution - a.contribution);
+                const top10 = topPlayers.slice(0, 10);
+                
+                topList.innerHTML = '';
+                
+                top10.forEach((player, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'top-item';
+                    
+                    let medal = '';
+                    if (index === 0) medal = '🥇';
+                    else if (index === 1) medal = '🥈';
+                    else if (index === 2) medal = '🥉';
+                    
+                    item.innerHTML = `
+                        <div class="top-rank">${medal || (index + 1)}</div>
+                        <div class="top-name">${player.name} ${player.id === userId ? '👑' : ''}</div>
+                        <div class="top-value">${player.contribution.toLocaleString()} 💎</div>
+                    `;
+                    
+                    topList.appendChild(item);
+                });
+                
+                if (top10.length === 0) {
+                    topList.innerHTML = '<div class="top-item">Пока нет участников</div>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки топа:', error);
+                topList.innerHTML = '<div class="top-item">Ошибка загрузки</div>';
+            }
+        }
+        
+        loadTop();
+        
+        // Выход
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'register.html';
+        });
+        
+        // Обновление каждые 10 секунд
+        setInterval(() => {
+            updateEventDisplay();
+            loadTop();
+        }, 10000);
+    </script>
+</body>
+</html>

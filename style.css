@@ -5526,3 +5526,278 @@ body.no-liquid-animations .nav-toggle-btn::before {
     .exchange-title { font-size: 1.3rem; }
     .exchange-result-value { font-size: 1.3rem; }
 }
+
+/* ===== СЕЗОННЫЙ ПРОПУСК ===== */
+.season-pass-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 10px; }
+.season-header { padding: 25px; margin-bottom: 20px; text-align: center; }
+.season-title { font-size: 1.8rem; background: linear-gradient(135deg, #fff, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; font-weight: 700; }
+.season-subtitle { color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 20px; }
+.season-progress-block { margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
+.season-progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: white; font-size: 0.9rem; font-weight: 600; }
+.season-progress-info #seasonLevel { color: gold; font-size: 1.1rem; text-shadow: 0 0 10px gold; }
+.season-progress-info #seasonExpText { color: rgba(255, 255, 255, 0.6); font-family: monospace; font-size: 0.85rem; }
+
+.season-actions { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.premium-btn {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 100, 0, 0.2)) !important;
+    border: 2px solid gold !important;
+    color: gold !important;
+    font-weight: 700;
+    padding: 12px 25px !important;
+    font-size: 0.95rem;
+    text-shadow: 0 0 10px gold;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3) !important;
+    animation: premiumPulse 2s infinite;
+    cursor: pointer;
+}
+.premium-btn:hover { background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 100, 0, 0.3)) !important; transform: translateY(-2px); }
+.premium-btn.active {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1)) !important;
+    border-color: #4CAF50 !important;
+    color: #4CAF50 !important;
+    text-shadow: 0 0 10px #4CAF50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3) !important;
+    animation: none;
+    cursor: default;
+}
+@keyframes premiumPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.6); }
+}
+
+.level-btn {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.05)) !important;
+    border: 2px solid #4CAF50 !important;
+    color: #4CAF50 !important;
+    font-weight: 700;
+    padding: 12px 25px !important;
+    font-size: 0.95rem;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.2) !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.level-btn:hover {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.35), rgba(76, 175, 80, 0.15)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(76, 175, 80, 0.5) !important;
+}
+.level-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== ЛЕНТА СЕЗОНА ===== */
+.season-track-wrapper { position: relative; padding: 25px 10px 20px; overflow: hidden; }
+.season-scroll-btn {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(20, 25, 35, 0.9); border: 2px solid gold;
+    color: gold; font-size: 26px; font-weight: 700; cursor: pointer;
+    z-index: 20; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(10px); transition: all 0.2s ease;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(255, 215, 0, 0.3);
+    line-height: 1; padding-bottom: 3px;
+}
+.season-scroll-btn:hover { background: rgba(255, 215, 0, 0.2); transform: translateY(-50%) scale(1.1); }
+.season-scroll-btn.left { left: 10px; }
+.season-scroll-btn.right { right: 10px; }
+.season-scroll-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.season-track-scroll {
+    overflow-x: auto; overflow-y: hidden;
+    scroll-behavior: smooth; padding: 10px 60px;
+    scrollbar-width: thin; scrollbar-color: gold rgba(255,255,255,0.05);
+}
+.season-track-scroll::-webkit-scrollbar { height: 8px; }
+.season-track-scroll::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin: 0 60px; }
+.season-track-scroll::-webkit-scrollbar-thumb { background: gold; border-radius: 10px; box-shadow: 0 0 10px gold; }
+
+.season-track { display: flex; gap: 8px; padding: 45px 0 15px 0; position: relative; min-width: max-content; }
+.season-track::before {
+    content: ''; position: absolute; top: 62px; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, rgba(255,215,0,0.1), rgba(255,215,0,0.4), rgba(255,215,0,0.1));
+    z-index: 0; border-radius: 3px;
+}
+.season-tier-column { display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; min-width: 100px; z-index: 1; }
+.season-tier-badge {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(20, 25, 35, 0.95); border: 3px solid rgba(255, 215, 0, 0.4);
+    color: rgba(255, 215, 0, 0.7); font-size: 0.85rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 5; backdrop-filter: blur(10px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); transition: all 0.3s ease;
+}
+.season-tier-column.current .season-tier-badge {
+    background: linear-gradient(135deg, gold, #ffaa00); color: #1a1a2e;
+    border-color: gold; box-shadow: 0 0 25px gold, 0 0 50px rgba(255, 215, 0, 0.4);
+    animation: tierBadgePulse 1.5s infinite;
+    transform: translateX(-50%) scale(1.15);
+}
+.season-tier-column.unlocked .season-tier-badge {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(76, 175, 80, 0.1));
+    border-color: #4CAF50; color: #4CAF50;
+}
+@keyframes tierBadgePulse {
+    0%, 100% { box-shadow: 0 0 20px gold, 0 0 40px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 35px gold, 0 0 70px rgba(255, 215, 0, 0.6); }
+}
+.season-tier-cell {
+    width: 100px; min-height: 100px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px; padding: 12px 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; position: relative; transition: all 0.2s ease; text-align: center;
+}
+.season-tier-cell.premium {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 100, 0, 0.05));
+    border-color: rgba(255, 215, 0, 0.35);
+    box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.08);
+}
+.season-tier-cell.unlocked {
+    background: rgba(76, 175, 80, 0.1); border-color: rgba(76, 175, 80, 0.5);
+    cursor: pointer; animation: tierCellGlow 2s infinite;
+}
+.season-tier-cell.unlocked:hover { background: rgba(76, 175, 80, 0.2); transform: translateY(-3px); }
+.season-tier-cell.claimed { background: rgba(76, 175, 80, 0.18); border-color: #4CAF50; opacity: 0.75; }
+.season-tier-cell.locked { opacity: 0.55; filter: grayscale(0.5); }
+@keyframes tierCellGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(76, 175, 80, 0.3), inset 0 0 10px rgba(76, 175, 80, 0.1); }
+    50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.5), inset 0 0 15px rgba(76, 175, 80, 0.2); }
+}
+.season-tier-icon { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5)); }
+.season-tier-value { color: gold; font-weight: 800; font-size: 0.9rem; text-shadow: 0 0 8px rgba(255, 215, 0, 0.4); line-height: 1; }
+.season-tier-name { font-size: 0.65rem; color: rgba(255, 255, 255, 0.8); line-height: 1.1; font-weight: 600; }
+.season-tier-status { position: absolute; top: 4px; right: 6px; font-size: 0.9rem; }
+.season-tier-status.claimed-mark { color: #4CAF50; }
+.season-tier-status.locked-mark { color: rgba(255, 255, 255, 0.3); }
+.season-tier-claim-btn {
+    position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #4CAF50, #388E3C);
+    border: 1px solid #4CAF50; color: white;
+    padding: 3px 12px; border-radius: 20px;
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;
+    cursor: pointer; white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.5);
+    animation: claimBtnPulse 1.5s infinite; z-index: 3;
+}
+.season-tier-claim-btn:hover { background: linear-gradient(135deg, #66BB6A, #43A047); transform: translateX(-50%) scale(1.08); }
+@keyframes claimBtnPulse {
+    0%, 100% { box-shadow: 0 3px 10px rgba(76, 175, 80, 0.4); }
+    50% { box-shadow: 0 3px 20px rgba(76, 175, 80, 0.8); }
+}
+
+/* ===== МОДАЛКА ПОКУПКИ УРОВНЕЙ ===== */
+.buy-levels-modal {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    z-index: 25000; display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: all 0.3s ease; padding: 20px;
+}
+.buy-levels-modal.active { opacity: 1; visibility: visible; }
+.buy-levels-card {
+    max-width: 600px; width: 100%;
+    background: rgba(20, 25, 35, 0.97);
+    backdrop-filter: blur(20px);
+    border: 2px solid #4CAF50; border-radius: 40px;
+    padding: 30px 25px; text-align: center; position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(76, 175, 80, 0.3);
+}
+.buy-levels-modal.active .buy-levels-card { transform: scale(1); }
+.buy-levels-close {
+    position: absolute; top: 15px; right: 20px;
+    background: rgba(255, 255, 255, 0.1); border: none;
+    color: white; width: 36px; height: 36px; border-radius: 50%;
+    font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+}
+.buy-levels-close:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(90deg); }
+.buy-levels-title { color: #4CAF50; font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; text-shadow: 0 0 20px rgba(76, 175, 80, 0.6); }
+.buy-levels-subtitle { color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 20px; }
+.buy-levels-balance { background: rgba(0, 0, 0, 0.3); border-radius: 30px; padding: 10px 20px; display: inline-block; color: white; font-size: 0.95rem; margin-bottom: 25px; }
+.buy-levels-balance strong { color: gold; font-size: 1.1rem; margin-right: 4px; }
+.buy-levels-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.buy-level-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px; padding: 20px 10px; cursor: pointer;
+    transition: all 0.2s ease; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.buy-level-card:hover { transform: translateY(-4px); background: rgba(76, 175, 80, 0.1); border-color: rgba(76, 175, 80, 0.5); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
+.buy-level-card.best { border-color: rgba(255, 215, 0, 0.3); }
+.buy-level-card.best:hover { background: rgba(255, 215, 0, 0.08); border-color: gold; }
+.buy-level-card.super { border-color: rgba(255, 100, 0, 0.3); }
+.buy-level-card.super:hover { background: rgba(255, 100, 0, 0.08); border-color: #ff6400; }
+.buy-level-badge { font-size: 2rem; font-weight: 900; color: #4CAF50; text-shadow: 0 0 15px rgba(76, 175, 80, 0.5); line-height: 1; }
+.buy-level-card.best .buy-level-badge { color: gold; text-shadow: 0 0 15px gold; }
+.buy-level-card.super .buy-level-badge { color: #ff6400; text-shadow: 0 0 15px #ff6400; }
+.buy-level-name { font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.buy-level-price { display: flex; align-items: center; justify-content: center; gap: 5px; color: white; font-weight: 700; font-size: 0.95rem; margin-top: 5px; }
+.buy-level-save {
+    position: absolute; top: 8px; right: 8px;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    color: white; font-size: 0.65rem; font-weight: 800;
+    padding: 3px 8px; border-radius: 12px; letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+.buy-level-card.best .buy-level-save { background: linear-gradient(135deg, gold, #ff8800); color: #1a1a2e; box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4); }
+.buy-level-card.super .buy-level-save { background: linear-gradient(135deg, #ff6400, #cc4400); color: white; box-shadow: 0 2px 8px rgba(255, 100, 0, 0.4); }
+
+@media (max-width: 768px) {
+    .season-title { font-size: 1.4rem; }
+    .season-track-scroll { padding: 10px 40px; }
+    .season-scroll-btn { width: 38px; height: 38px; font-size: 22px; }
+    .season-tier-cell { width: 85px; min-height: 90px; }
+    .season-tier-badge { width: 38px; height: 38px; font-size: 0.75rem; }
+}
+@media (max-width: 500px) {
+    .buy-levels-card { padding: 25px 15px; border-radius: 30px; }
+    .buy-levels-title { font-size: 1.4rem; }
+    .buy-levels-grid { gap: 8px; }
+    .buy-level-card { padding: 15px 6px; }
+    .buy-level-badge { font-size: 1.5rem; }
+    .buy-level-name { font-size: 0.65rem; }
+    .buy-level-price { font-size: 0.8rem; }
+    .season-tier-cell { width: 75px; min-height: 80px; }
+}
+
+.claim-all-btn {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 100, 0, 0.15)) !important;
+    border: 2px solid gold !important;
+    color: gold !important;
+    font-weight: 700;
+    padding: 12px 25px !important;
+    font-size: 0.95rem;
+    text-shadow: 0 0 10px gold;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3) !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    animation: claimAllPulse 2s infinite;
+}
+
+.claim-all-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 100, 0, 0.25)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.6) !important;
+}
+
+.claim-all-btn:active {
+    transform: translateY(1px);
+}
+
+.claim-all-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    animation: none;
+    transform: none !important;
+}
+
+@keyframes claimAllPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.6); }
+}

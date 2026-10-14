@@ -5803,12 +5803,138 @@ body.no-liquid-animations .nav-toggle-btn::before {
 } 
 
 /* ============================================
-   СЕЗОННЫЙ ПРОПУСК — МОБИЛЬНАЯ ВЕРСИЯ
+   ОПТИМИЗАЦИЯ ПОД МОБИЛЬНЫЕ / TELEGRAM WEBAPP
+   (сохраняем вид кнопок и карточек!)
    ============================================ */
-@media (max-width: 768px) {
-    .season-pass-wrapper {
-        padding: 0 5px;
+
+/* ===== 1. СКРОЛЛ и плавность БЕЗ потери стиля ===== */
+.season-track-scroll {
+    -webkit-overflow-scrolling: touch;
+}
+
+.click-effect {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.season-track {
+    transform: translateZ(0);
+}
+
+/* ===== 2. НА МОБИЛКЕ: убираем ТОЛЬКО тяжёлый blur, но сохраняем фон и границы ===== */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    /* Уменьшаем blur, но НЕ убираем фон и градиент */
+    .liquid-glass,
+    .glass-card,
+    .glass-nav,
+    .glass-btn,
+    .nav-btn,
+    .buy-btn,
+    .upgrade-btn,
+    .equip-btn,
+    .admin-execute-btn,
+    .modal-btn,
+    .glass-input,
+    .admin-console,
+    .wheel-card,
+    .event-card,
+    .season-header,
+    .season-track-wrapper,
+    .buy-levels-card,
+    .exchange-card,
+    .player-profile-card,
+    .maintenance-card,
+    .modal-content,
+    .shop-item,
+    .upgrade-item,
+    .inventory-item,
+    .achievement-card,
+    .settings-card,
+    .announcement-card,
+    .user-panel-mini,
+    .events-header,
+    .promocodes-header,
+    .promocode-input-section,
+    .active-promocodes,
+    .promocodes-history,
+    .leaderboard-container,
+    .profile-header,
+    .skin-stats,
+    .clicker-card,
+    .stats,
+    .user-panel {
+        /* Только уменьшаем blur — фон и стили НЕ трогаем */
+        backdrop-filter: blur(8px) saturate(150%) !important;
+        -webkit-backdrop-filter: blur(8px) saturate(150%) !important;
+        /* GPU-ускорение для плавности */
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
     }
+    
+    /* Оверлеи модалок — лёгкий blur, вид сохраняем */
+    .modal-overlay,
+    .ban-overlay,
+    .maintenance-overlay,
+    .exchange-modal,
+    .buy-levels-modal,
+    .player-profile-modal,
+    .wheel-skin-modal,
+    .confirm-modal {
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+    }
+    
+    /* Отключаем тяжелые тени-свечения, оставляем обычные */
+    .liquid-glass,
+    .glass-card {
+        box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    /* Пульсации упрощаем, но НЕ убираем */
+    @keyframes premiumPulse {
+        0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
+    }
+    @keyframes claimBtnPulse {
+        0%, 100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4); }
+        50% { box-shadow: 0 2px 14px rgba(76, 175, 80, 0.6); }
+    }
+    @keyframes claimAllPulse {
+        0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
+    }
+    @keyframes tierBadgePulse {
+        0%, 100% { box-shadow: 0 0 15px gold; }
+        50% { box-shadow: 0 0 25px gold; }
+    }
+    @keyframes tierCellGlow {
+        0%, 100% { box-shadow: 0 0 8px rgba(76, 175, 80, 0.3); }
+        50% { box-shadow: 0 0 14px rgba(76, 175, 80, 0.5); }
+    }
+    
+    /* Пузырьки — уменьшаем нагрузку, но оставляем анимацию */
+    .bubble {
+        opacity: 0.6;
+    }
+    
+    /* Плавный тап для кнопок */
+    .glass-btn:active,
+    .nav-btn:active,
+    .buy-btn:active,
+    .upgrade-btn:active,
+    .equip-btn:active,
+    .modal-btn:active,
+    .admin-execute-btn:active {
+        transition: transform 0.08s ease !important;
+    }
+}
+
+/* ===== 3. Пасс на мобилке: правильные размеры колонок ===== */
+@media (max-width: 768px) {
+    .season-pass-wrapper { padding: 0 5px; }
     
     .season-header {
         padding: 18px 15px;
@@ -5816,32 +5942,13 @@ body.no-liquid-animations .nav-toggle-btn::before {
         border-radius: 20px;
     }
     
-    .season-title {
-        font-size: 1.3rem !important;
-    }
+    .season-title { font-size: 1.3rem !important; }
+    .season-subtitle { font-size: 0.75rem; margin-bottom: 12px; }
     
-    .season-subtitle {
-        font-size: 0.75rem;
-        margin-bottom: 12px;
-    }
+    .season-progress-info { font-size: 0.8rem; }
+    .season-progress-info #seasonLevel { font-size: 0.95rem; }
+    .season-progress-info #seasonExpText { font-size: 0.7rem; }
     
-    .season-progress-block {
-        margin-bottom: 12px;
-    }
-    
-    .season-progress-info {
-        font-size: 0.8rem;
-    }
-    
-    .season-progress-info #seasonLevel {
-        font-size: 0.95rem;
-    }
-    
-    .season-progress-info #seasonExpText {
-        font-size: 0.7rem;
-    }
-    
-    /* Кнопки сверху — компактные, в столбик */
     .season-actions {
         flex-direction: column;
         gap: 8px;
@@ -5854,10 +5961,8 @@ body.no-liquid-animations .nav-toggle-btn::before {
         width: 100%;
         padding: 10px 15px !important;
         font-size: 0.8rem !important;
-        animation: none !important;
     }
     
-    /* ==== САМОЕ ВАЖНОЕ: лента ==== */
     .season-track-wrapper {
         padding: 15px 5px 12px;
         border-radius: 20px;
@@ -5869,30 +5974,22 @@ body.no-liquid-animations .nav-toggle-btn::before {
         font-size: 20px;
         padding-bottom: 2px;
     }
-    
     .season-scroll-btn.left { left: 3px; }
     .season-scroll-btn.right { right: 3px; }
     
     .season-track-scroll {
         padding: 5px 35px;
-        /* Плавный тач-скролл на мобилке */
-        -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
-        /* Не даём контейнеру растягивать детей */
         display: flex;
     }
     
-    /* Контейнер с колонками */
     .season-track {
-        display: flex;
         gap: 5px;
         padding: 35px 0 12px 0;
-        /* Не даём flex тянуть колонки */
         width: max-content;
         min-width: max-content;
     }
     
-    /* ====== КОЛОНКА ОДНОГО УРОВНЯ ====== */
+    /* ====== КОЛОНКА ФИКСИРОВАННОЙ ШИРИНЫ ====== */
     .season-tier-column {
         flex: 0 0 auto !important;
         min-width: 72px !important;
@@ -5901,7 +5998,6 @@ body.no-liquid-animations .nav-toggle-btn::before {
         gap: 8px;
     }
     
-    /* Бейдж с номером уровня */
     .season-tier-badge {
         width: 32px;
         height: 32px;
@@ -5909,11 +6005,6 @@ body.no-liquid-animations .nav-toggle-btn::before {
         border-width: 2px;
     }
     
-    .season-tier-column.current .season-tier-badge {
-        transform: translateX(-50%) scale(1.1);
-    }
-    
-    /* Ячейка награды */
     .season-tier-cell {
         width: 72px !important;
         min-width: 72px !important;
@@ -5921,49 +6012,16 @@ body.no-liquid-animations .nav-toggle-btn::before {
         min-height: 78px !important;
         padding: 8px 4px;
         border-radius: 12px;
-        gap: 3px;
     }
     
-    .season-tier-icon {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .season-tier-value {
-        font-size: 0.7rem;
-    }
-    
-    .season-tier-name {
-        font-size: 0.5rem;
-        line-height: 1;
-    }
-    
-    .season-tier-claim-btn {
-        font-size: 0.5rem;
-        padding: 2px 6px;
-        bottom: -6px;
-    }
-    
-    .season-tier-status {
-        font-size: 0.7rem;
-        top: 2px;
-        right: 4px;
-    }
-    
-    /* Убираем тяжёлые анимации пульсации — оставляем только цвет */
-    .season-tier-cell.unlocked {
-        animation: none !important;
-        background: rgba(76, 175, 80, 0.15) !important;
-        border-color: rgba(76, 175, 80, 0.6) !important;
-    }
-    
-    .season-tier-column.current .season-tier-badge {
-        animation: none !important;
-        box-shadow: 0 0 12px gold !important;
-    }
+    .season-tier-icon { width: 24px; height: 24px; }
+    .season-tier-value { font-size: 0.7rem; }
+    .season-tier-name { font-size: 0.5rem; line-height: 1; }
+    .season-tier-claim-btn { font-size: 0.5rem; padding: 2px 6px; bottom: -6px; }
+    .season-tier-status { font-size: 0.7rem; top: 2px; right: 4px; }
 }
 
-/* Совсем маленькие экраны */
+/* ===== 4. Совсем маленькие экраны ===== */
 @media (max-width: 400px) {
     .season-tier-column,
     .season-tier-cell {
@@ -5971,17 +6029,21 @@ body.no-liquid-animations .nav-toggle-btn::before {
         max-width: 65px !important;
         width: 65px !important;
     }
-    
-    .season-tier-cell {
-        min-height: 70px !important;
-    }
-    
-    .season-tier-icon {
-        width: 20px;
-        height: 20px;
-    }
-    
-    .season-title {
-        font-size: 1.1rem !important;
-    }
+    .season-tier-cell { min-height: 70px !important; }
+    .season-tier-icon { width: 20px; height: 20px; }
+    .season-title { font-size: 1.1rem !important; }
+}
+
+/* ===== 5. Сглаживание шрифтов ===== */
+.nav-text,
+.glass-btn,
+.glass-card h3,
+.section-title,
+.season-title,
+.season-tier-value,
+.season-tier-name,
+.announcement-text,
+.exchange-result-value {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }

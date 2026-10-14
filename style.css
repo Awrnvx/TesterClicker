@@ -5800,4 +5800,302 @@ body.no-liquid-animations .nav-toggle-btn::before {
 @keyframes claimAllPulse {
     0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
     50% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.6); }
+} 
+
+/* ============================================
+   ОПТИМИЗАЦИЯ ПОД МОБИЛЬНЫЕ / TELEGRAM WEBAPP
+   ============================================ */
+
+/* ===== 1. ГЛАВНОЕ: отключаем тяжёлый blur в Telegram WebApp ===== */
+body.telegram-webapp .liquid-glass,
+body.telegram-webapp .glass-card,
+body.telegram-webapp .glass-nav,
+body.telegram-webapp .glass-effect,
+body.telegram-webapp .feature-island,
+body.telegram-webapp .glass-input,
+body.telegram-webapp .glass-btn,
+body.telegram-webapp .admin-console,
+body.telegram-webapp .wheel-card,
+body.telegram-webapp .event-card,
+body.telegram-webapp .season-header,
+body.telegram-webapp .season-track-wrapper,
+body.telegram-webapp .buy-levels-card,
+body.telegram-webapp .exchange-card,
+body.telegram-webapp .player-profile-card,
+body.telegram-webapp .maintenance-card,
+body.telegram-webapp .modal-content,
+body.telegram-webapp .shop-item,
+body.telegram-webapp .upgrade-item,
+body.telegram-webapp .inventory-item,
+body.telegram-webapp .achievement-card,
+body.telegram-webapp .settings-card,
+body.telegram-webapp .season-tier-cell,
+body.telegram-webapp .season-tier-badge,
+body.telegram-webapp .announcement-card {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    background: rgba(20, 25, 35, 0.82) !important;
+    transform: translateZ(0);
+    will-change: auto;
+}
+
+/* ===== 2. Убираем тяжёлые свечения ::before / ::after у карточек в тг ===== */
+body.telegram-webapp .liquid-glass::before {
+    height: 25% !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%) !important;
+}
+body.telegram-webapp .liquid-glass::after {
+    height: 12% !important;
+    background: linear-gradient(0deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0) 100%) !important;
+}
+
+/* ===== 3. Плавные, но дешёвые анимации кнопок ===== */
+body.telegram-webapp .glass-btn,
+body.telegram-webapp .nav-btn,
+body.telegram-webapp .buy-btn,
+body.telegram-webapp .upgrade-btn,
+body.telegram-webapp .equip-btn,
+body.telegram-webapp .auth-btn,
+body.telegram-webapp .auth-tab,
+body.telegram-webapp .settings-save-btn,
+body.telegram-webapp .settings-warning-btn,
+body.telegram-webapp .settings-danger-btn,
+body.telegram-webapp .admin-execute-btn,
+body.telegram-webapp .modal-btn,
+body.telegram-webapp .season-tier-claim-btn,
+body.telegram-webapp .wheel-spin-btn,
+body.telegram-webapp .exchange-confirm-btn,
+body.telegram-webapp .exchange-quick-btn,
+body.telegram-webapp .season-scroll-btn,
+body.telegram-webapp .premium-btn,
+body.telegram-webapp .level-btn,
+body.telegram-webapp .claim-all-btn {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+/* ===== 4. Мобильная адаптация: 60fps без лагов ===== */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    /* Убираем backdrop-filter ПОЛНОСТЬЮ на мобилках — самый тяжёлый эффект */
+    .liquid-glass,
+    .glass-card,
+    .glass-nav,
+    .glass-effect,
+    .feature-island,
+    .glass-input,
+    .glass-btn,
+    .admin-console,
+    .wheel-card,
+    .event-card,
+    .season-header,
+    .season-track-wrapper,
+    .buy-levels-card,
+    .exchange-card,
+    .player-profile-card,
+    .maintenance-card,
+    .modal-content,
+    .shop-item,
+    .upgrade-item,
+    .inventory-item,
+    .achievement-card,
+    .settings-card,
+    .season-tier-cell,
+    .season-tier-badge,
+    .announcement-card,
+    .user-panel-mini,
+    .events-header,
+    .promocodes-header,
+    .promocode-input-section,
+    .active-promocodes,
+    .promocodes-history,
+    .leaderboard-container,
+    .profile-header,
+    .skin-stats,
+    .clicker-card,
+    .stats,
+    .user-panel {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(20, 25, 35, 0.9) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+        border: 1px solid rgba(255, 215, 0, 0.15) !important;
+    }
+
+    /* Уменьшаем яркость свечения */
+    .liquid-glass::before,
+    .liquid-glass::after {
+        display: none !important;
+    }
+
+    /* Кнопки: быстрая простая анимация */
+    .glass-btn, .nav-btn, .buy-btn, .upgrade-btn, .equip-btn,
+    .auth-btn, .auth-tab, .settings-save-btn, .settings-warning-btn,
+    .settings-danger-btn, .admin-execute-btn, .modal-btn,
+    .season-tier-claim-btn, .wheel-spin-btn, .exchange-confirm-btn,
+    .exchange-quick-btn, .season-scroll-btn, .premium-btn,
+    .level-btn, .claim-all-btn, .promocode-activate-btn {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        transition: background 0.15s ease, transform 0.15s ease !important;
+        will-change: transform;
+    }
+
+    /* Ускоряем клик-эффекты */
+    .click-effect {
+        animation-duration: 0.5s !important;
+    }
+
+    /* Пузырьки — уменьшаем количество и упрощаем */
+    .bubble {
+        animation-duration: 6s !important;
+        opacity: 0.5 !important;
+    }
+
+    /* Отключаем тяжёлые тени, оставляем мягкие */
+    .glass-card,
+    .liquid-glass {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Навигация без размытия, но с плотным фоном */
+    .glass-nav {
+        background: rgba(15, 18, 25, 0.95) !important;
+    }
+
+    /* Модальные окна — плотный фон */
+    .modal-overlay,
+    .ban-overlay,
+    .maintenance-overlay,
+    .exchange-modal,
+    .buy-levels-modal,
+    .player-profile-modal,
+    .wheel-skin-modal {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(0, 0, 0, 0.88) !important;
+    }
+
+    /* Убираем тяжёлый градиент у оверлеев */
+    .modal-content, .ban-card, .maintenance-card, .exchange-card,
+    .buy-levels-card, .player-profile-card, .wheel-modal-content {
+        background: rgba(20, 25, 35, 0.98) !important;
+    }
+
+    /* Плавный, но лёгкий hover/active */
+    .glass-btn:active,
+    .nav-btn:active,
+    .buy-btn:active,
+    .upgrade-btn:active {
+        transform: scale(0.97) !important;
+    }
+
+    /* Пульсации делаем дешевле */
+    @keyframes premiumPulse {
+        0%, 100% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.3); }
+        50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+    }
+    @keyframes claimBtnPulse {
+        0%, 100% { box-shadow: 0 2px 6px rgba(76, 175, 80, 0.4); }
+        50% { box-shadow: 0 2px 12px rgba(76, 175, 80, 0.6); }
+    }
+    @keyframes claimAllPulse {
+        0%, 100% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.3); }
+        50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+    }
+    @keyframes tierBadgePulse {
+        0%, 100% { box-shadow: 0 0 12px gold; }
+        50% { box-shadow: 0 0 22px gold; }
+    }
+    @keyframes tierCellGlow {
+        0%, 100% { box-shadow: 0 0 6px rgba(76, 175, 80, 0.3); }
+        50% { box-shadow: 0 0 12px rgba(76, 175, 80, 0.5); }
+    }
+
+    /* Анимацию бейджа текущего уровня делаем проще */
+    .season-tier-column.current .season-tier-badge {
+        animation: tierBadgePulse 2s infinite !important;
+    }
+    .season-tier-cell.unlocked {
+        animation: tierCellGlow 2.5s infinite !important;
+    }
+}
+
+/* ===== 5. GPU-ускорение для анимированных элементов ===== */
+.click-btn,
+.nav-btn,
+.glass-btn,
+.season-tier-badge,
+.season-tier-cell,
+.bubble,
+.click-effect {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* ===== 6. Плавные клик-эффекты на всех устройствах ===== */
+.click-effect {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* ===== 7. Убираем лаги при скролле ленты пасса ===== */
+.season-track-scroll {
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+}
+
+.season-track {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* ===== 8. Убираем "замыливание" текста в Safari/Telegram ===== */
+.nav-text,
+.glass-btn,
+.glass-card h3,
+.section-title,
+.season-title,
+.season-tier-value,
+.season-tier-name,
+.announcement-text,
+.exchange-result-value {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
+}
+
+/* ===== 9. Модалки на мобилке — упрощённый backdrop ===== */
+@media (max-width: 768px) {
+    .modal-overlay.active,
+    .confirm-modal.active,
+    .ban-overlay,
+    .maintenance-overlay,
+    .exchange-modal.active,
+    .buy-levels-modal.active,
+    .player-profile-modal.active {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(0, 0, 0, 0.85) !important;
+    }
+
+    /* Убираем тяжёлые glow у активных элементов */
+    .season-tier-cell.unlocked {
+        box-shadow: 0 0 8px rgba(76, 175, 80, 0.3) !important;
+    }
+
+    .season-tier-column.current .season-tier-badge {
+        box-shadow: 0 0 12px gold !important;
+    }
+
+    /* Меню навигации — без размытия, но всё ещё "стеклянное" */
+    .nav-btn,
+    .user-info,
+    .currency,
+    .dilic {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: rgba(0, 0, 0, 0.35) !important;
+    }
 }

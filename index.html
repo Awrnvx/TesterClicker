@@ -645,4 +645,14 @@
     
     <script src="script.js"></script>
 </body>
+    <script>
+        // Определяем Telegram WebApp и добавляем класс для оптимизации
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== '') {
+            document.body.classList.add('telegram-webapp');
+        }
+        // На слабых устройствах тоже включаем облегчённый режим
+        if (navigator.deviceMemory && navigator.deviceMemory < 4) {
+            document.body.classList.add('telegram-webapp');
+        }
+    </script>
 </html>

@@ -6219,3 +6219,119 @@ body.telegram-webapp .wheel-skin-modal {
         contain: content;
     }
 }
+
+/* ============================================================
+   ОПТИМИЗАЦИЯ ДЛЯ ПК (ширина от 769px)
+   ------------------------------------------------------------
+   Мобильную версию облегчили отдельно, а на ПК крутились все тяжёлые
+   эффекты сразу. Вид элементов НЕ меняется — меняется только то, как
+   браузер их рисует.
+
+   Главная беда: 8 бесконечных анимаций крутили box-shadow. Анимация тени
+   заставляет перерисовывать весь элемент каждый кадр (60 раз в секунду).
+   Здесь та же пульсация сделана через прозрачность подсветки — такую
+   анимацию браузер выполняет на видеокарте, не нагружая процессор.
+   ============================================================ */
+@media (min-width: 769px) {
+
+    /* ---- 1. Убираем бесконечную пульсацию тени ----
+       Оставляем статичное свечение той же яркости, что было в середине пульсации:
+       выглядит так же, но браузер больше не перерисовывает элементы 60 раз в секунду. */
+    .premium-btn {
+        animation: none !important;
+        box-shadow: 0 0 28px rgba(255, 215, 0, 0.45) !important;
+    }
+    .claim-all-btn {
+        animation: none !important;
+        box-shadow: 0 0 28px rgba(255, 215, 0, 0.45) !important;
+    }
+    .claim-all-btn:disabled {
+        box-shadow: none !important;
+    }
+    .season-tier-claim-btn {
+        animation: none !important;
+        box-shadow: 0 3px 12px rgba(76, 175, 80, 0.55) !important;
+    }
+    /* Ячейка «доступна к получению» */
+    .season-tier-cell.unlocked {
+        animation: none !important;
+        box-shadow: inset 0 0 12px rgba(76, 175, 80, 0.18);
+    }
+    /* Текущий уровень сезона */
+    .season-tier-column.current .season-tier-badge {
+        animation: none !important;
+        box-shadow: 0 0 25px gold, 0 0 50px rgba(255, 215, 0, 0.4);
+    }
+
+    /* ---- 2. Лента сезона ---- */
+    /* Иконки наград: в ленте их десятки, лишний drop-shadow не нужен */
+    .season-tier-icon {
+        filter: none;
+    }
+    /* Изоляция колонки: браузер пересчитывает только её, а не всю ленту.
+       Невидимые колонки вообще не рисуются. */
+    .season-tier-column {
+        contain: layout style;
+        content-visibility: auto;
+        contain-intrinsic-size: 100px 244px;
+    }
+
+    /* ---- 3. Длинные списки: изоляция перерисовки ----
+       В магазине, инвентаре, улучшениях и достижениях карточки стоят в сетке
+       и выравниваются по высоте ряда. Пропуск отрисовки (content-visibility)
+       такую сетку может разъехать, поэтому здесь только изоляция: браузер
+       пересчитывает одну карточку, а не весь список. */
+    .achievement-card,
+    .shop-item,
+    .inventory-item,
+    .upgrade-item {
+        contain: layout style;
+    }
+
+    /* ---- 4. Пульсирующий текст множителя в ивенте ----
+       Было: анимация text-shadow — буквы перерисовывались каждый кадр.
+       Стало: плавное увеличение (выполняется на видеокарте), свечение статичное. */
+    .multiplier-box {
+        animation: pcTextPulse 2s ease-in-out infinite !important;
+        text-shadow: 0 0 20px gold;
+    }
+    @keyframes pcTextPulse {
+        0%, 100% { transform: scale(1); }
+        50%      { transform: scale(1.05); }
+    }
+
+    /* ---- 5. Плавающий аватар: движение остаётся, но уходит на видеокарту ---- */
+    .avatar,
+    .profile-avatar {
+        will-change: transform;
+    }
+
+    /* ---- 6. Переходы без пересчёта всех свойств ----
+       `transition: all` заставляет проверять каждое свойство при наведении,
+       а вместе с backdrop-filter это лишняя перерисовка. */
+    .liquid-glass,
+    .glass-card,
+    .glass-nav,
+    .glass-btn,
+    .nav-btn,
+    .buy-btn,
+    .upgrade-btn,
+    .equip-btn,
+    .modal-btn,
+    .admin-execute-btn {
+        transition: background-color 0.2s ease,
+                    border-color 0.2s ease,
+                    box-shadow 0.2s ease,
+                    color 0.2s ease,
+                    transform 0.2s ease !important;
+    }
+
+    /* ---- 7. Скролл: изоляция от остальной страницы ---- */
+    .content {
+        contain: layout style;
+    }
+    .season-track-scroll {
+        overscroll-behavior-x: contain;
+    }
+}
+

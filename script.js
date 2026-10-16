@@ -872,8 +872,9 @@ class ClickerGame {
         const rewardsBox = document.createElement('div');
         rewardsBox.style.cssText = 'display:flex;flex-direction:column;gap:12px;background:rgba(20,25,35,0.95);border:2px solid gold;border-radius:30px;padding:25px 35px;opacity:0;transform:scale(0.8);transition:all 0.6s cubic-bezier(0.68,-0.55,0.265,1.55) 0.5s;box-shadow:0 0 40px rgba(255,215,0,0.4);max-height:60vh;overflow-y:auto;';
         let rewardsHtml = '';
-        if (money > 0) rewardsHtml += `<div style="display:flex;align-items:center;gap:10px;color:white;font-size:1.3rem;font-weight:700;">💰 +${money.toLocaleString()} <img src="${this.MONEY_ICON}" style="width:24px;height:24px;border-radius:50%;"></div>`;
-        if (dilicks > 0) rewardsHtml += `<div style="display:flex;align-items:center;gap:10px;color:white;font-size:1.3rem;font-weight:700;">💎 +${dilicks.toLocaleString()} <img src="${this.DILICKS_ICON}" style="width:24px;height:24px;border-radius:50%;"></div>`;
+        // Эмодзи-мешочек и алмазик убраны: остаётся своя иконка валюты игры
+        if (money > 0) rewardsHtml += `<div style="display:flex;align-items:center;gap:10px;color:white;font-size:1.3rem;font-weight:700;">+${money.toLocaleString()} <img src="${this.MONEY_ICON}" style="width:24px;height:24px;border-radius:50%;"></div>`;
+        if (dilicks > 0) rewardsHtml += `<div style="display:flex;align-items:center;gap:10px;color:white;font-size:1.3rem;font-weight:700;">+${dilicks.toLocaleString()} <img src="${this.DILICKS_ICON}" style="width:24px;height:24px;border-radius:50%;"></div>`;
         if (skins.length > 0) {
             rewardsHtml += `<div style="color:gold;font-size:1rem;font-weight:700;margin-top:5px;">✨ Новые скины:</div>`;
             skins.forEach(s => { rewardsHtml += `<div style="color:white;font-size:0.95rem;font-weight:600;">• ${s}</div>`; });

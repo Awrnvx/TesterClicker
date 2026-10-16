@@ -258,7 +258,7 @@
         <div class="user-panel liquid-glass">
             <div class="user-info">
                 <span>👤 <span id="usernameDisplay">Загрузка...</span></span>
-                <span>💎 Дилики: <span id="dilicksDisplay">0</span></span>
+                <span><img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> Дилики: <span id="dilicksDisplay">0</span></span>
             </div>
             <button class="logout-btn" id="logoutBtn">Выйти</button>
         </div>
@@ -269,11 +269,11 @@
         </div>
         
         <div class="wheel-controls">
-            <button class="spin-btn" id="spinBtn">🎲 КРУТИТЬ (2500💎)</button>
+            <button class="spin-btn" id="spinBtn">🎲 КРУТИТЬ (2500 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">)</button>
         </div>
         
         <div class="wheel-balance">
-            💎 Твой баланс: <span id="balanceDisplay">0</span> 💎
+            <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> Твой баланс: <span id="balanceDisplay">0</span> <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">
         </div>
         
         <div class="result-card">
@@ -286,7 +286,7 @@
             <div class="prize-item"><span class="prize-dot" style="background:#f9a825;"></span><span class="prize-text"><strong>35%</strong> 5500💰</span></div>
             <div class="prize-item"><span class="prize-dot" style="background:#ef6c00;"></span><span class="prize-text"><strong>25%</strong> 8500💰</span></div>
             <div class="prize-item"><span class="prize-dot" style="background:#d32f2f;"></span><span class="prize-text"><strong>15%</strong> 11500💰</span></div>
-            <div class="prize-item"><span class="prize-dot" style="background:#7b1fa2;"></span><span class="prize-text"><strong>5%</strong> 5000💎</span></div>
+            <div class="prize-item"><span class="prize-dot" style="background:#7b1fa2;"></span><span class="prize-text"><strong>5%</strong> 5000 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></span></div>
             <div class="prize-item"><span class="prize-dot" style="background:#c2185b;"></span><span class="prize-text"><strong>2.5%</strong> СКИН ✨</span></div>
         </div>
         
@@ -439,16 +439,16 @@
                     alert('🎉 Поздравляем! Вы получили легендарный скин дракона с множителем x250!');
                 } else {
                     userData.dilicks += 10000;
-                    resultHTML = '🎉 +10000 💎 (скин уже был)';
+                    resultHTML = '🎉 +10000 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> (скин уже был)';
                     await firebase.database().ref('users/' + userId).update({ dilicks: userData.dilicks });
                 }
             } else if (prize.type === 'money') {
                 userData.money += prize.value;
-                resultHTML = `🎉 +${prize.value.toLocaleString()} 🪙`;
+                resultHTML = `🎉 +${prize.value.toLocaleString()} <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги">`;
                 await firebase.database().ref('users/' + userId).update({ money: userData.money });
             } else {
                 userData.dilicks += prize.value;
-                resultHTML = `🎉 +${prize.value.toLocaleString()} 💎`;
+                resultHTML = `🎉 +${prize.value.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`;
                 await firebase.database().ref('users/' + userId).update({ dilicks: userData.dilicks });
             }
             

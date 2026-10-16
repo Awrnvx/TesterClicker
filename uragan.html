@@ -365,15 +365,15 @@
 <body>
     <div class="uragan-page">
         <div class="uragan-header liquid-glass">
-            <h1>💎 ДИЛИКОВЫЙ УРАГАН 💨</h1>
+            <h1>ДИЛИКОВЫЙ УРАГАН 💨</h1>
             <p>Самый мощный ивент! Зарабатывай дилики x5 и становись легендой!</p>
         </div>
         
         <div class="user-panel liquid-glass">
             <div class="user-info">
                 <span>👤 <span id="usernameDisplay">Загрузка...</span></span>
-                <span>💎 Дилики: <span id="dilicksDisplay">0</span></span>
-                <span>📊 Мой вклад: <span id="userContribution">0</span> 💎</span>
+                <span><img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> Дилики: <span id="dilicksDisplay">0</span></span>
+                <span>📊 Мой вклад: <span id="userContribution">0</span> <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></span>
             </div>
             <button class="logout-btn" id="logoutBtn">Выйти</button>
         </div>
@@ -393,8 +393,8 @@
                 <div class="progress-fill" id="poolProgress" style="width: 0%"></div>
             </div>
             <div class="pool-stats">
-                <span>Собрано: <span id="totalPool">0</span> 💎</span>
-                <span>Цель: 100 000 000 💎</span>
+                <span>Собрано: <span id="totalPool">0</span> <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></span>
+                <span>Цель: 100 000 000 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></span>
             </div>
         </div>
         
@@ -418,9 +418,9 @@
         <div class="rewards-section liquid-glass">
             <div class="rewards-title">🎁 НАГРАДЫ ЗА ВКЛАД</div>
             <div class="rewards-grid">
-                <div class="reward-item"><div class="reward-value">1 000 💎</div><div class="reward-desc">за 10 000 диликов</div></div>
-                <div class="reward-item"><div class="reward-value">5 000 💎</div><div class="reward-desc">за 50 000 диликов</div></div>
-                <div class="reward-item"><div class="reward-value">25 000 💎</div><div class="reward-desc">за 100 000 диликов</div></div>
+                <div class="reward-item"><div class="reward-value">1 000 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div><div class="reward-desc">за 10 000 диликов</div></div>
+                <div class="reward-item"><div class="reward-value">5 000 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div><div class="reward-desc">за 50 000 диликов</div></div>
+                <div class="reward-item"><div class="reward-value">25 000 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div><div class="reward-desc">за 100 000 диликов</div></div>
                 <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК"</div><div class="reward-desc">Топ-100</div></div>
                 <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК МАСТЕР"</div><div class="reward-desc">Топ-50</div></div>
                 <div class="reward-item"><div class="reward-value">СКИН "ДИЛИК ЛОРД"</div><div class="reward-desc">Топ-10</div></div>
@@ -537,7 +537,7 @@
                             <div class="progress-fill" style="width: ${progressPercent}%; height: 4px;"></div>
                         </div>
                     </div>
-                    <div class="quest-reward">+${quest.reward.toLocaleString()} 💎</div>
+                    <div class="quest-reward">+${quest.reward.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div>
                     <div class="quest-status ${isCompleted ? 'completed' : 'active'}">
                         ${isCompleted ? '✅ ВЫПОЛНЕНО' : '🏃 В ПРОЦЕССЕ'}
                     </div>
@@ -584,7 +584,7 @@
                     item.innerHTML = `
                         <div class="top-rank">${medal || (index + 1)}</div>
                         <div class="top-name">${player.name} ${player.id === userId ? '👑' : ''}</div>
-                        <div class="top-value">${player.contribution.toLocaleString()} 💎</div>
+                        <div class="top-value">${player.contribution.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div>
                     `;
                     
                     topList.appendChild(item);

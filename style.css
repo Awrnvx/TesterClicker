@@ -6220,6 +6220,56 @@ body.telegram-webapp .wheel-skin-modal {
     }
 }
 
+/* ===== ИКОНКА ДИЛИКА В ТЕКСТЕ =====
+   Заменяет эмодзи-алмазик 💎 там, где показывается количество диликов.
+   Размер 16px — такой же, как у getDilicksIcon() в script.js, чтобы иконка
+   выглядела одинаково в статичной разметке и в том, что рисует игра. */
+.dilic-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    vertical-align: -3px;
+    display: inline-block;
+    object-fit: cover;
+}
+
+/* ===== ИКОНКА ВАЛЮТЫ В ЗАГОЛОВКЕ (крупнее строки текста) ===== */
+.dilic-icon-lg {
+    width: 1.15em;
+    height: 1.15em;
+    border-radius: 50%;
+    vertical-align: -0.2em;
+    display: inline-block;
+    object-fit: cover;
+}
+
+/* ===== МЕЛКАЯ ИКОНКА В СПИСКАХ И НАГРАДАХ =====
+   В списках желаний и наградах ивента шрифт мелкий, иконка 16px была бы
+   крупнее строки — уменьшаем. */
+.wishlist-item .dilic-icon,
+.reward-item .dilic-icon,
+.reward-desc .dilic-icon {
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
+}
+
+/* В наградах заданий и топе ивента — под размер строки */
+.quest-reward .dilic-icon,
+.top-value .dilic-icon {
+    width: 14px;
+    height: 14px;
+    vertical-align: -2px;
+}
+
+/* Иконки валют в заголовках ивента */
+.event-icon .dilic-icon-lg,
+h1 .dilic-icon-lg,
+h2 .dilic-icon-lg,
+h3 .dilic-icon-lg {
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+}
+
 /* ============================================================
    ОПТИМИЗАЦИЯ ДЛЯ ПК (ширина от 769px)
    ------------------------------------------------------------

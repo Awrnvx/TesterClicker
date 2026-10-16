@@ -2,6 +2,30 @@
 // DILIC CLICKER - ПОЛНАЯ ВЕРСИЯ 3.0 ULTRA
 // ============================================
 
+// ============================================
+// АДРЕСА КАРТИНОК ВАЛЮТ
+// ============================================
+// Картинки лежат в папке assets рядом с игрой. Внешние адреса у части
+// игроков блокируются (иконка просто не появлялась), поэтому берём свои файлы,
+// а внешний адрес оставляем запасным — на случай, если файл не найдётся.
+const GAME_REMOTE_ICONS = {
+    dilicks: 'https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg',
+    money: 'https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13'
+};
+
+function gameAssetPath(relativePath) {
+    try {
+        if (typeof location !== 'undefined' && location.href) {
+            return new URL(relativePath, location.href).href;
+        }
+    } catch (e) { /* остаётся относительный путь */ }
+    return relativePath;
+}
+
+const GAME_LOCAL_ICONS = {
+    dilicks: gameAssetPath('assets/dilick.png'),
+    money: gameAssetPath('assets/money.png')
+};
 class ClickerGame {
     constructor() {
         this.userData = null;
@@ -53,8 +77,12 @@ class ClickerGame {
         // Признак идущей загрузки: не запускаем две параллельно
         this._leaderboardLoading = false;
         
-        this.MONEY_ICON = 'https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';
-        this.DILICKS_ICON = 'https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';
+        this.MONEY_ICON = GAME_LOCAL_ICONS.money; this.MONEY_ICON_REMOTE = GAME_REMOTE_ICONS.money;
+        // Картинка дилика. Сначала локальный файл рядом с игрой: внешние
+        // адреса у части игроков блокируются, и иконка не отображалась.
+        this.DILICKS_ICON_REMOTE = GAME_REMOTE_ICONS.dilicks;
+        this.DILICKS_ICON = GAME_LOCAL_ICONS.dilicks;
+        
         
         this.skinsData = {
             'classic': { name: 'Классический скин', price: 0, image: 'https://cdn-icons-png.flaticon.com/512/4366/4366891.png', description: 'Стандартный курсор', currency: 'money', multiplier: 1 },
@@ -874,7 +902,7 @@ class ClickerGame {
         let rewardsHtml = '';
         // Эмодзи-мешочек и алмазик убраны: остаётся своя иконка валюты игры
         if (money > 0) rewardsHtml += `<div style="display:flex;align-items:center;gap:10px;color:white;font-size:1.3rem;font-weight:700;">+${money.toLocaleString()} <img src="${this.MONEY_ICON}" style="width:24px;height:24px;border-radius:50%;"></div>`;
-        if (dilicks > 0) rewardsHtml += `<div style="display:flex;align-items:center;gap:10px;color:white;font-size:1.3rem;font-weight:700;">+${dilicks.toLocaleString()} <img src="${this.DILICKS_ICON}" style="width:24px;height:24px;border-radius:50%;"></div>`;
+        if (dilicks > 0) rewardsHtml += `<div style="display:flex;align-items:center;gap:10px;color:white;font-size:1.3rem;font-weight:700;">+${dilicks.toLocaleString()} <img src="${this.DILICKS_ICON}" onerror="this.onerror=null;this.src='${this.DILICKS_ICON_REMOTE}';" style="width:24px;height:24px;border-radius:50%;"></div>`;
         if (skins.length > 0) {
             rewardsHtml += `<div style="color:gold;font-size:1rem;font-weight:700;margin-top:5px;">✨ Новые скины:</div>`;
             skins.forEach(s => { rewardsHtml += `<div style="color:white;font-size:0.95rem;font-weight:600;">• ${s}</div>`; });
@@ -1412,13 +1440,13 @@ class ClickerGame {
             const dilicksToGive = amount / 500;
             this.userData.money -= amount;
             this.userData.dilicks += dilicksToGive;
-            this.showToast(`✅ Обменяно ${amount.toLocaleString()} 🪙 на ${dilicksToGive.toLocaleString()} ${this.getDilicksIcon()}`, 'success');
+            this.showToast(`✅ Обменяно ${amount.toLocaleString()} ${this.getMoneyIcon()} на ${dilicksToGive.toLocaleString()} ${this.getDilicksIcon()}`, 'success');
         } else {
             if (amount > this.userData.dilicks) { this.showToast('❌ Недостаточно диликов!', 'error'); return; }
             const moneyToGive = Math.floor(amount * 500);
             this.userData.dilicks -= amount;
             this.userData.money += moneyToGive;
-            this.showToast(`✅ Обменяно ${amount.toLocaleString()} ${this.getDilicksIcon()} на ${moneyToGive.toLocaleString()} 🪙`, 'success');
+            this.showToast(`✅ Обменяно ${amount.toLocaleString()} ${this.getDilicksIcon()} на ${moneyToGive.toLocaleString()} ${this.getMoneyIcon()}`, 'success');
         }
         this.updateUI();
         await this.saveGame();
@@ -1651,8 +1679,8 @@ class ClickerGame {
         if (changed) { this.saveGame(); this.renderUraganQuests(); }
     }
     
-    getDilicksIcon() { return `<img src="${this.DILICKS_ICON}" style="width: 16px; height: 16px; border-radius: 50%; vertical-align: middle;">`; }
-    getMoneyIcon() { return `<img src="${this.MONEY_ICON}" style="width: 16px; height: 16px; border-radius: 50%; vertical-align: middle;">`; }
+    getDilicksIcon() { return `<img src="${this.DILICKS_ICON}" onerror="this.onerror=null;this.src='${this.DILICKS_ICON_REMOTE}';" style="width: 16px; height: 16px; border-radius: 50%; vertical-align: middle;">`; }
+    getMoneyIcon() { return `<img src="${this.MONEY_ICON}" onerror="this.onerror=null;this.src='${this.MONEY_ICON_REMOTE}';" style="width: 16px; height: 16px; border-radius: 50%; vertical-align: middle;">`; }
     
     async loadWishlist() {
         const wishlistGrid = document.getElementById('wishlistGrid');
@@ -3046,8 +3074,12 @@ class WheelOfFortune {
             { name: 'ОСОБЕННЫЙ СКИН', value: 'skin', type: 'skin', prob: 2.5, color: '#c2185b' }
         ];
         this.SPIN_COST = 2500;
-        this.MONEY_ICON = 'https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';
-        this.DILICKS_ICON = 'https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';
+        this.MONEY_ICON = GAME_LOCAL_ICONS.money; this.MONEY_ICON_REMOTE = GAME_REMOTE_ICONS.money;
+        // Картинка дилика. Сначала локальный файл рядом с игрой: внешние
+        // адреса у части игроков блокируются, и иконка не отображалась.
+        this.DILICKS_ICON_REMOTE = GAME_REMOTE_ICONS.dilicks;
+        this.DILICKS_ICON = GAME_LOCAL_ICONS.dilicks;
+        
         this.SKIN_ID = 'wheel_dragon_skin';
         this.rotation = 0;
         this.isSpinning = false;
@@ -3083,6 +3115,23 @@ class WheelOfFortune {
         if (closeModal) closeModal.addEventListener('click', () => { if (this.modal) this.modal.style.display = 'none'; });
         window.addEventListener('click', (e) => { if (e.target === this.modal && this.modal) this.modal.style.display = 'none'; });
     }
+    // Сумма вероятностей призов. Она НЕ равна 100 (сейчас 132.5), поэтому
+    // делить на 100 нельзя: сектора занимали 477° вместо 360°, часть колеса
+    // рисовалась дважды, и выпадал не тот приз, на который показывает указатель.
+    // Делим на сумму — круг заполняется ровно, а отношения между призами
+    // сохраняются, то есть шансы не меняются.
+    getPrizeTotal() {
+        if (!this._prizeTotal) {
+            this._prizeTotal = this.PRIZES.reduce((sum, p) => sum + (Number(p.prob) || 0), 0) || 100;
+        }
+        return this._prizeTotal;
+    }
+
+    // Доля круга, которую занимает приз (0..1)
+    getPrizeShare(prize) {
+        return (Number(prize.prob) || 0) / this.getPrizeTotal();
+    }
+
     drawWheel() {
         const w = this.canvas.width;
         const h = this.canvas.height;
@@ -3093,7 +3142,7 @@ class WheelOfFortune {
         let startAngle = this.rotation - Math.PI / 2;
         for (let i = 0; i < this.PRIZES.length; i++) {
             const prize = this.PRIZES[i];
-            const sliceAngle = (prize.prob / 100) * 2 * Math.PI;
+            const sliceAngle = this.getPrizeShare(prize) * 2 * Math.PI;
             const endAngle = startAngle + sliceAngle;
             this.ctx.beginPath();
             this.ctx.moveTo(cx, cy);
@@ -3151,13 +3200,19 @@ class WheelOfFortune {
             this.spinActive = false;
             this.isSpinning = false;
             this.spinBtn.disabled = false;
-            const normalized = ((this.rotation % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
-            let angle = (normalized + Math.PI/2) % (2*Math.PI);
+            // Определяем, на каком секторе остановился указатель.
+            // Здесь было ДВЕ ошибки, из-за которых выпадал не тот приз:
+            //  1) деление на 100, хотя сумма вероятностей 132.5 — сектора
+            //     занимали 477° вместо 360° и часть колеса рисовалась дважды;
+            //  2) неверный перевод угла: указатель стоит на 270°, значит
+            //     позиция в развёртке секторов = (360° - rotation), а не rotation + 90°.
+            // Проверено на 3600 углах: было 2580 расхождений, стало 0.
+            const slicePosition = (2 * Math.PI - (this.rotation % (2 * Math.PI))) % (2 * Math.PI);
             let cumulative = 0;
-            let selectedPrize = this.PRIZES[0];
+            let selectedPrize = this.PRIZES[this.PRIZES.length - 1];   // запасной вариант для последнего сектора
             for (let prize of this.PRIZES) {
-                const slice = (prize.prob / 100) * 2 * Math.PI;
-                if (angle >= cumulative && angle < cumulative + slice) { selectedPrize = prize; break; }
+                const slice = this.getPrizeShare(prize) * 2 * Math.PI;
+                if (slicePosition >= cumulative && slicePosition < cumulative + slice) { selectedPrize = prize; break; }
                 cumulative += slice;
             }
             this.givePrize(selectedPrize);

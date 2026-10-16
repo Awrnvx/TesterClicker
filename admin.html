@@ -564,7 +564,7 @@
                     
                     <!-- ДИЛИКОВЫЙ УРАГАН -->
                     <div class="admin-card">
-                        <h2>💎 ДИЛИКОВЫЙ УРАГАН</h2>
+                        <h2>ДИЛИКОВЫЙ УРАГАН</h2>
                         
                         <div class="admin-command">
                             <div class="admin-command-code">/start event dilicks</div>
@@ -643,11 +643,11 @@
                             <div class="admin-command-code">🌍 ГЛОБАЛЬНЫЙ ВИШЛИСТ</div>
                             <div class="admin-input-group">
                                 <select id="globalWishlistItem">
-                                    <option value="dilicks_10000">10 000 💎</option>
-                                    <option value="dilicks_50000">50 000 💎</option>
-                                    <option value="dilicks_100000">100 000 💎</option>
-                                    <option value="money_50000">50 000 🪙</option>
-                                    <option value="money_100000">100 000 🪙</option>
+                                    <option value="dilicks_10000">10 000</option>
+                                    <option value="dilicks_50000">50 000</option>
+                                    <option value="dilicks_100000">100 000</option>
+                                    <option value="money_50000">50 000</option>
+                                    <option value="money_100000">100 000</option>
                                     <option value="skin_dragon">Скин Дракона ✨</option>
                                     <option value="upgrade_boost">Усилитель x10 ⚡</option>
                                 </select>
@@ -692,8 +692,8 @@
                             <div class="admin-input-group">
                                 <input type="text" id="rewardUserId" placeholder="ID игрока">
                                 <select id="rewardType">
-                                    <option value="dilicks">💎 Дилики</option>
-                                    <option value="money">🪙 Деньги</option>
+                                    <option value="dilicks">Дилики</option>
+                                    <option value="money">Деньги</option>
                                     <option value="skin">✨ Скин</option>
                                 </select>
                             </div>
@@ -710,8 +710,8 @@
                             <div class="admin-command-desc">⚠️ ВНИМАНИЕ! Выдать ВСЕМ игрокам</div>
                             <div class="admin-input-group">
                                 <select id="giveAllType">
-                                    <option value="dilicks">💎 Дилики</option>
-                                    <option value="money">🪙 Деньги</option>
+                                    <option value="dilicks">Дилики</option>
+                                    <option value="money">Деньги</option>
                                 </select>
                                 <input type="number" id="giveAllAmount" placeholder="количество">
                                 <button class="glass-btn warning-btn" id="giveAllBtn">⚠️ ВЫДАТЬ ВСЕМ</button>
@@ -1140,7 +1140,7 @@
                 document.getElementById('startDilicksEventBtn')?.addEventListener('click', async () => {
                     const days = parseInt(document.getElementById('uraganDays').value) || 7;
                     await eventsRef.child('dilicksHurricane').set({ active: true, startTime: Date.now(), endTime: Date.now() + days * 24 * 60 * 60 * 1000, duration: days, multiplier: 2, day: 1, totalPool: 0 });
-                    showToast(`💎 Ивент запущен на ${days} дней!`, 'success');
+                    showToast(`<img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> Ивент запущен на ${days} дней!`, 'success');
                 });
                 
                 document.getElementById('stopDilicksEventBtn')?.addEventListener('click', async () => {
@@ -1167,14 +1167,14 @@
                     if (!amount || amount < 1) return showToast('❌ Введите сумму', 'error');
                     const snap = await eventsRef.child('dilicksHurricane').once('value');
                     await eventsRef.child('dilicksHurricane').update({ totalPool: (snap.val()?.totalPool || 0) + amount });
-                    showToast(`💰 Добавлено ${amount.toLocaleString()} 💎`, 'success');
+                    showToast(`💰 Добавлено ${amount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
                 });
                 
                 document.getElementById('setPoolBtn')?.addEventListener('click', async () => {
                     const amount = parseInt(document.getElementById('setPoolAmount').value);
                     if (isNaN(amount) || amount < 0) return showToast('❌ Введите корректную сумму', 'error');
                     await eventsRef.child('dilicksHurricane').update({ totalPool: amount });
-                    showToast(`💰 Копилка установлена на ${amount.toLocaleString()} 💎`, 'success');
+                    showToast(`💰 Копилка установлена на ${amount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
                 });
                 
                 document.getElementById('removePoolBtn')?.addEventListener('click', async () => {
@@ -1182,7 +1182,7 @@
                     if (!amount || amount < 1) return showToast('❌ Введите сумму', 'error');
                     const snap = await eventsRef.child('dilicksHurricane').once('value');
                     await eventsRef.child('dilicksHurricane').update({ totalPool: Math.max(0, (snap.val()?.totalPool || 0) - amount) });
-                    showToast(`➖ Вычтено ${amount.toLocaleString()} 💎`, 'success');
+                    showToast(`➖ Вычтено ${amount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
                 });
                 
                 document.getElementById('resetPoolBtn')?.addEventListener('click', async () => {
@@ -1227,7 +1227,7 @@
                         topListDiv.innerHTML = '';
                         topPlayers.slice(0, 10).forEach((player, index) => {
                             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
-                            topListDiv.innerHTML += `<div class="top-item"><div class="top-rank">${medal}</div><div class="top-name">${player.name} ${player.id === CREATOR_ID ? '👑' : ''}</div><div class="top-value">${player.contribution.toLocaleString()} 💎</div></div>`;
+                            topListDiv.innerHTML += `<div class="top-item"><div class="top-rank">${medal}</div><div class="top-name">${player.name} ${player.id === CREATOR_ID ? '👑' : ''}</div><div class="top-value">${player.contribution.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div></div>`;
                         });
                         if (topPlayers.length === 0) topListDiv.innerHTML = '<div class="top-item">Пока нет участников</div>';
                         addDebugMessage(`🏆 Топ загружен: ${topPlayers.length} участников`);
@@ -1348,12 +1348,12 @@
                             const dilicksAmount = parseInt(amount);
                             if (isNaN(dilicksAmount) || dilicksAmount < 1) return showToast('❌ Введите количество', 'error');
                             await firebase.database().ref('users/' + userId).update({ dilicks: (userData.dilicks || 0) + dilicksAmount });
-                            showToast(`✅ Выдано ${dilicksAmount.toLocaleString()} 💎 игроку ${username}`, 'success');
+                            showToast(`✅ Выдано ${dilicksAmount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> игроку ${username}`, 'success');
                         } else if (rewardType === 'money') {
                             const moneyAmount = parseInt(amount);
                             if (isNaN(moneyAmount) || moneyAmount < 1) return showToast('❌ Введите количество', 'error');
                             await firebase.database().ref('users/' + userId).update({ money: (userData.money || 0) + moneyAmount });
-                            showToast(`✅ Выдано ${moneyAmount.toLocaleString()} 🪙 игроку ${username}`, 'success');
+                            showToast(`✅ Выдано ${moneyAmount.toLocaleString()} <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"> игроку ${username}`, 'success');
                         } else if (rewardType === 'skin') {
                             const skinId = amount.trim();
                             if (!skinId) return showToast('❌ Введите ID скина', 'error');
@@ -1377,7 +1377,7 @@
                     const type = document.getElementById('giveAllType').value;
                     const amount = parseInt(document.getElementById('giveAllAmount').value);
                     if (isNaN(amount) || amount < 1) return showToast('❌ Введите количество', 'error');
-                    if (!confirm(`⚠️ Выдать ВСЕМ ${amount.toLocaleString()} ${type === 'dilicks' ? '💎' : '🪙'}?`)) return;
+                    if (!confirm(`⚠️ Выдать ВСЕМ ${amount.toLocaleString()} ${type === 'dilicks' ? 'диликов' : 'монет'}?`)) return;
                     const snapshot = await usersRef.once('value');
                     const users = snapshot.val();
                     let count = 0;
@@ -1409,7 +1409,7 @@
                     const cost = parseInt(document.getElementById('spinCostInput').value);
                     if (!cost || cost < 1) return showToast('❌ Введите стоимость', 'error');
                     await eventsRef.child('wheelEvent').update({ spinCost: cost });
-                    showToast(`🎡 Стоимость крутки: ${cost} 💎`, 'success');
+                    showToast(`🎡 Стоимость крутки: ${cost} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
                 });
                 
                 document.getElementById('refreshStatusBtn')?.addEventListener('click', () => {

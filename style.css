@@ -6047,3 +6047,175 @@ body.no-liquid-animations .nav-toggle-btn::before {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+/* ============================================================
+   ОПТИМИЗАЦИЯ 2.0 — СЕЗОН И TELEGRAM WEBAPP
+   Внешний вид НЕ меняется: только то, что браузер не рисует зря.
+   ============================================================ */
+
+/* ===== A. ЛЕНТА СЕЗОНА: не рисуем 150 колонок, которых не видно =====
+   Раньше браузер держал в слое все 150 колонок (300 ячеек, 450 иконок),
+   даже когда на экране помещается 4-5 штук. content-visibility: auto
+   заставляет его пропускать отрисовку и layout невидимых колонок, а иконки
+   внутри них вообще не загружаются с CDN. */
+.season-tier-column {
+    contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: 100px 244px;
+}
+
+.season-tier-icon {
+    /* иконки не участвуют в drag-and-drop и не тянут лишние слои */
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+/* Горизонтальный скролл ленты: не «дёргает» страницу и не тянет анимации */
+.season-track-scroll {
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+}
+
+/* ===== B. ЭФФЕКТЫ КЛИКА ===== */
+.click-effect {
+    /* эффект живёт 0.6 с и удаляется — изолируем его от остального layout */
+    contain: layout style paint;
+    will-change: transform, opacity;
+}
+
+/* ===== C. ПУСТОЙ БЛОК АНОНСОВ не должен висеть в layout ===== */
+#globalAnnouncements:empty {
+    display: none;
+}
+
+/* ===== D. РЕЖИМ ЭКОНОМИИ (галочка в настройках) — убираем blur полностью =====
+   Было: режим только выключал анимации, а blur (самое дорогое на мобилке)
+   продолжал работать. */
+body.no-liquid-animations .liquid-glass,
+body.no-liquid-animations .glass-card,
+body.no-liquid-animations .glass-nav,
+body.no-liquid-animations .glass-btn,
+body.no-liquid-animations .nav-btn,
+body.no-liquid-animations .stats,
+body.no-liquid-animations .clicker-card,
+body.no-liquid-animations .season-header,
+body.no-liquid-animations .season-track-wrapper,
+body.no-liquid-animations .season-scroll-btn,
+body.no-liquid-animations .modal-content,
+body.no-liquid-animations .user-panel,
+body.no-liquid-animations .admin-console {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* ===== E. МОБИЛЬНАЯ ЛЕНТА СЕЗОНА: свои размеры для content-visibility ===== */
+@media (max-width: 768px) {
+    .season-tier-column {
+        contain-intrinsic-size: 72px 194px;
+    }
+    /* Тень у иконок сезона — 450 штук с drop-shadow стоят дорого при скролле */
+    .season-tier-icon {
+        filter: none;
+    }
+}
+
+@media (max-width: 400px) {
+    .season-tier-column {
+        contain-intrinsic-size: 65px 176px;
+    }
+}
+
+/* ===== F. TELEGRAM WEBAPP =====
+   Всё ниже применяется ТОЛЬКО когда игра открыта внутри Telegram (класс
+   .telegram-webapp ставит index.html). В обычном браузере на сайте вёрстка не меняется
+   ни на пиксель.
+
+   В Telegram сверху висит шапка с кнопкой закрытия, снизу — системная полоса,
+   а 100vh скачет при появлении клавиатуры. Берём реальные значения из
+   Telegram.WebApp (safeAreaInset / viewportStableHeight) через CSS-переменные. */
+:root {
+    --tg-safe-top: 0px;
+    --tg-safe-bottom: 0px;
+    --tg-safe-left: 0px;
+    --tg-safe-right: 0px;
+    --tg-viewport-stable-height: 100vh;
+}
+
+body.telegram-webapp {
+    /* высота берётся из Telegram, поэтому интерфейс не «прыгает» */
+    min-height: var(--tg-viewport-stable-height, 100vh);
+}
+
+body.telegram-webapp .game-container {
+    padding-top: var(--tg-safe-top);
+    padding-bottom: var(--tg-safe-bottom);
+    padding-left: var(--tg-safe-left);
+    padding-right: var(--tg-safe-right);
+}
+
+/* Оверлеи на весь экран — чтобы карточка не залезала под шапку Telegram */
+body.telegram-webapp .modal-overlay,
+body.telegram-webapp .ban-overlay,
+body.telegram-webapp .maintenance-overlay,
+body.telegram-webapp .exchange-modal,
+body.telegram-webapp .buy-levels-modal,
+body.telegram-webapp .player-profile-modal,
+body.telegram-webapp .wheel-skin-modal {
+    padding-top: var(--tg-safe-top);
+    padding-bottom: var(--tg-safe-bottom);
+}
+
+/* Переключение вкладок в Telegram: убираем «залипание» подсветки и 300ms-задержку */
+.nav-btn,
+.glass-btn,
+.click-btn,
+.season-tier-claim-btn,
+.buy-btn,
+.upgrade-btn,
+.equip-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== G. МОБИЛЬНАЯ ПРОИЗВОДИТЕЛЬНОСТЬ =====
+   На тач-устройствах убираем то, что не видно глазом, но грузит GPU:
+   анимации теней (box-shadow перерисовывается целиком) и фон под пальцем. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    /* Пульсации через box-shadow → через прозрачность (визуально похоже, в разы дешевле) */
+    .premium-btn,
+    .claim-all-btn,
+    .season-tier-claim-btn,
+    .season-tier-column.current .season-tier-badge,
+    .season-tier-cell.unlocked {
+        animation: none !important;
+    }
+
+    /* Анимированные свечения статичных элементов гасим — остаётся тот же вид */
+    .maintenance-icon,
+    .ban-icon {
+        animation-duration: 4s;
+    }
+
+    /* Иконки сезона: без drop-shadow (450 штук в ленте) */
+    .season-tier-icon {
+        filter: none !important;
+    }
+
+    /* Убираем «липкие» hover-состояния после тапа */
+    .season-tier-cell.unlocked:hover {
+        transform: none;
+    }
+}
+
+/* ===== H. ПЛАВНОСТЬ СКРОЛЛА НА МОБИЛКЕ =====
+   Один композитный слой вместо пересчёта backdrop-filter под каждым элементом. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    .glass-nav,
+    .season-track-scroll,
+    .content {
+        -webkit-overflow-scrolling: touch;
+    }
+    .season-track-scroll {
+        contain: content;
+    }
+}

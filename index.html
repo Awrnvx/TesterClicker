@@ -13,6 +13,48 @@
         const telegram = window.Telegram.WebApp;
         telegram.ready();
         telegram.expand();
+
+        // ===== ОПТИМИЗАЦИЯ ПОД TELEGRAM WEBAPP =====
+        // Класс telegram-webapp включает CSS для safe-area и высоты вьюпорта.
+        // В обычном браузере (на сайте) класс не ставится — вёрстка не меняется.
+        (function () {
+            if (window.__tgInitDone) return;
+            const tg = window.Telegram && window.Telegram.WebApp;
+            const safe = tg && tg.safeAreaInset;
+            const contentSafe = tg && tg.contentSafeAreaInset;
+            const insideTelegram = !!(tg && (
+                (typeof tg.initData === 'string' && tg.initData !== '') ||
+                (tg.initDataUnsafe && tg.initDataUnsafe.user) ||
+                (typeof tg.platform === 'string' && tg.platform && tg.platform !== 'unknown') ||
+                safe || contentSafe
+            ));
+            if (!insideTelegram) return;
+            window.__tgInitDone = true;
+            const root = document.documentElement;
+            try { document.body.classList.add('telegram-webapp'); } catch (e) {}
+
+            const px = (v) => (v || 0) + 'px';
+            const apply = () => {
+                const s = (tg && tg.safeAreaInset) || safe || {};
+                const cs = (tg && tg.contentSafeAreaInset) || contentSafe || {};
+                root.style.setProperty('--tg-safe-top', px(Math.max(s.top || 0, cs.top || 0)));
+                root.style.setProperty('--tg-safe-bottom', px(Math.max(s.bottom || 0, cs.bottom || 0)));
+                root.style.setProperty('--tg-safe-left', px(Math.max(s.left || 0, cs.left || 0)));
+                root.style.setProperty('--tg-safe-right', px(Math.max(s.right || 0, cs.right || 0)));
+                if (tg && tg.viewportStableHeight) {
+                    root.style.setProperty('--tg-viewport-stable-height', tg.viewportStableHeight + 'px');
+                }
+                // Позиция кликера могла сместиться — сбрасываем кэш отступов
+                if (window.game && typeof window.game._invalidateRects === 'function') window.game._invalidateRects();
+            };
+            apply();
+            if (tg && typeof tg.onEvent === 'function') {
+                tg.onEvent('safeAreaChanged', apply);
+                tg.onEvent('contentSafeAreaChanged', apply);
+                tg.onEvent('viewportChanged', apply);
+            }
+            window.addEventListener('load', apply);
+        })();
     </script>
 </head>
 <body>
@@ -376,7 +418,7 @@
                         <p class="season-subtitle">Сезон 1: Диликовый рассвет</p>
                         <div class="season-progress-block">
                             <div class="season-progress-info">
-                                <span>Уровень <span id="seasonLevel">1</span> / 150</span>
+                                <span>Уровень <span id="seasonLevel">1</span> / 50</span>
                                 <span id="seasonExpText">0 / 100 XP</span>
                             </div>
                             <div class="progress-bar"><div class="progress-fill" id="seasonProgress"></div></div>
@@ -645,14 +687,4 @@
     
     <script src="script.js"></script>
 </body>
-    <script>
-        // Определяем Telegram WebApp и добавляем класс для оптимизации
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== '') {
-            document.body.classList.add('telegram-webapp');
-        }
-        // На слабых устройствах тоже включаем облегчённый режим
-        if (navigator.deviceMemory && navigator.deviceMemory < 4) {
-            document.body.classList.add('telegram-webapp');
-        }
-    </script>
 </html>

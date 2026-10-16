@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Диагностика входа — Dilic Clicker</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        body { background: #0d0f16; color: #e8e8e8; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 16px; line-height: 1.5; }
+        h1 { font-size: 1.2rem; color: #ffd700; margin: 0 0 4px; }
+        .sub { color: #8b93a7; font-size: .82rem; margin-bottom: 16px; }
+        .row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #161a24; margin-bottom: 8px; border-left: 4px solid #444; }
+        .row.ok { border-left-color: #4CAF50; }
+        .row.err { border-left-color: #f44336; }
+        .row.wait { border-left-color: #ff9800; }
+        .mark { font-size: 1.1rem; width: 22px; flex: 0 0 22px; text-align: center; }
+        .name { font-weight: 600; font-size: .92rem; }
+        .detail { color: #9aa3b8; font-size: .78rem; margin-top: 2px; word-break: break-word; font-family: ui-monospace, Consolas, monospace; }
+        .summary { margin-top: 16px; padding: 14px; border-radius: 14px; background: #1a2030; font-size: .9rem; }
+        .summary b { color: #ffd700; }
+        button { margin-top: 14px; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ffd700; background: rgba(255,215,0,.12); color: #ffd700; font-weight: 700; font-size: .95rem; cursor: pointer; }
+        .hint { margin-top: 12px; color: #8b93a7; font-size: .78rem; }
+    </style>
+</head>
+<body>
+    <h1>🔎 Диагностика входа</h1>
+    <div class="sub">Проверяю Firebase прямо в вашем браузере. Ничего не меняю — только чтение.</div>
+    <div id="out"></div>
+    <button id="again">Проверить снова</button>
+    <div class="hint" id="hint"></div>
+
+    <script>
+        const out = document.getElementById('out');
+        let rows = [];
+
+        function row(id, name) {
+            const el = document.createElement('div');
+            el.className = 'row wait';
+            el.id = 'row-' + id;
+            el.innerHTML = '<div class="mark">⏳</div><div><div class="name">' + name + '</div><div class="detail">проверяю...</div></div>';
+            out.appendChild(el);
+            return el;
+        }
+        function done(id, ok, detail) {
+            const el = document.getElementById('row-' + id);
+            if (!el) return;
+            el.className = 'row ' + (ok ? 'ok' : 'err');
+            el.querySelector('.mark').textContent = ok ? '✅' : '❌';
+            el.querySelector('.detail').textContent = detail;
+            rows.push({ id, ok });
+        }
+        function withTimeout(promise, ms) {
+            return new Promise((resolve, reject) => {
+                let settled = false;
+                const t = setTimeout(() => { if (!settled) { settled = true; reject(new Error('таймаут ' + ms + ' мс')); } }, ms);
+                promise.then(
+                    (v) => { if (!settled) { settled = true; clearTimeout(t); resolve(v); } },
+                    (e) => { if (!settled) { settled = true; clearTimeout(t); reject(e); } }
+                );
+            });
+        }
+
+        async function run() {
+            out.innerHTML = '';
+            rows = [];
+
+            // 1. Библиотека Firebase
+            row('lib', 'Библиотека Firebase загружена');
+            if (typeof firebase === 'undefined' || !firebase.database) {
+                done('lib', false, 'firebase не найден — скрипт не загрузился (проверьте интернет)');
+                return finish();
+            }
+            done('lib', true, 'firebase ' + (firebase.SDK_VERSION || '?') + ', база: ' + (firebase.app().options.databaseURL || '—'));
+
+            // 2. Чтение своего профиля (без входа)
+            row('own', 'Чтение вашего профиля');
+            const uid = localStorage.getItem('userId');
+            if (!uid) {
+                done('own', false, 'в localStorage нет userId — это нормально, если вы ещё не входили');
+            } else {
+                try {
+                    const s = await withTimeout(firebase.database().ref('users/' + uid).once('value'), 12000);
+                    done('own', true, 'профиль прочитан: ' + ((s.val() && s.val().username) || '?') + ' (id ' + uid + ')');
+                } catch (e) {
+                    done('own', false, e.message);
+                }
+            }
+
+            // 3. Список игроков через REST — на нём держится вход и таблица лидеров
+            row('ids', 'Список игроков (REST ?shallow=true)');
+            let ids = [];
+
+            // адрес базы ищем так же, как игра: сначала firebaseConfig, потом app().options
+            function resolveBase() {
+                const clean = (u) => String(u || '').replace(/\/+$/, '');
+                let url = '';
+                try {
+                    if (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.databaseURL) {
+                        url = firebaseConfig.databaseURL;
+                    }
+                } catch (e) {}
+                if (!url) {
+                    try { url = (firebase.app().options && firebase.app().options.databaseURL) || ''; } catch (e) {}
+                }
+                return clean(url);
+            }
+            const base = resolveBase();
+            let baseSource = '';
+            try {
+                if (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.databaseURL) baseSource = 'из firebaseConfig';
+            } catch (e) {}
+            if (!baseSource && base) baseSource = 'из firebase.app().options';
+            if (!baseSource) baseSource = 'НЕ НАЙДЕН — это и есть причина!';
+
+            done('base', !!base, 'адрес базы (' + baseSource + '): ' + (base || '(пусто)'));
+
+            try {
+                if (!base) throw new Error('адрес базы пустой');
+                const res = await withTimeout(fetch(base + '/users.json?shallow=true', { cache: 'no-store' }), 12000);
+                if (!res.ok) throw new Error('сервер ответил ' + res.status);
+                const data = await res.json();
+                ids = data ? Object.keys(data) : [];
+                done('ids', ids.length > 0, 'получено игроков: ' + ids.length);
+            } catch (e) {
+                done('ids', false, e.message);
+            }
+
+            // 3б. Таблица лидеров: чтение нескольких профилей (как в игре)
+            row('lb', 'Чтение профилей для таблицы лидеров');
+            if (ids.length === 0 || !base) {
+                done('lb', false, 'нет списка игроков — шаг пропущен');
+            } else {
+                let ok = 0, fail = 0;
+                const t0 = Date.now();
+                const test = ids.slice(0, 8);
+                for (const id of test) {
+                    try {
+                        const r = await withTimeout(fetch(base + '/users/' + id + '.json', { cache: 'no-store' }), 8000);
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        const u = await r.json();
+                        if (u && typeof u === 'object') ok++; else fail++;
+                    } catch (e) { fail++; }
+                }
+                const secs = ((Date.now() - t0) / 1000).toFixed(1);
+                done('lb', ok > 0, 'прочитано ' + ok + ' из ' + test.length + ' за ' + secs + ' с, ошибок: ' + fail);
+            }
+
+            // 4. Чтение ников по одному — поштучный путь входа
+            row('scan', 'Чтение ников по одному (REST)');
+            if (ids.length === 0 || !base) {
+                done('scan', false, 'нет списка игроков — шаг пропущен');
+            } else {
+                let okCount = 0, failCount = 0;
+                const test = ids.slice(0, 6);
+                for (const id of test) {
+                    try {
+                        const r = await withTimeout(fetch(base + '/users/' + id + '/username.json', { cache: 'no-store' }), 6000);
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        await r.json();
+                        okCount++;
+                    } catch (e) { failCount++; }
+                }
+                done('scan', okCount > 0, 'прочитано ' + okCount + ' из ' + test.length + ', ошибок: ' + failCount);
+            }
+
+            // 5. Есть ли shallow в самом SDK (в v8 его нет — так и должно быть)
+            row('sdk', 'Метод shallow в SDK');
+            let hasShallow = false;
+            try { hasShallow = typeof firebase.database().ref('users').shallow === 'function'; } catch (e) {}
+            done('sdk', true, hasShallow
+                ? 'shallow есть в SDK — можно пользоваться и им'
+                : 'shallow в SDK нет — игра использует REST, это правильно');
+
+            // 6. Полное чтение ветки users — здесь обычно и виснет
+            row('full', 'Полное чтение всех игроков (резервный путь)');
+            if (!base) {
+                done('full', false, 'нет адреса базы');
+            } else {
+                try {
+                    const r = await withTimeout(fetch(base + '/users.json', { cache: 'no-store' }), 15000);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const d = await r.json();
+                    done('full', true, 'прочитано за < 15 с, игроков: ' + Object.keys(d || {}).length);
+                } catch (e) {
+                    done('full', false, e.message + ' — это ожидаемо, вход это не использует');
+                }
+            }
+
+            // 7. Поиск конкретного игрока (tweeins02) — ровно как при входе
+            row('find', 'Поиск игрока tweeins02 (как при входе)');
+            if (ids.length === 0 || !base) {
+                done('find', false, 'нет списка игроков');
+            } else {
+                try {
+                    const wanted = 'tweeins02';
+                    let foundId = null;
+                    let cursor = 0;
+                    async function worker() {
+                        while (cursor < ids.length && !foundId) {
+                            const id = ids[cursor++];
+                            try {
+                                const r = await withTimeout(fetch(base + '/users/' + id + '/username.json', { cache: 'no-store' }), 6000);
+                                if (!r.ok) continue;
+                                const nm = await r.json();
+                                if (nm && String(nm).toLowerCase() === wanted) foundId = id;
+                            } catch (e) {}
+                        }
+                    }
+                    const t0 = Date.now();
+                    const workers = [];
+                    for (let i = 0; i < Math.min(6, ids.length); i++) workers.push(worker());
+                    await Promise.all(workers);
+                    const secs = ((Date.now() - t0) / 1000).toFixed(1);
+                    if (foundId) {
+                        const r = await withTimeout(fetch(base + '/users/' + foundId + '.json', { cache: 'no-store' }), 10000);
+                        const u = await r.json();
+                        done('find', true, 'найден за ' + secs + ' с: ' + foundId + ', ник ' + u.username + ', пароль ' + (u.password ? 'задан' : 'ПУСТОЙ'));
+                    } else {
+                        done('find', false, 'не найден за ' + secs + ' с');
+                    }
+                } catch (e) {
+                    done('find', false, e.message);
+                }
+            }
+
+            finish();
+        }
+
+        function finish() {
+            const bad = rows.filter(r => !r.ok);
+            const box = document.createElement('div');
+            box.className = 'summary';
+            const critical = ['lib', 'base', 'ids', 'lb'];
+            const broken = rows.filter(r => critical.includes(r.id) && !r.ok);
+            if (broken.length === 0) {
+                box.innerHTML = '<b>Итог:</b> всё, что нужно для входа, работает. Если вход не проходит — пришлите этот экран целиком.';
+            } else {
+                box.innerHTML = '<b>Итог:</b> сломано: ' + broken.map(b => b.id).join(', ') + '. Пришлите этот экран — по нему будет ясно, что чинить.';
+            }
+            out.appendChild(box);
+            document.getElementById('hint').textContent = 'Проверка выполнена: ' + new Date().toLocaleTimeString();
+        }
+
+        document.getElementById('again').addEventListener('click', run);
+        run();
+    </script>
+</body>
+</html>

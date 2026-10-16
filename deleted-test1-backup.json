@@ -1,0 +1,85 @@
+﻿{
+    "autoClickerLevel":  0,
+    "clickPower":  1,
+    "clickerMastery":  0,
+    "clicks":  0,
+    "compensationReceived":  false,
+    "critChance":  5,
+    "currentSkin":  "classic",
+    "dilicks":  500,
+    "eventBooster":  0,
+    "eventQuests":  {
+                        "lastReset":  1791920125080,
+                        "quests":  [
+                                       {
+                                           "completed":  false,
+                                           "id":  "clicks3",
+                                           "name":  "Сделать кликов x3",
+                                           "progress":  0,
+                                           "reward":  25000,
+                                           "target":  10000
+                                       },
+                                       {
+                                           "completed":  false,
+                                           "id":  "moneyEarned2",
+                                           "name":  "Заработать денег x2",
+                                           "progress":  0,
+                                           "reward":  15000,
+                                           "target":  500000
+                                       },
+                                       {
+                                           "completed":  false,
+                                           "id":  "dilicksEarned",
+                                           "name":  "Заработать диликов",
+                                           "progress":  0,
+                                           "reward":  10000,
+                                           "target":  10000
+                                       },
+                                       {
+                                           "completed":  false,
+                                           "id":  "wheelSpins2",
+                                           "name":  "Крутить колесо x2",
+                                           "progress":  0,
+                                           "reward":  15000,
+                                           "target":  15
+                                       },
+                                       {
+                                           "completed":  false,
+                                           "id":  "wheelSpins",
+                                           "name":  "Крутить колесо",
+                                           "progress":  0,
+                                           "reward":  5000,
+                                           "target":  5
+                                       },
+                                       {
+                                           "completed":  false,
+                                           "id":  "all",
+                                           "name":  "Выполнить все задания",
+                                           "progress":  0,
+                                           "reward":  50000,
+                                           "target":  1
+                                       }
+                                   ]
+                    },
+    "inventory":  [
+                      "classic"
+                  ],
+    "lastSave":  1791920124550,
+    "money":  1000,
+    "password":  "test1",
+    "playtime":  4,
+    "premiumPass":  false,
+    "rechargeBonus":  0,
+    "seasonExp":  0,
+    "seasonLevel":  1,
+    "seasonVersion":  2,
+    "settings":  {
+                     "animations":  true,
+                     "displayName":  "test1",
+                     "language":  "ru",
+                     "notifications":  true,
+                     "sound":  true,
+                     "theme":  "dark"
+                 },
+    "username":  "test1"
+}

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Замер скорости базы — Dilic Clicker</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="firebase-config.js"></script>
+    <style>
+        body { background: #0d0f16; color: #e8e8e8; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 16px; line-height: 1.5; }
+        h1 { font-size: 1.15rem; color: #ffd700; margin: 0 0 4px; }
+        h2 { font-size: .95rem; color: #9aa3b8; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .5px; }
+        .sub { color: #8b93a7; font-size: .8rem; margin-bottom: 14px; }
+        table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+        th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #232838; }
+        th { color: #8b93a7; font-weight: 600; font-size: .72rem; text-transform: uppercase; }
+        td.t { font-family: ui-monospace, Consolas, monospace; font-weight: 700; }
+        .fast { color: #4CAF50; }
+        .mid { color: #ff9800; }
+        .slow { color: #f44336; }
+        .verdict { margin-top: 18px; padding: 14px; border-radius: 14px; background: #1a2030; font-size: .88rem; }
+        .verdict b { color: #ffd700; }
+        button { margin-top: 14px; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ffd700; background: rgba(255,215,0,.12); color: #ffd700; font-weight: 700; cursor: pointer; }
+        .note { color: #8b93a7; font-size: .75rem; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <h1>⏱️ Замер скорости базы</h1>
+    <div class="sub">Сравниваю чтение через Firebase SDK и через прямой HTTPS. Ничего не меняю.</div>
+    <div id="out"></div>
+    <button id="again">Замерить снова</button>
+
+    <script>
+        const out = document.getElementById('out');
+        let n = 0;
+
+        function section(title) {
+            const h = document.createElement('h2');
+            h.textContent = title;
+            out.appendChild(h);
+            const t = document.createElement('table');
+            t.innerHTML = '<tr><th>Что читаю</th><th>Способ</th><th>Время</th><th>Результат</th></tr>';
+            out.appendChild(t);
+            return t;
+        }
+        function addRow(table, what, how, ms, result, ok) {
+            const cls = ms === null ? 'slow' : (ms < 800 ? 'fast' : ms < 4000 ? 'mid' : 'slow');
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + what + '</td><td>' + how + '</td><td class="t ' + cls + '">'
+                + (ms === null ? '—' : ms + ' мс') + '</td><td>' + result + '</td>';
+            table.appendChild(tr);
+        }
+
+        function withTimeout(promise, ms) {
+            return new Promise((resolve, reject) => {
+                let settled = false;
+                const t = setTimeout(() => { if (!settled) { settled = true; reject(new Error('таймаут ' + ms + ' мс')); } }, ms);
+                promise.then(
+                    (v) => { if (!settled) { settled = true; clearTimeout(t); resolve(v); } },
+                    (e) => { if (!settled) { settled = true; clearTimeout(t); reject(e); } }
+                );
+            });
+        }
+
+        function baseUrl() {
+            const clean = (u) => String(u || '').replace(/\/+$/, '');
+            let url = '';
+            try { if (firebaseConfig && firebaseConfig.databaseURL) url = firebaseConfig.databaseURL; } catch (e) {}
+            if (!url) { try { url = (firebase.app().options && firebase.app().options.databaseURL) || ''; } catch (e) {} }
+            return clean(url);
+        }
+
+        // замер чтения через SDK
+        async function sdkRead(path, ms) {
+            const t0 = performance.now();
+            try {
+                const s = await withTimeout(firebase.database().ref(path).once('value'), ms);
+                const dt = Math.round(performance.now() - t0);
+                const v = s && s.exists() ? s.val() : null;
+                return { ms: dt, ok: true, value: v };
+            } catch (e) {
+                return { ms: Math.round(performance.now() - t0), ok: false, error: e.message };
+            }
+        }
+        // замер чтения через REST
+        async function restRead(path, ms) {
+            const t0 = performance.now();
+            try {
+                const res = await withTimeout(fetch(baseUrl() + path, { cache: 'no-store' }), ms);
+                const dt = Math.round(performance.now() - t0);
+                if (!res.ok) return { ms: dt, ok: false, error: 'HTTP ' + res.status };
+                const txt = await res.text();
+                return { ms: dt, ok: true, value: txt ? JSON.parse(txt) : null };
+            } catch (e) {
+                return { ms: Math.round(performance.now() - t0), ok: false, error: e.message };
+            }
+        }
+
+        async function run() {
+            out.innerHTML = '';
+            const base = baseUrl();
+            const uid = localStorage.getItem('userId');
+
+            // ---- 1. соединение ----
+            const tConn = section('1. Соединение с базой');
+            addRow(tConn, 'адрес базы', 'из конфига', null, base || 'НЕ НАЙДЕН', !!base);
+
+            const conn = await new Promise((resolve) => {
+                const t0 = performance.now();
+                let done = false;
+                const ref = firebase.database().ref('.info/connected');
+                const timer = setTimeout(() => { if (!done) { done = true; ref.off(); resolve({ ms: Math.round(performance.now() - t0), val: null }); } }, 8000);
+                ref.on('value', (s) => {
+                    if (done) return;
+                    done = true;
+                    clearTimeout(timer);
+                    resolve({ ms: Math.round(performance.now() - t0), val: s.val() });
+                    ref.off();
+                });
+            });
+            addRow(tConn, 'состояние подключения', 'SDK (веб-сокет)', conn.ms,
+                conn.val === true ? 'подключено ✅' : (conn.val === false ? 'НЕ подключено ❌' : 'нет ответа ❌'));
+
+            // ---- 2. чтение одной записи ----
+            const tOne = section('2. Чтение одного профиля');
+            if (!uid) {
+                addRow(tOne, 'свой профиль', '—', null, 'нет userId — войдите в игру', false);
+            } else {
+                const a = await sdkRead('users/' + uid, 12000);
+                addRow(tOne, 'свой профиль', 'SDK', a.ms, a.ok ? 'прочитан' : a.error, a.ok);
+                const b = await restRead('/users/' + uid + '.json', 12000);
+                addRow(tOne, 'свой профиль', 'REST', b.ms, b.ok ? 'прочитан' : b.error, b.ok);
+            }
+
+            // ---- 3. список игроков ----
+            const tIds = section('3. Список игроков');
+            const restIds = await restRead('/users.json?shallow=true', 12000);
+            const ids = restIds.ok && restIds.value ? Object.keys(restIds.value) : [];
+            addRow(tIds, 'список ID (' + ids.length + ')', 'REST ?shallow', restIds.ms,
+                restIds.ok ? ids.length + ' игроков' : restIds.error, restIds.ok);
+
+            // ---- 4. чтение ВСЕХ профилей двумя способами ----
+            const tAll = section('4. Чтение всех профилей (то, что раньше делала таблица)');
+            const allSdk = await sdkRead('users', 20000);
+            addRow(tAll, 'вся ветка users', 'SDK', allSdk.ms,
+                allSdk.ok ? 'прочитано, игроков: ' + Object.keys(allSdk.value || {}).length : allSdk.error, allSdk.ok);
+
+            const allRest = await restRead('/users.json', 20000);
+            addRow(tAll, 'вся ветка users', 'REST', allRest.ms,
+                allRest.ok ? 'прочитано, игроков: ' + Object.keys(allRest.value || {}).length : allRest.error, allRest.ok);
+
+            // по одному — то, что делает игра сейчас
+            if (ids.length > 0) {
+                const t0 = performance.now();
+                let ok = 0;
+                for (let i = 0; i < Math.min(6, ids.length); i++) {
+                    const r = await restRead('/users/' + ids[i] + '.json', 8000);
+                    if (r.ok) ok++;
+                }
+                const dt = Math.round(performance.now() - t0);
+                addRow(tAll, '6 профилей по одному', 'REST', dt, 'прочитано ' + ok + ' из 6', ok > 0);
+            }
+
+            // ---- вывод ----
+            const v = document.createElement('div');
+            v.className = 'verdict';
+            if (allSdk.ok && allSdk.ms < 3000) {
+                v.innerHTML = '<b>Вывод:</b> база работает быстро — всю ветку удалось прочитать за ' + allSdk.ms
+                    + ' мс. Значит тормозил код игры, а не база.';
+            } else if (allSdk.ok) {
+                v.innerHTML = '<b>Вывод:</b> база отвечает, но медленно (' + allSdk.ms + ' мс на всю ветку). Это уже на стороне Firebase.';
+            } else {
+                v.innerHTML = '<b>Вывод:</b> база НЕ отдаёт всю ветку за 20 с (' + allSdk.error + '), '
+                    + 'хотя отдельные записи читаются. Это похоже на внутреннюю проблему Realtime Database, '
+                    + 'а не на код игры.';
+            }
+            v.innerHTML += '<div class="note">Замер выполнен: ' + new Date().toLocaleTimeString() + '</div>';
+            out.appendChild(v);
+        }
+
+        document.getElementById('again').addEventListener('click', run);
+        run();
+    </script>
+</body>
+</html>

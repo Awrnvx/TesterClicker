@@ -23,6 +23,36 @@ class ClickerGame {
         this.exchangeFrom = null;
         this._seasonAutoScrolled = false;
         
+        // ===== ОПТИМИЗАЦИЯ: состояние сезонной ленты и UI =====
+        this._seasonBarFrame = null;      // rAF-троттлинг прогресс-бара сезона
+        this._tiersCache = null;          // кэш узлов ленты сезона (без пересоздания DOM)
+        this._tiersStateKey = null;       // ключ состояния: при совпадении лента не трогается
+        this._tiersFrame = null;          // rAF для отложенной сборки ленты
+        this._tiersRendered = false;
+        this._claimingTier = false;       // защита от двойного получения награды
+        this._uiCache = {};               // кэш последних значений UI (не пишем в DOM лишний раз)
+        this._saveTimer = null;           // батчинг сохранений в Firebase
+        this._savePending = false;
+        this._saveBound = false;
+        this._eventAccum = 0;             // накопление вклада в ивент до отправки в БД
+        this._eventFlushTimer = null;
+        
+        // Максимум уровней сезонного пропуска. Было 150 — из-за этого лента
+        // строила 300 ячеек и 450 картинок, что и грузило мобильные устройства.
+        this.MAX_SEASON_LEVEL = 50;
+        // Версия сезона. При смене значения игра один раз перезапускает сезон
+        // у игрока (см. applySeasonReset) — это защищает откат от перезаписи
+        // старой открытой вкладкой.
+        this.SEASON_VERSION = 2;
+        // Последняя удачно загруженная таблица лидеров: показываем её сразу,
+        // пока грузится свежая — база тормозит, и пустой экран раздражает.
+        // Копия кладётся ещё и в localStorage, поэтому переживает перезапуск игры.
+        this._leaderboardCache = this._loadLeaderboardCache();
+        // Сколько игроков не удалось прочитать в последний раз (для пометки)
+        this._leaderboardFailed = 0;
+        // Признак идущей загрузки: не запускаем две параллельно
+        this._leaderboardLoading = false;
+        
         this.MONEY_ICON = 'https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';
         this.DILICKS_ICON = 'https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';
         
@@ -323,7 +353,12 @@ class ClickerGame {
             const isMobile = /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(ua);
             const memory = navigator.deviceMemory;
             const cores = navigator.hardwareConcurrency;
-            return isMobile && (memory < 4 || cores < 4);
+            // ВАЖНО: memory === undefined на iOS Safari и в старых браузерах.
+            // Раньше `undefined < 4` давало false-срабатывание только случайно,
+            // поэтому проверяем наличие значения явно.
+            const lowMemory = typeof memory === 'number' && memory > 0 && memory < 4;
+            const lowCores = typeof cores === 'number' && cores > 0 && cores < 4;
+            return isMobile && (lowMemory || lowCores);
         };
         const performanceMode = this.userData.settings?.performanceMode || isSlowDevice();
         if (performanceMode) {
@@ -360,7 +395,14 @@ class ClickerGame {
         this.showLoader(true);
         try {
             const userRef = firebase.database().ref('users/' + userId);
-            const snapshot = await userRef.once('value');
+            // Таймаут обязателен: если база не ответит, игрок раньше оставался
+            // навсегда на экране «Загрузка...» с бесконечным спиннером.
+            const snapshot = await this._withTimeout(userRef.once('value'), 15000);
+            if (!snapshot || !snapshot.exists()) {
+                this.showLoader(false);
+                this.showToast('⚠️ Не удалось загрузить профиль. Обновите страницу', 'error');
+                return;
+            }
             if (snapshot.exists()) {
                 this.userData = snapshot.val();
                 if (this.userData.username !== currentUser) { localStorage.clear(); window.location.href = 'register.html'; return; }
@@ -371,12 +413,16 @@ class ClickerGame {
                 if (!this.userData.clickerMastery) this.userData.clickerMastery = 0;
                 if (!this.userData.eventBooster) this.userData.eventBooster = 0;
                 if (!this.userData.seasonClaimed) this.userData.seasonClaimed = { free: [], premium: [] };
-                if (this.userData.seasonLevel > 150) this.userData.seasonLevel = 150;
+                if (this.userData.seasonLevel > this.MAX_SEASON_LEVEL) this.userData.seasonLevel = this.MAX_SEASON_LEVEL;
                 if (!this.userData.seasonLevel) this.userData.seasonLevel = 1;
                 if (!this.userData.seasonExp) this.userData.seasonExp = 0;
                 if (this.userData.settings === undefined) {
                     this.userData.settings = { displayName: this.userData.username, theme: 'dark', notifications: true, sound: true, animations: true, language: 'ru', performanceMode: false };
                 }
+                // Разовая миграция: сезон перезапускается для всех (150 → 50 уровней).
+                // Нужна потому, что у игрока может быть открыта вкладка со старой
+                // версией игры, и её автосохранение перезаписывает откат в базе.
+                if (this.userData.seasonVersion !== this.SEASON_VERSION) this.applySeasonReset();
                 this.checkAndResetQuests();
             } else {
                 localStorage.clear();
@@ -385,8 +431,10 @@ class ClickerGame {
             }
         } catch (error) {
             console.error(error);
-            localStorage.clear();
-            window.location.href = 'register.html';
+            // Сетевой сбой — это НЕ повод стирать сессию и выкидывать на регистрацию
+            // (раньше игрок терял вход из-за одного таймаута). Просим обновить страницу.
+            this.showLoader(false);
+            this.showToast('⚠️ Не удалось загрузить профиль. Обновите страницу', 'error');
             return;
         }
         this.loadElements();
@@ -417,7 +465,45 @@ class ClickerGame {
             this.initSeasonScroll();
             this.isLoaded = true;
             this.showLoader(false);
+            // Если был перезапуск сезона — записываем его в базу сразу, чтобы
+            // старой вкладке было нечем перезаписать откат
+            if (this._forceSaveOnce) { this._forceSaveOnce = false; this.flushSaveNow(); }
+            this._invalidateRects();   // layout после старта мог сместиться
         }, 100);
+    }
+
+    // ===== РАЗОВЫЙ ПЕРЕЗАПУСК СЕЗОНА =====
+    // Сезон ужат со 150 до MAX_SEASON_LEVEL уровней. Возвращаем всех в начало:
+    // уровень, опыт и собранные награды обнуляются, а сезонные скины
+    // (ДИЛИК МАСТЕР / ЛОРД / КОРОЛЬ) изымаются — их выдавали только за уровни
+    // сезона, так что раньше 25/40/50 уровня их получить нельзя.
+    // НЕ трогает: дилики, монеты, премиум-пропуск, клики, обычные скины,
+    // достижения, промокоды и прогресс ивентов.
+    applySeasonReset() {
+        if (!this.userData) return;
+        const SEASON_SKINS = ['uragan_dragon_top3', 'uragan_holo_top10', 'uragan_banana_top50'];
+
+        this.userData.seasonLevel = 1;
+        this.userData.seasonExp = 0;
+        this.userData.seasonClaimed = { free: [], premium: [] };
+
+        // Забираем только сезонные скины, остальные не трогаем
+        if (Array.isArray(this.userData.inventory)) {
+            this.userData.inventory = this.userData.inventory.filter(s => !SEASON_SKINS.includes(s));
+        } else {
+            this.userData.inventory = ['classic'];
+        }
+        // Если был надет сезонный скин — возвращаем классический
+        if (SEASON_SKINS.includes(this.userData.currentSkin)) {
+            this.userData.currentSkin = 'classic';
+            if (this.clickIcon) this.clickIcon.src = this.skinsData.classic.image;
+        }
+
+        this.userData.seasonVersion = this.SEASON_VERSION;
+        this._savePending = true;        // изменения ждут записи в базу
+        this._forceSaveOnce = true;      // пишем в базу сразу после загрузки
+        this._tiersRaceKey = null;       // лента перерисуется под новый уровень
+        this._uiCache = {};              // сбрасываем кэш цифр интерфейса
     }
     
     loadElements() {
@@ -476,6 +562,10 @@ class ClickerGame {
     }
     
     setupEventListeners() {
+        // Сброс кэша позиций эффектов: положение кликера меняется при скролле/повороте
+        window.addEventListener('resize', () => this._invalidateRects(), { passive: true });
+        window.addEventListener('orientationchange', () => this._invalidateRects(), { passive: true });
+        window.addEventListener('scroll', () => this._invalidateRects(), { passive: true });
         this.navBtns.forEach(btn => btn.addEventListener('click', (e) => { e.preventDefault(); this.switchTab(btn.dataset.tab); }));
         if (this.clickButton) this.clickButton.addEventListener('click', (e) => { e.preventDefault(); this.handleClick(e); });
         if (this.buyPremiumBtn) this.buyPremiumBtn.addEventListener('click', (e) => { e.preventDefault(); this.buyPremiumPass(); });
@@ -537,37 +627,49 @@ class ClickerGame {
         if (tabId === 'promocodes') { this.updatePromocodesList(); this.updatePromocodesHistory(); }
         if (tabId === 'season') {
             this.updateSeasonUI();
+            if (this._seasonAutoScrollFrame) cancelAnimationFrame(this._seasonAutoScrollFrame);
+            this._seasonAutoScrollFrame = requestAnimationFrame(() => {
+                const sc = document.getElementById('seasonTrackScroll');
+                const cur = document.querySelector('.season-tier-column.current');
+                if (!sc || !cur) return;
+                sc.scrollLeft = Math.max(0, cur.offsetLeft - (sc.clientWidth / 2) + (cur.clientWidth / 2));
+                this._seasonAutoScrollFrame = null;
+            });
             setTimeout(() => this.updateScrollButtons(), 200);
-            if (!this._seasonAutoScrolled) {
-                this._seasonAutoScrolled = true;
-                setTimeout(() => {
-                    const sc = document.getElementById('seasonTrackScroll');
-                    const cur = document.querySelector('.season-tier-column.current');
-                    if (sc && cur) {
-                        const pos = cur.offsetLeft - (sc.clientWidth / 2) + (cur.clientWidth / 2);
-                        sc.scrollTo({ left: Math.max(0, pos), behavior: 'smooth' });
-                    }
-                }, 250);
-            }
         }
         if (tabId === 'leaderboard') {
             const activeTab = document.querySelector('.leaderboard-tabs .active');
             this.updateLeaderboard(activeTab ? activeTab.dataset.leaderboard : 'clicks');
         }
         if (tabId === 'events') this.showEventsList();
-    }    // ===== СЕЗОННЫЙ ПРОПУСК (150 УРОВНЕЙ) =====
+        this._invalidateRects();
+    }
+
+    // ===== СЕЗОННЫЙ ПРОПУСК (MAX_SEASON_LEVEL УРОВНЕЙ) =====
     getSeasonExpNeeded(level) {
         if (level <= 10) return 100 + (level - 1) * 50;
         if (level <= 50) return 600 + (level - 11) * 46;
-        if (level <= 100) return 2550 + (level - 51) * 49;
-        return 5100 + (level - 101) * 50;
+        return 2550 + (level - 51) * 49;
     }
 
+    // Начисление XP. Раньше здесь вызывался updateSeasonUI(), который перерисовывал
+    // всю ленту из 150 уровней (600+ узлов и 450 картинок) НА КАЖДЫЙ КЛИК — это и был    // главный источник лагов. Теперь обновляется только прогресс-бар (троттлинг через rAF),
+    // а лента трогается лишь тогда, когда реально меняется уровень.
     addSeasonExp(amount) {
-        const xpGain = Math.max(1, Math.floor(amount / 100));
+        this._applySeasonExp(Math.max(1, Math.floor(amount / 100)));
+    }
+
+    // Пакетное начисление XP (автокликер): считаем один раз, в DOM пишем один раз
+    addSeasonExpBatch(totalAmount) {
+        if (!this.userData || totalAmount <= 0) return;
+        this._applySeasonExp(Math.max(1, Math.floor(totalAmount / 100)));
+    }
+
+    _applySeasonExp(xpGain) {
+        if (!this.userData) return;
         this.userData.seasonExp = (this.userData.seasonExp || 0) + xpGain;
         let leveledUp = false;
-        while (this.userData.seasonLevel < 150) {
+        while (this.userData.seasonLevel < this.MAX_SEASON_LEVEL) {
             const expNeeded = this.getSeasonExpNeeded(this.userData.seasonLevel);
             if (this.userData.seasonExp >= expNeeded) {
                 this.userData.seasonExp -= expNeeded;
@@ -575,37 +677,68 @@ class ClickerGame {
                 leveledUp = true;
             } else break;
         }
-        if (this.userData.seasonLevel >= 150) this.userData.seasonExp = 0;
-        this.updateSeasonUI();
+        if (this.userData.seasonLevel >= this.MAX_SEASON_LEVEL) this.userData.seasonExp = 0;
+        this.scheduleSeasonBarSync();
         if (leveledUp) {
+            this._tiersStateKey = null;      // уровень изменился — лента обновится один раз
+            this._tiersRaceKey = null;
+            this._uiCache.seasonLevel = null;
             this.saveGame();
             this.showToast(`🎫 Новый уровень сезонного пропуска: ${this.userData.seasonLevel}!`, 'success');
         }
     }
 
-    updateSeasonUI() {
-        const seasonLevelEl = document.getElementById('seasonLevel');
-        const seasonProgressEl = document.getElementById('seasonProgress');
+    // Лёгкая синхронизация прогресс-бара: не чаще одного раза на кадр
+    scheduleSeasonBarSync() {
+        if (this._seasonBarFrame) return;
+        const run = () => {
+            this._seasonBarFrame = null;
+            this.syncSeasonBar();
+        };
+        if (typeof requestAnimationFrame === 'function') this._seasonBarFrame = requestAnimationFrame(run);
+        else run();
+    }
+
+    syncSeasonBar() {
+        if (!this.userData) return;
+        const level = this.userData.seasonLevel || 1;
+        const exp = this.userData.seasonExp || 0;
+        const maxLevel = this.MAX_SEASON_LEVEL;
+        const isMax = level >= maxLevel;
+        const expNeeded = isMax ? 1 : this.getSeasonExpNeeded(level);
+        const progress = isMax ? 100 : Math.min(100, (exp / expNeeded) * 100);
+
+        if (this.seasonProgress) this.seasonProgress.style.width = progress + '%';
+        if (this.seasonLevel && this._uiCache.seasonLevel !== level) {
+            this.seasonLevel.textContent = level;
+            this._uiCache.seasonLevel = level;
+        }
         const seasonExpTextEl = document.getElementById('seasonExpText');
+        if (seasonExpTextEl) {
+            const text = isMax ? 'МАКСИМУМ' : `${this.formatNumber(exp)} / ${this.formatNumber(expNeeded)} XP`;
+            if (this._uiCache.seasonExpText !== text) {
+                seasonExpTextEl.textContent = text;
+                this._uiCache.seasonExpText = text;
+            }
+        }
+    }
+
+    // Полное обновление сезонной вкладки (шапка + лента). Вызывается только при
+    // открытии вкладки «Сезон» и после покупок/получения наград — НЕ в цикле клика.
+    updateSeasonUI() {
+        this.syncSeasonBar();
+
+        const level = this.userData.seasonLevel || 1;
         const premiumBtnTextEl = document.getElementById('premiumBtnText');
         const buyPremiumBtn = document.getElementById('buyPremiumBtn');
         const buyLevelBtn = document.getElementById('buyLevelBtn');
         const buyLevelTextEl = document.getElementById('buyLevelText');
         const buyLevelsBalanceEl = document.getElementById('buyLevelsBalance');
-        
-        const level = this.userData.seasonLevel || 1;
-        const exp = this.userData.seasonExp || 0;
-        const expNeeded = level >= 150 ? 1 : this.getSeasonExpNeeded(level);
-        const progress = level >= 150 ? 100 : Math.min(100, (exp / expNeeded) * 100);
-        
-        if (seasonLevelEl) seasonLevelEl.textContent = level;
-        if (seasonProgressEl) seasonProgressEl.style.width = progress + '%';
-        if (seasonExpTextEl) {
-            if (level >= 150) seasonExpTextEl.textContent = 'МАКСИМУМ';
-            else seasonExpTextEl.textContent = `${exp.toLocaleString()} / ${expNeeded.toLocaleString()} XP`;
-        }
-        
-        if (buyPremiumBtn && premiumBtnTextEl) {
+        const cache = this._uiCache;
+
+        // Покупка премиума / уровней: пишем в DOM только при реальном изменении
+        const premiumKey = 'premium:' + (this.userData.premiumPass ? '1' : '0');
+        if (buyPremiumBtn && premiumBtnTextEl && cache.premiumBtn !== premiumKey) {
             if (this.userData.premiumPass) {
                 buyPremiumBtn.classList.add('active');
                 buyPremiumBtn.disabled = true;
@@ -615,27 +748,39 @@ class ClickerGame {
                 buyPremiumBtn.disabled = false;
                 premiumBtnTextEl.innerHTML = `${this.getDilicksIcon()} КУПИТЬ ПРЕМИУМ — 15000`;
             }
+            cache.premiumBtn = premiumKey;
         }
-        
-        if (buyLevelBtn && buyLevelTextEl) {
-            if (level >= 150) {
+
+        const levelKey = level >= this.MAX_SEASON_LEVEL ? 'max' : 'buy';
+        if (buyLevelBtn && buyLevelTextEl && cache.buyLevelBtn !== levelKey) {
+            if (level >= this.MAX_SEASON_LEVEL) {
                 buyLevelBtn.disabled = true;
                 buyLevelTextEl.textContent = '🏆 МАКС. УРОВЕНЬ';
             } else {
                 buyLevelBtn.disabled = false;
                 buyLevelTextEl.textContent = '⬆️ КУПИТЬ УРОВНИ';
             }
+            cache.buyLevelBtn = levelKey;
         }
-        
-        if (buyLevelsBalanceEl) buyLevelsBalanceEl.textContent = (this.userData.dilicks || 0).toLocaleString();
-        
+
+        if (buyLevelsBalanceEl) {
+            const balKey = this.userData.dilicks || 0;
+            if (cache.buyLevelsBalance !== balKey) {
+                buyLevelsBalanceEl.textContent = this.formatNumber(balKey);
+                cache.buyLevelsBalance = balKey;
+            }
+        }
+
         const claimAllBtn = document.getElementById('claimAllBtn');
         if (claimAllBtn) {
             const hasClaimable = this.hasClaimableSeasonRewards();
-            claimAllBtn.disabled = !hasClaimable;
-            claimAllBtn.textContent = hasClaimable ? '🎁 СОБРАТЬ ВСЁ' : '✅ ВСЁ СОБРАНО';
+            if (cache.claimAll !== hasClaimable) {
+                claimAllBtn.disabled = !hasClaimable;
+                claimAllBtn.textContent = hasClaimable ? '🎁 СОБРАТЬ ВСЁ' : '✅ ВСЁ СОБРАНО';
+                cache.claimAll = hasClaimable;
+            }
         }
-        
+
         this.renderSeasonTiers();
     }
     
@@ -643,11 +788,26 @@ class ClickerGame {
         const level = this.userData.seasonLevel || 1;
         const premium = this.userData.premiumPass || false;
         const claimed = this.userData.seasonClaimed || { free: [], premium: [] };
+        // Set вместо includes() внутри цикла: было O(n²) на каждый вызов
+        const claimedFree = new Set(claimed.free || []);
+        const claimedPremium = new Set(claimed.premium || []);
         for (let lvl = 1; lvl <= level; lvl++) {
-            if (!claimed.free.includes(lvl)) return true;
-            if (premium && !claimed.premium.includes(lvl)) return true;
+            if (!claimedFree.has(lvl)) return true;
+            if (premium && !claimedPremium.has(lvl)) return true;
         }
         return false;
+    }
+
+    // Быстрый кэшированный формат чисел (toLocaleString в цикле клика — дорого).
+    // Локаль не задаём жёстко — формат остаётся ровно таким, как был.
+    formatNumber(value) {
+        const num = Number(value) || 0;
+        if (this._numberFormatter === undefined) {
+            try { this._numberFormatter = new Intl.NumberFormat(); }
+            catch (e) { this._numberFormatter = null; }
+        }
+        if (this._numberFormatter) return this._numberFormatter.format(num);
+        return num.toLocaleString();
     }
     
     async claimAllSeasonRewards() {
@@ -741,103 +901,275 @@ class ClickerGame {
         setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 500); }, 4500);
     }
 
+    // ===== НАГРАДЫ СЕЗОНА =====
+    // Сезон сокращён со 150 до MAX_SEASON_LEVEL (50) уровней, поэтому редкие
+    // премиум-скины перенесены на достижимые уровни:
+    //   ДИЛИК МАСТЕР (×55)  — 25 уровень
+    //   ДИЛИК ЛОРД   (×100) — 40 уровень
+    //   ДИЛИК КОРОЛЬ (×145) — 50 уровень, главная награда сезона
     getSeasonReward(level, isPremium) {
+        const maxLevel = this.MAX_SEASON_LEVEL;
         if (isPremium) {
-            if (level === 150) return { type: 'skin', skinId: 'uragan_dragon_top3', name: 'ДИЛИК КОРОЛЬ' };
-            if (level === 100) return { type: 'skin', skinId: 'uragan_holo_top10', name: 'ДИЛИК ЛОРД' };
-            if (level === 50) return { type: 'skin', skinId: 'uragan_banana_top50', name: 'ДИЛИК МАСТЕР' };
-            if (level % 25 === 0) return { type: 'dilicks', value: 10000 };
-            if (level % 10 === 0) return { type: 'dilicks', value: 2500 };
-            if (level % 5 === 0) return { type: 'dilicks', value: 1000 };
+            if (level >= maxLevel) return { type: 'skin', skinId: 'uragan_dragon_top3', name: 'ДИЛИК КОРОЛЬ' };
+            if (level === 40) return { type: 'skin', skinId: 'uragan_holo_top10', name: 'ДИЛИК ЛОРД' };
+            if (level === 25) return { type: 'skin', skinId: 'uragan_banana_top50', name: 'ДИЛИК МАСТЕР' };
+            if (level % 15 === 0) return { type: 'dilicks', value: 10000 };
+            if (level % 5 === 0) return { type: 'dilicks', value: 2500 };
             if (level % 3 === 0) return { type: 'dilicks', value: 500 };
-            if (level === 5) return { type: 'dilicks', value: 500 };
-            if (level === 15) return { type: 'dilicks', value: 1500 };
+            if (level === 5) return { type: 'dilicks', value: 1500 };
             if (level === 20) return { type: 'dilicks', value: 2000 };
             if (level % 2 === 0) return { type: 'money', value: 15000 };
             return { type: 'money', value: 7500 };
         } else {
-            if (level === 150) return { type: 'dilicks', value: 25000 };
-            if (level === 100) return { type: 'dilicks', value: 10000 };
-            if (level === 50) return { type: 'dilicks', value: 2500 };
-            if (level % 25 === 0) return { type: 'dilicks', value: 1500 };
-            if (level % 10 === 0) return { type: 'dilicks', value: 500 };
+            if (level >= maxLevel) return { type: 'dilicks', value: 25000 };
+            if (level === 40) return { type: 'dilicks', value: 10000 };
+            if (level === 25) return { type: 'dilicks', value: 2500 };
+            if (level % 15 === 0) return { type: 'dilicks', value: 1500 };
             if (level % 5 === 0) return { type: 'dilicks', value: 200 };
             if (level % 3 === 0) return { type: 'money', value: 3000 };
             return { type: 'money', value: 800 };
         }
     }
 
+    // ===== ЛЕНТА СЕЗОНА: инкрементальный рендер =====
+    // Было: на каждый вызов innerHTML = '' и создание 150 колонок = 600+ узлов,
+    // 300 кнопок со своими слушателями и 450 <img> с внешних CDN. Обновление
+    // состояния теперь меняет только атрибуты у уже созданных узлов, картинки
+    // больше не перезагружаются, а кнопки «ЗАБРАТЬ» обрабатываются делегированием.
     renderSeasonTiers() {
         const container = document.getElementById('seasonTrack');
         if (!container) return;
+
+        // Ленту из 150 колонок строим не во время старта игры (когда грузится интерфейс
+        // и профиль), а когда браузер свободен и вкладка «Сезон» реально показана.
+        const seasonTab = document.getElementById('season');
+        const tabVisible = !!seasonTab && seasonTab.classList.contains('active');
+        if (!this._tiersRendered && !tabVisible) {
+            if (!this._tiersDeferScheduled) {
+                this._tiersDeferScheduled = true;
+                // Собираем напрямую, без повторного входа в renderSeasonTiers
+                const build = () => {
+                    this._tiersDeferScheduled = false;
+                    if (this._tiersRendered) return;
+                    const c = document.getElementById('seasonTrack');
+                    if (!c || !this.userData) return;
+                    const level = this.userData.seasonLevel || 1;
+                    const prem = this.userData.premiumPass || false;
+                    const free = new Set((this.userData.seasonClaimed && this.userData.seasonClaimed.free) || []);
+                    const premClaimed = new Set((this.userData.seasonClaimed && this.userData.seasonClaimed.premium) || []);
+                    this._buildSeasonTiers(c, level, prem, free, premClaimed);
+                    const raceKey = level + ':' + (prem ? 1 : 0) + ':' + free.size + ':' + premClaimed.size;
+                    this._tiersRaceKey = raceKey;
+                    this.updateScrollButtons();
+                };
+                if (typeof requestIdleCallback === 'function') requestIdleCallback(build, { timeout: 1500 });
+                else setTimeout(build, 300);
+            }
+            return;
+        }
+
         const currentLevel = this.userData.seasonLevel || 1;
         const premium = this.userData.premiumPass || false;
-        const claimed = this.userData.seasonClaimed || { free: [], premium: [] };
-        container.innerHTML = '';
-        
-        for (let level = 1; level <= 150; level++) {
-            const isCurrent = level === currentLevel;
-            const isUnlocked = level <= currentLevel;
+        const claimedFree = new Set((this.userData.seasonClaimed && this.userData.seasonClaimed.free) || []);
+        const claimedPremium = new Set((this.userData.seasonClaimed && this.userData.seasonClaimed.premium) || []);
+
+        // Если с прошлого рендера ничего не изменилось — вообще не трогаем DOM
+        const raceKey = currentLevel + ':' + (premium ? 1 : 0) + ':' + claimedFree.size + ':' + claimedPremium.size;
+        if (this._tiersRendered && this._tiersRaceKey === raceKey) return;
+        this._tiersRaceKey = raceKey;
+
+        // Если сменилось только состояние (уровень/награды) — обновляем атрибуты,
+        // не трогая структуру. Полная сборка нужна один раз.
+        const maxLevel = this.MAX_SEASON_LEVEL;
+        if (this._tiersCache && this._tiersCache.count === maxLevel) {
+            for (let level = 1; level <= maxLevel; level++) {
+                const entry = this._tiersCache.columns[level - 1];
+                if (!entry) continue;
+                this.updateTierColumn(entry, level, currentLevel, premium, claimedFree, claimedPremium);
+            }
+            setTimeout(() => this.updateScrollButtons(), 100);
+            return;
+        }
+
+        this._buildSeasonTiers(container, currentLevel, premium, claimedFree, claimedPremium);
+        setTimeout(() => this.updateScrollButtons(), 100);
+    }
+
+    _buildSeasonTiers(container, currentLevel, premium, claimedFree, claimedPremium) {
+        // 1) вся разметка собирается в фрагменте (одна вставка в DOM)
+        const frag = document.createDocumentFragment();
+        const columns = [];
+        const maxLevel = this.MAX_SEASON_LEVEL;
+
+        for (let level = 1; level <= maxLevel; level++) {
             const column = document.createElement('div');
-            column.className = `season-tier-column ${isCurrent ? 'current' : ''} ${isUnlocked ? 'unlocked' : ''}`;
             column.dataset.level = level;
-            
+
             const badge = document.createElement('div');
             badge.className = 'season-tier-badge';
             badge.textContent = level;
             column.appendChild(badge);
-            
-            const premReward = this.getSeasonReward(level, true);
-            const premClaimed = claimed.premium && claimed.premium.includes(level);
-            const premUnlocked = premium && isUnlocked;
+
             const premCell = document.createElement('div');
-            premCell.className = `season-tier-cell premium ${premUnlocked ? 'unlocked' : ''} ${premClaimed ? 'claimed' : ''} ${!premUnlocked && !premClaimed ? 'locked' : ''}`;
-            premCell.appendChild(this.createRewardElement(premReward));
-            if (premClaimed) {
-                const mark = document.createElement('div'); mark.className = 'season-tier-status claimed-mark'; mark.textContent = '✅'; premCell.appendChild(mark);
-            } else if (premUnlocked) {
-                const btn = document.createElement('button'); btn.className = 'season-tier-claim-btn'; btn.textContent = 'ЗАБРАТЬ';
-                btn.addEventListener('click', (e) => { e.stopPropagation(); this.claimSeasonReward(level, true); });
-                premCell.appendChild(btn);
-            } else {
-                const mark = document.createElement('div'); mark.className = 'season-tier-status locked-mark'; mark.textContent = premium ? '🔒' : '👑'; premCell.appendChild(mark);
-            }
+            premCell.dataset.premium = '1';
+            const premContent = this.createRewardContent(this.getSeasonReward(level, true));
+            premCell.appendChild(premContent.el);
+            const premStatus = document.createElement('span');
+            premStatus.className = 'season-tier-status';
+            const premBtn = document.createElement('button');
+            premBtn.type = 'button';
+            premBtn.className = 'season-tier-claim-btn';
+            premBtn.textContent = 'ЗАБРАТЬ';
+            premBtn.dataset.level = level;
+            premBtn.dataset.tier = 'premium';
+            premBtn.hidden = true;
+            premCell.appendChild(premStatus);
+            premCell.appendChild(premBtn);
             column.appendChild(premCell);
-            
-            const freeReward = this.getSeasonReward(level, false);
-            const freeClaimed = claimed.free && claimed.free.includes(level);
+
             const freeCell = document.createElement('div');
-            freeCell.className = `season-tier-cell ${isUnlocked ? 'unlocked' : ''} ${freeClaimed ? 'claimed' : ''} ${!isUnlocked ? 'locked' : ''}`;
-            freeCell.appendChild(this.createRewardElement(freeReward));
-            if (freeClaimed) {
-                const mark = document.createElement('div'); mark.className = 'season-tier-status claimed-mark'; mark.textContent = '✅'; freeCell.appendChild(mark);
-            } else if (isUnlocked) {
-                const btn = document.createElement('button'); btn.className = 'season-tier-claim-btn'; btn.textContent = 'ЗАБРАТЬ';
-                btn.addEventListener('click', (e) => { e.stopPropagation(); this.claimSeasonReward(level, false); });
-                freeCell.appendChild(btn);
-            } else {
-                const mark = document.createElement('div'); mark.className = 'season-tier-status locked-mark'; mark.textContent = '🔒'; freeCell.appendChild(mark);
-            }
+            freeCell.dataset.premium = '0';
+            const freeContent = this.createRewardContent(this.getSeasonReward(level, false));
+            freeCell.appendChild(freeContent.el);
+            const freeStatus = document.createElement('span');
+            freeStatus.className = 'season-tier-status';
+            const freeBtn = document.createElement('button');
+            freeBtn.type = 'button';
+            freeBtn.className = 'season-tier-claim-btn';
+            freeBtn.textContent = 'ЗАБРАТЬ';
+            freeBtn.dataset.level = level;
+            freeBtn.dataset.tier = 'free';
+            freeBtn.hidden = true;
+            freeCell.appendChild(freeStatus);
+            freeCell.appendChild(freeBtn);
             column.appendChild(freeCell);
-            container.appendChild(column);
+
+            const entry = {
+                column: column,
+                badge: badge,
+                premium: { cell: premCell, status: premStatus, btn: premBtn, content: premContent },
+                free: { cell: freeCell, status: freeStatus, btn: freeBtn, content: freeContent }
+            };
+            columns.push(entry);
+            frag.appendChild(column);
         }
-        
-        setTimeout(() => this.updateScrollButtons(), 100);
+
+        // 2) наполняем состояниями до вставки в DOM
+        for (let level = 1; level <= maxLevel; level++) {
+            this.updateTierColumn(columns[level - 1], level, currentLevel, premium, claimedFree, claimedPremium);
+        }
+
+        // 3) одна вставка вместо сотен appendChild
+        container.innerHTML = '';
+        container.appendChild(frag);
+
+        // 4) делегирование клика: один слушатель вместо 300
+        if (this._tiersClickHandler) container.removeEventListener('click', this._tiersClickHandler);
+        this._tiersClickHandler = (e) => {
+            const btn = e.target.closest ? e.target.closest('.season-tier-claim-btn') : null;
+            if (!btn || btn.hidden) return;
+            e.preventDefault();
+            e.stopPropagation();
+            this.claimSeasonReward(parseInt(btn.dataset.level, 10), btn.dataset.tier === 'premium');
+        };
+        container.addEventListener('click', this._tiersClickHandler);
+
+        this._tiersCache = { count: maxLevel, columns: columns };
+        this._tiersRendered = true;
     }
 
-    createRewardElement(reward) {
+    updateTierColumn(entry, level, currentLevel, premium, claimedFree, claimedPremium) {
+        if (!entry) return;
+        const isCurrent = level === currentLevel;
+        const isUnlocked = level <= currentLevel;
+
+        const columnClass = 'season-tier-column' + (isCurrent ? ' current' : '') + (isUnlocked ? ' unlocked' : '');
+        if (entry.column.className !== columnClass) entry.column.className = columnClass;
+
+        this._updateTierCell(entry.premium, level, true, premium && isUnlocked, claimedPremium.has(level), premium);
+        this._updateTierCell(entry.free, level, false, isUnlocked, claimedFree.has(level), premium);
+    }
+
+    _updateTierCell(cell, level, isPremium, unlocked, claimed, hasPremiumPass) {
+        const cls = 'season-tier-cell'
+            + (isPremium ? ' premium' : '')
+            + (unlocked ? ' unlocked' : '')
+            + (claimed ? ' claimed' : '')
+            + (!unlocked && !claimed ? ' locked' : '');
+        if (cell.cell.className !== cls) cell.cell.className = cls;
+
+        // Значок статуса / кнопка получения (внешний вид как был: ✅ / ЗАБРАТЬ / 👑 или 🔒)
+        if (claimed) {
+            if (cell.status.textContent !== '✅') cell.status.textContent = '✅';
+            if (cell.status.className !== 'season-tier-status claimed-mark') cell.status.className = 'season-tier-status claimed-mark';
+            if (cell.status.hidden) cell.status.hidden = false;
+            if (!cell.btn.hidden) cell.btn.hidden = true;
+        } else if (unlocked) {
+            if (!cell.status.hidden) cell.status.hidden = true;
+            if (cell.btn.hidden) cell.btn.hidden = false;
+        } else {
+            const glyph = (isPremium && !hasPremiumPass) ? '👑' : '🔒';
+            if (cell.status.textContent !== glyph) cell.status.textContent = glyph;
+            if (cell.status.className !== 'season-tier-status locked-mark') cell.status.className = 'season-tier-status locked-mark';
+            if (cell.status.hidden) cell.status.hidden = false;
+            if (!cell.btn.hidden) cell.btn.hidden = true;
+        }
+
+        const reward = this.getSeasonReward(level, isPremium);
+        this.applyRewardContent(cell.content, reward);
+    }
+
+    // Разметка награды создаётся ОДИН раз. Раньше innerHTML со <img> заставлял
+    // браузер заново скачивать/декодировать 450 картинок на каждую перерисовку.
+    createRewardContent(reward) {
         const el = document.createElement('div');
         el.style.display = 'flex';
         el.style.flexDirection = 'column';
         el.style.alignItems = 'center';
         el.style.gap = '4px';
-        if (reward.type === 'money') el.innerHTML = `<img src="${this.MONEY_ICON}" class="season-tier-icon"><div class="season-tier-value">${reward.value.toLocaleString()}</div>`;
-        else if (reward.type === 'dilicks') el.innerHTML = `<img src="${this.DILICKS_ICON}" class="season-tier-icon"><div class="season-tier-value">${reward.value.toLocaleString()}</div>`;
-        else if (reward.type === 'skin') {
+
+        let img = null;
+        let text = null;
+        if (reward.type === 'money' || reward.type === 'dilicks') {
+            img = document.createElement('img');
+            img.className = 'season-tier-icon';
+            img.src = reward.type === 'money' ? this.MONEY_ICON : this.DILICKS_ICON;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.draggable = false;
+            text = document.createElement('div');
+            text.className = 'season-tier-value';
+            el.appendChild(img);
+            el.appendChild(text);
+        } else if (reward.type === 'skin') {
             const skin = this.skinsData[reward.skinId];
-            el.innerHTML = `<img src="${skin ? skin.image : this.DILICKS_ICON}" class="season-tier-icon"><div class="season-tier-name">${reward.name}</div>`;
+            img = document.createElement('img');
+            img.className = 'season-tier-icon';
+            img.src = skin ? skin.image : this.DILICKS_ICON;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.draggable = false;
+            text = document.createElement('div');
+            text.className = 'season-tier-name';
+            text.textContent = reward.name;
+            el.appendChild(img);
+            el.appendChild(text);
         }
-        return el;
+        const content = { el: el, img: img, text: text, sig: null };
+        return content;
+    }
+
+    applyRewardContent(content, reward) {
+        if (!content || !content.text) return;
+        let valueText = '';
+        if (reward.type === 'money' || reward.type === 'dilicks') valueText = this.formatNumber(reward.value);
+        else if (reward.type === 'skin') valueText = reward.name || '';
+
+        // signature: если содержимое не изменилось — не трогаем DOM вообще
+        const sig = reward.type + ':' + valueText;
+        if (content.sig === sig) return;
+        content.sig = sig;
+        if (content.text.textContent !== valueText) content.text.textContent = valueText;
     }
 
     async claimSeasonReward(level, isPremium) {
@@ -846,6 +1178,9 @@ class ClickerGame {
         if (!this.userData.seasonClaimed) this.userData.seasonClaimed = { free: [], premium: [] };
         const key = isPremium ? 'premium' : 'free';
         if (this.userData.seasonClaimed[key].includes(level)) return;
+        if (this._claimingTier) return;      // защита от двойного тапа по «ЗАБРАТЬ»
+        this._claimingTier = true;
+        try {
         const reward = this.getSeasonReward(level, isPremium);
         let toastMsg = '';
         if (reward.type === 'money') { this.userData.money += reward.value; toastMsg = `+${reward.value.toLocaleString()} ${this.getMoneyIcon()}`; }
@@ -856,13 +1191,17 @@ class ClickerGame {
             else { this.userData.dilicks += 1000; toastMsg = `+1000 ${this.getDilicksIcon()} (скин был)`; }
         }
         this.userData.seasonClaimed[key].push(level);
+        this._uiCache.claimAll = null;
         this.showToast(`✅ Получено: ${toastMsg}`, 'success');
         this.updateUI();
         this.updateInventory();
         this.updateShopStatus();
         this.updateSeasonUI();
-        await this.saveGame();
+        await this.saveGame(true);   // награду нельзя терять при закрытии
         this.checkAchievements();
+        } finally {
+            this._claimingTier = false;
+        }
     }
 
     async buyPremiumPass() {
@@ -876,11 +1215,11 @@ class ClickerGame {
         this.userData.premiumPass = true;
         const oldLevel = this.userData.seasonLevel || 1;
         const bonusLevels = 10;
-        const newLevel = Math.min(150, oldLevel + bonusLevels);
+        const newLevel = Math.min(this.MAX_SEASON_LEVEL, oldLevel + bonusLevels);
         this.userData.seasonLevel = newLevel;
         this.updateUI();
         this.updateSeasonUI();
-        await this.saveGame();
+        await this.saveGame(true);   // покупка за дилики фиксируется сразу
         this.showPremiumActivationAnimation(oldLevel, newLevel);
         this.showToast(`👑 ПРЕМИУМ АКТИВЕН! +${bonusLevels} уровней сразу!`, 'success');
     }
@@ -943,8 +1282,8 @@ class ClickerGame {
     
     async buySeasonLevels(count) {
         const currentLevel = this.userData.seasonLevel || 1;
-        if (currentLevel >= 150) { this.showToast('🏆 Максимум!', 'warning'); this.closeBuyLevelsModal(); return; }
-        const actualLevels = Math.min(count, 150 - currentLevel);
+        if (currentLevel >= this.MAX_SEASON_LEVEL) { this.showToast('🏆 Максимум!', 'warning'); this.closeBuyLevelsModal(); return; }
+        const actualLevels = Math.min(count, this.MAX_SEASON_LEVEL - currentLevel);
         const cost = this.getLevelsPrice(count);
         if (this.userData.dilicks < cost) { this.showToast(`❌ Нужно: ${cost.toLocaleString()} ${this.getDilicksIcon()}`, 'error'); return; }
         this.userData.dilicks -= cost;
@@ -952,7 +1291,7 @@ class ClickerGame {
         this.userData.seasonExp = 0;
         this.updateUI();
         this.updateSeasonUI();
-        await this.saveGame();
+        await this.saveGame(true);   // покупка уровней фиксируется сразу
         this.showLevelsBoughtAnimation(actualLevels, this.userData.seasonLevel);
         this.showToast(`⬆️ +${actualLevels} уровней! Теперь LVL ${this.userData.seasonLevel}`, 'success');
         if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 100]);
@@ -1296,8 +1635,12 @@ class ClickerGame {
         }
         const allQuest = this.userData.eventQuests.quests.find(q => q.id === 'all');
         if (allQuest && !allQuest.completed) {
-            const allCompleted = this.userData.eventQuests.quests.filter(q => q.id !== 'all' && q.completed).length === 5;
-            if (allCompleted) {
+            // было filter(...).length === 5 — лишние аллокации в цикле клика
+            let completedCount = 0;
+            for (const q of this.userData.eventQuests.quests) {
+                if (q.id !== 'all' && q.completed) completedCount++;
+            }
+            if (completedCount === 5) {
                 allQuest.completed = true;
                 this.userData.dilicks += allQuest.reward;
                 changed = true;
@@ -1412,22 +1755,58 @@ class ClickerGame {
     async updateUraganTop() {
         const topList = document.getElementById('topList');
         if (!topList) return;
+        if (this._uraganTopBusy) return;      // не запускаем повторно, пока идёт загрузка
+        this._uraganTopBusy = true;
         topList.innerHTML = '<div class="top-item">Загрузка...</div>';
         try {
-            const snapshot = await firebase.database().ref('users').once('value');
-            const users = snapshot.val();
-            const topPlayers = [];
-            for (const [id, user] of Object.entries(users)) {
-                const contribution = user.eventContribution || 0;
-                if (contribution > 0) {
-                    const displayName = user.settings?.displayName || user.username;
-                    topPlayers.push({ name: displayName, contribution, id });
+            // Раньше читалась ВСЯ ветка users целиком — тот же тяжёлый запрос, что
+            // и в лидерборде. Теперь: список игроков + чтение по одному с таймаутом.
+            let topPlayers = [];
+            try {
+                const ids = await this._fetchUserIds();
+                if (ids.length === 0) throw new Error('нет списка игроков');
+
+                const self = this;
+                let cursor = 0;
+                async function worker() {
+                    while (cursor < ids.length) {
+                        const id = ids[cursor++];
+                        try {
+                            const contribution = Number(await self._restGet('/users/' + id + '/eventContribution.json', 6000)) || 0;
+                            if (contribution > 0) topPlayers.push({ name: id, contribution, id });
+                        } catch (e) { /* пропускаем только этого игрока */ }
+                    }
                 }
+                const workers = [];
+                for (let i = 0; i < Math.min(6, ids.length); i++) workers.push(worker());
+                await Promise.all(workers);
+
+                // имена нужны только для тех, кто реально в топе
+                topPlayers.sort((a, b) => b.contribution - a.contribution);
+                topPlayers = topPlayers.slice(0, 10);
+                await Promise.all(topPlayers.map(async (p) => {
+                    try {
+                        const nm = await this._restGet('/users/' + p.id + '/username.json', 6000);
+                        if (nm) p.name = nm;
+                    } catch (e) { /* оставляем id вместо имени */ }
+                }));
+            } catch (e) {
+                console.warn('Топ ивента: быстрый путь не сработал, пробую полное чтение');
+                const snapshot = await this._withTimeout(firebase.database().ref('users').once('value'), 10000);
+                const users = snapshot.val() || {};
+                topPlayers = [];
+                for (const [id, user] of Object.entries(users)) {
+                    if (!user || typeof user !== 'object') continue;
+                    const contribution = Number(user.eventContribution) || 0;
+                    if (contribution > 0) topPlayers.push({ name: user.settings?.displayName || user.username || 'Игрок', contribution, id });
+                }
+                topPlayers.sort((a, b) => b.contribution - a.contribution);
+                topPlayers = topPlayers.slice(0, 10);
             }
-            topPlayers.sort((a, b) => b.contribution - a.contribution);
-            const top10 = topPlayers.slice(0, 10);
+
             topList.innerHTML = '';
-            top10.forEach((player, index) => {
+            if (topPlayers.length === 0) { topList.innerHTML = '<div class="top-item">Пока нет участников</div>'; return; }
+            topPlayers.forEach((player, index) => {
                 const item = document.createElement('div');
                 item.className = 'top-item';
                 let medal = '';
@@ -1437,31 +1816,63 @@ class ClickerGame {
                 item.innerHTML = `<div class="top-rank">${medal || (index + 1)}</div><div class="top-name">${player.name} ${player.id === localStorage.getItem('userId') ? '👑' : ''}</div><div class="top-value">${player.contribution.toLocaleString()} ${this.getDilicksIcon()}</div>`;
                 topList.appendChild(item);
             });
-            if (top10.length === 0) topList.innerHTML = '<div class="top-item">Пока нет участников</div>';
-        } catch (error) { console.error(error); topList.innerHTML = '<div class="top-item">Ошибка загрузки</div>'; }
+        } catch (error) {
+            console.error(error);
+            topList.innerHTML = '<div class="top-item">Не удалось загрузить</div>';
+        } finally {
+            this._uraganTopBusy = false;
+        }
     }
     
-    async addEventContribution(amount) {
+    // Вклад в ивент. Раньше на КАЖДЫЙ КЛИК выполнялись чтение всей ветки ивента из
+    // базы + запись + сохранение профиля. Теперь вклад копится локально, а в базу
+    // уходит раз в 5 секунд через транзакцию (атомарный инкремент — без гонок, когда
+    // играют несколько человек одновременно).
+    addEventContribution(amount) {
         if (!this.uraganEventActive) return;
         if (amount <= 0) return;
         const booster = (this.userData.eventBooster || 0) * 0.05;
         const boostedAmount = Math.floor(amount * (1 + booster));
         this.userData.eventContribution = (this.userData.eventContribution || 0) + boostedAmount;
-        const eventsRef = firebase.database().ref('events/dilicksHurricane');
-        const snapshot = await eventsRef.once('value');
-        const currentPool = snapshot.val()?.totalPool || 0;
-        await eventsRef.update({ totalPool: currentPool + boostedAmount });
-        await this.saveGame();
-        const userContributionSpan = document.getElementById('userContribution');
-        if (userContributionSpan) userContributionSpan.textContent = this.userData.eventContribution.toLocaleString();
+        this._eventAccum = (this._eventAccum || 0) + boostedAmount;
+
+        if (this._eventContribEl === undefined) this._eventContribEl = document.getElementById('userContribution');
+        if (this._eventContribEl) {
+            const text = this.formatNumber(this.userData.eventContribution);
+            if (this._eventContribEl.textContent !== text) this._eventContribEl.textContent = text;
+        }
+
+        if (!this._eventFlushTimer) {
+            this._eventFlushTimer = setTimeout(() => {
+                this._eventFlushTimer = null;
+                this.flushEventContribution();
+            }, 5000);
+        }
+        this.saveGame();
+    }
+
+    flushEventContribution() {
+        const pending = this._eventAccum || 0;
+        if (pending <= 0) return;
+        this._eventAccum = 0;
+        try {
+            firebase.database().ref('events/dilicksHurricane/totalPool').transaction((current) => {
+                return (current || 0) + pending;
+            }).catch((error) => {
+                console.error('❌ Ошибка обновления пула ивента:', error);
+                this._eventAccum = (this._eventAccum || 0) + pending;
+            });
+        } catch (error) {
+            console.error('❌ Ошибка обновления пула ивента:', error);
+            this._eventAccum = (this._eventAccum || 0) + pending;
+        }
     }
     
     handleClick(e) {
         if (!this.isLoaded && this.userData) this.isLoaded = true;
-        let clickPower = this.userData.clickPower;
-        const skinMultipliers = { 'uragan_dragon_top3': 145, 'uragan_holo_top10': 100, 'uragan_banana_top50': 55, 'uragan_cursor_top100': 15, 'wheel_dragon_skin': 250 };
+        const skinMultipliers = this.getSkinMultipliers();
         const skinMultiplier = skinMultipliers[this.userData.currentSkin] || 1;
-        clickPower = clickPower * skinMultiplier;
+        let clickPower = this.userData.clickPower * skinMultiplier;
         const rechargeBonus = (this.userData.rechargeBonus || 0) * 0.1;
         clickPower = Math.floor(clickPower * (1 + rechargeBonus));
         const uraganMultiplier = this.uraganEventActive ? this.currentUraganMultiplier : 1;
@@ -1490,12 +1901,29 @@ class ClickerGame {
         this.updateQuestProgress('moneyEarned', moneyEarned);
     }
     
+    // Кэш положения контейнера эффектов: getBoundingClientRect() на каждый клик
+    // заставлял браузер синхронно пересчитывать layout. Сбрасываем кэш при скролле,
+    // повороте экрана и смене вкладки.
+    _invalidateRects() {
+        this._effectsRect = null;
+        this._effectsRectTime = 0;
+    }
+
+    _getEffectsRect() {
+        const now = Date.now();
+        if (this._effectsRect && (now - (this._effectsRectTime || 0)) < 100) return this._effectsRect;
+        const rect = this.clickEffects.getBoundingClientRect();
+        this._effectsRect = { left: rect.left, top: rect.top };
+        this._effectsRectTime = now;
+        return this._effectsRect;
+    }
+
     createClickEffect(x, y, text) {
         if (!this.clickEffects) return;
         const effect = document.createElement('div');
         effect.className = 'click-effect';
         effect.textContent = text;
-        const rect = this.clickEffects.getBoundingClientRect();
+        const rect = this._getEffectsRect();
         effect.style.left = (x - rect.left) + 'px';
         effect.style.top = (y - rect.top) + 'px';
         this.clickEffects.appendChild(effect);
@@ -1518,7 +1946,7 @@ class ClickerGame {
         this.userData.currentSkin = item;
         if (this.clickIcon) this.clickIcon.src = this.skinsData[item].image;
         this.updateUI();
-        await this.saveGame();
+        await this.saveGame(true);   // покупка скина фиксируется сразу
         this.updateInventory();
         this.updateShopStatus();
         this.checkAchievements();
@@ -1566,7 +1994,7 @@ class ClickerGame {
         this.showToast(`✅ Улучшение прокачано!`, 'success');
         this.renderUpgrades();
         this.updateUI();
-        await this.saveGame();
+        await this.saveGame(true);   // списанные дилики фиксируем сразу
         this.checkAchievements();
         this.updateQuestProgress('upgrades');
     }
@@ -1588,6 +2016,10 @@ class ClickerGame {
     
     updateInventory() {
         if (!this.inventoryGrid) return;
+        // Пропускаем перерисовку, если инвентарь и активный скин не менялись
+        const invKey = (this.userData.inventory || []).join(',') + '|' + this.userData.currentSkin;
+        if (this._inventoryKey === invKey) return;
+        this._inventoryKey = invKey;
         this.inventoryGrid.innerHTML = '';
         const inventory = this.userData.inventory || ['classic'];
         if (!inventory.includes('classic')) inventory.unshift('classic');
@@ -1616,41 +2048,59 @@ class ClickerGame {
         if (this.clickIcon) this.clickIcon.src = this.skinsData[skinId].image;
         const multiplier = this.getSkinMultiplier(skinId);
         if (multiplier > 1 && this.clickPowerSpan && this.userData) this.clickPowerSpan.textContent = this.userData.clickPower * multiplier;
-        await this.saveGame();
+        await this.saveGame(true);   // экипировку фиксируем сразу
         this.updateInventory();
         this.createClickEffect(window.innerWidth / 2, window.innerHeight / 2, `✨ ${this.skinsData[skinId].name} ✨`);
         if (this.clickIcon) { this.clickIcon.style.transform = 'scale(0.8)'; setTimeout(() => { if (this.clickIcon) this.clickIcon.style.transform = 'scale(1)'; }, 200); }
         this.showToast(`✨ Экипирован скин: ${this.skinsData[skinId].name}${multiplier > 1 ? ` (x${multiplier})` : ''}`, 'success');
     }
     
+    // Карта множителей скинов: раньше объект создавался заново на каждый клик и
+    // на каждую итерацию автокликера — теперь создаётся один раз.
+    getSkinMultipliers() {
+        if (!this._skinMultipliers) {
+            this._skinMultipliers = { 'uragan_dragon_top3': 145, 'uragan_holo_top10': 100, 'uragan_banana_top50': 55, 'uragan_cursor_top100': 15, 'wheel_dragon_skin': 250 };
+        }
+        return this._skinMultipliers;
+    }
+
     startAutoClicker() {
         if (this.autoClickerInterval) clearInterval(this.autoClickerInterval);
         this.autoClickerInterval = setInterval(() => {
             if (this.userData.autoClickerLevel > 0 && this.isLoaded) {
-                for (let i = 0; i < this.userData.autoClickerLevel; i++) {
-                    let clickPower = this.userData.clickPower;
-                    const skinMultipliers = { 'uragan_dragon_top3': 145, 'uragan_holo_top10': 100, 'uragan_banana_top50': 55, 'uragan_cursor_top100': 15, 'wheel_dragon_skin': 250 };
-                    const skinMultiplier = skinMultipliers[this.userData.currentSkin] || 1;
-                    clickPower = clickPower * skinMultiplier;
-                    const rechargeBonus = (this.userData.rechargeBonus || 0) * 0.1;
-                    clickPower = Math.floor(clickPower * (1 + rechargeBonus));
-                    const uraganMultiplier = this.uraganEventActive ? this.currentUraganMultiplier : 1;
-                    const dilicksEarned = uraganMultiplier;
-                    let moneyEarned = clickPower;
-                    const critRoll = Math.random() * 100;
-                    if (critRoll < this.userData.critChance) moneyEarned *= 2 + (this.userData.clickerMastery || 0) * 0.1;
-                    this.userData.clicks++;
-                    this.userData.money += moneyEarned;
-                    this.userData.dilicks += dilicksEarned;
-                    if (this.uraganEventActive) this.addEventContribution(dilicksEarned);
-                    this.addSeasonExp(moneyEarned);
+                const skinMultipliers = this.getSkinMultipliers();
+                const skinMultiplier = skinMultipliers[this.userData.currentSkin] || 1;
+                const rechargeBonus = (this.userData.rechargeBonus || 0) * 0.1;
+                const critMultiplier = 2 + (this.userData.clickerMastery || 0) * 0.1;
+                const baseClickPower = Math.floor(this.userData.clickPower * skinMultiplier * (1 + rechargeBonus));
+                const uraganMultiplier = this.uraganEventActive ? this.currentUraganMultiplier : 1;
+                const iterations = this.userData.autoClickerLevel;
+
+                let moneyTotal = 0;
+                let dilicksTotal = 0;
+                let seasonXpTotal = 0;
+                for (let i = 0; i < iterations; i++) {
+                    let moneyEarned = baseClickPower;
+                    if (Math.random() * 100 < this.userData.critChance) moneyEarned *= critMultiplier;
+                    moneyTotal += moneyEarned;
+                    dilicksTotal += uraganMultiplier;
+                    // XP считаем пачкой: раньше на каждую итерацию шло отдельное
+                    // обновление сезонной ленты — из-за этого автокликер и лагал.
+                    seasonXpTotal += Math.max(1, Math.floor(moneyEarned / 100));
                 }
+
+                this.userData.clicks += iterations;
+                this.userData.money += moneyTotal;
+                this.userData.dilicks += dilicksTotal;
+                if (this.uraganEventActive) this.addEventContribution(dilicksTotal);
+                this.addSeasonExpBatch(seasonXpTotal * 100);
+
                 this.updateUI();
                 this.saveGame();
                 this.checkAchievements();
-                this.updateQuestProgress('clicks', this.userData.autoClickerLevel);
-                this.updateQuestProgress('dilicksEarned', this.userData.autoClickerLevel * (this.uraganEventActive ? this.currentUraganMultiplier : 1));
-                this.updateQuestProgress('moneyEarned', this.userData.autoClickerLevel * this.userData.clickPower);
+                this.updateQuestProgress('clicks', iterations);
+                this.updateQuestProgress('dilicksEarned', dilicksTotal);
+                this.updateQuestProgress('moneyEarned', moneyTotal);
             }
         }, 1000);
     }
@@ -1675,9 +2125,8 @@ class ClickerGame {
         const modal = document.getElementById('playerProfileModal');
         if (!modal) return;
         try {
-            const snapshot = await firebase.database().ref('users/' + playerId).once('value');
-            const userData = snapshot.val();
-            if (!userData) { this.showToast('❌ Игрок не найден', 'error'); return; }
+            const userData = await this._restGet('/users/' + playerId + '.json', 10000);
+            if (!userData || typeof userData !== 'object') { this.showToast('❌ Игрок не найден', 'error'); return; }
             const username = userData.settings?.displayName || userData.username;
             document.getElementById('modalUsername').textContent = username;
             document.getElementById('modalClicks').textContent = (userData.clicks || 0).toLocaleString();
@@ -1696,32 +2145,318 @@ class ClickerGame {
     
     async updateLeaderboard(type) {
         if (!this.leaderboardBody) return;
-        this.leaderboardBody.innerHTML = '<tr><td colspan="3" class="empty-history">Загрузка...</td></tr>';
+        this._leaderboardType = type;
+
+        // Сразу показываем прошлую удачную загрузку (если была) — таблица
+        // появляется мгновенно, а свежие данные подставляются по мере чтения.
+        const cached = this._leaderboardCache && this._leaderboardCache[type];
+        if (cached && cached.length > 0) {
+            this._renderLeaderboard(cached.slice(), type, { count: 0 });
+        } else {
+            this.leaderboardBody.innerHTML = '<tr><td colspan="3" class="empty-history">Загрузка...</td></tr>';
+        }
+
+        // Загрузка идёт и при старте игры, и при открытии вкладки — не запускаем
+        // вторую параллельно, иначе база получает двойную нагрузку и обе тормозят.
+        if (this._leaderboardLoading) {
+            console.log('Таблица уже загружается — показываю то, что есть');
+            return;
+        }
+        this._leaderboardLoading = true;
         try {
-            const snapshot = await firebase.database().ref('users').once('value');
-            if (!snapshot.exists()) { this.leaderboardBody.innerHTML = '<tr><td colspan="3" class="empty-history">Нет данных</td></tr>'; return; }
-            const users = snapshot.val();
-            const leaderboard = [];
-            for (let [id, userData] of Object.entries(users)) {
-                let value = 0;
-                switch(type) { case 'clicks': value = userData.clicks || 0; break; case 'money': value = userData.money || 0; break; case 'playtime': value = userData.playtime || 0; break; }
-                const displayName = userData.settings?.displayName || userData.username;
-                leaderboard.push({ id, username: displayName, value, realUsername: userData.username });
+            await this._loadLeaderboard(type);
+        } finally {
+            this._leaderboardLoading = false;
+        }
+    }
+
+    async _loadLeaderboard(type) {
+        const failed = { count: 0 };
+        const cached = this._leaderboardCache && this._leaderboardCache[type];
+
+        // ОСНОВНОЙ ПУТЬ: список игроков + чтение по одному.
+        // ПУТЬ 1 (основной): вся ветка одним запросом.
+        // База пересобрана (октябрь 2026) и теперь отдаёт ветку целиком за ~170 мс
+        // против ~540 мс при чтении по одному. Если запрос не пройдёт — уходим
+        // на путь 2, поэтому резкость базы игру больше не ломает.
+        let reason = '';
+        try {
+            const users = await this._restGetOnce('/users.json', 8000) || {};
+            const entries = [];
+            for (const [id, userData] of Object.entries(users)) {
+                if (!userData || typeof userData !== 'object') continue;
+                entries.push({
+                    id,
+                    username: (userData.settings && userData.settings.displayName) || userData.username || 'Игрок',
+                    value: this._leaderboardValue(userData, type),
+                    realUsername: userData.username
+                });
             }
-            leaderboard.sort((a, b) => b.value - a.value);
-            const topPlayers = leaderboard.slice(0, 50);
-            this.leaderboardBody.innerHTML = '';
-            topPlayers.forEach((entry, index) => {
-                const row = document.createElement('tr');
-                let medal = '';
-                if (index === 0) medal = '🥇'; else if (index === 1) medal = '🥈'; else if (index === 2) medal = '🥉';
-                row.innerHTML = `<td style="width: 60px;">${medal ? medal : index + 1}</td><td class="leaderboard-player" data-id="${entry.id}" style="cursor: pointer;">${entry.username} ${entry.realUsername === localStorage.getItem('currentUser') ? '👑' : ''}</td><td>${this.formatLeaderboardValue(entry.value, type)}</td>`;
-                const playerCell = row.querySelector('.leaderboard-player');
-                if (playerCell) playerCell.addEventListener('click', (e) => { e.stopPropagation(); this.showPlayerProfile(entry.id, entry.username); });
-                if (entry.realUsername === localStorage.getItem('currentUser')) { row.style.background = 'rgba(255,215,0,0.1)'; row.style.border = '1px solid gold'; }
-                this.leaderboardBody.appendChild(row);
-            });
-        } catch (error) { console.error(error); this.leaderboardBody.innerHTML = '<tr><td colspan="3" class="empty-history">Ошибка загрузки</td></tr>'; }
+            if (entries.length === 0) throw new Error('ветка users пуста');
+            this._rememberLeaderboardEntries(entries, type);
+            this._renderLeaderboard(this._leaderboardCache[type].slice(), type, { count: 0 });
+            return;
+        } catch (error) {
+            reason = (error && error.message) ? error.message : String(error);
+            console.warn('Чтение всей ветки не удалось (' + reason + ') — читаю по одному');
+        }
+
+        // ПУТЬ 2 (резерв): по одному с повторами.
+        // Нужен на случай, если база снова начнёт подвисать на агрегатных запросах.
+        try {
+            const list = await this._fetchUserIds();
+            if (list.length === 0) throw new Error('список игроков пуст (адрес базы: ' + this._dbBaseUrl() + ')');
+
+            const entries = await this._fetchLeaderboardEntries(list, failed);
+            if (entries.length === 0) {
+                this.leaderboardBody.innerHTML = `<tr><td colspan="3" class="empty-history">Не удалось прочитать профили (${failed.count} из ${list.length})</td></tr>`;
+                return;
+            }
+            this._rememberLeaderboardEntries(entries, type);
+            this._renderLeaderboard(this._leaderboardCache[type].slice(), type, failed);
+            return;
+        } catch (error) {
+            console.error(error);
+            const reason2 = (error && error.message) ? error.message : String(error);
+            // Если есть прошлая удачная загрузка — показываем её, а не пустой экран
+            if (cached && cached.length > 0) {
+                this._renderLeaderboard(cached.slice(), type, { count: cached.length });
+                console.warn('Показываю сохранённую таблицу: свежую загрузить не удалось (' + (reason || reason2) + ')');
+            } else {
+                // Показываем настоящую причину: без неё невозможно понять, что чинить
+                this.leaderboardBody.innerHTML = `<tr><td colspan="3" class="empty-history">Не удалось загрузить таблицу<br><span style="opacity:.6;font-size:.8em">${reason || reason2}</span></td></tr>`;
+            }
+        }
+    }
+
+    // value из уже загруженной записи игрока
+    _leaderboardValue(userData, type) {
+        if (!userData) return 0;
+        const id = this.userData ? this.userData.username : null;
+        if (userData.username === id) {
+            if (type === 'clicks') return this.userData.clicks || 0;
+            if (type === 'money') return this.userData.money || 0;
+            if (type === 'playtime') return this.userData.playtime || 0;
+        }
+        const raw = type === 'clicks' ? userData.clicks : type === 'money' ? userData.money : userData.playtime;
+        return typeof raw === 'number' && isFinite(raw) ? raw : 0;
+    }
+
+    // Один запрос профиля БЕЗ внутренних повторов (повторы делает вызывающий код).
+    // База периодически тормозит на отдельных записях, поэтому «не ответил» —
+    // это нормальная ситуация, которую нужно пережить, а не выбросить игрока.
+    async _fetchPlayerEntry(id, ms) {
+        const userData = await this._restGetOnce('/users/' + id + '.json', ms);
+        if (!userData || typeof userData !== 'object') return null;
+        return {
+            id,
+            username: (userData.settings && userData.settings.displayName) || userData.username || 'Игрок',
+            value: this._leaderboardValue(userData, this._leaderboardType),
+            realUsername: userData.username
+        };
+    }
+
+    // Один проход по списку игроков
+    async _fetchEntriesPass(ids, perUserTimeout, concurrency) {
+        const entries = [];
+        const missed = [];
+        const self = this;
+        let cursor = 0;
+
+        async function worker() {
+            while (cursor < ids.length) {
+                const id = ids[cursor++];
+                try {
+                    const entry = await self._fetchPlayerEntry(id, perUserTimeout);
+                    if (entry) entries.push(entry);
+                    else missed.push(id);
+                } catch (e) {
+                    missed.push(id);      // запомним и попробуем ещё раз
+                }
+            }
+        }
+
+        const workers = [];
+        for (let i = 0; i < Math.min(concurrency, ids.length); i++) workers.push(worker());
+        await Promise.all(workers);
+        return { entries, missed };
+    }
+
+    // Чтение игроков в несколько проходов.
+    // Замеры базы показали: профиль читается за 100-400 мс, но примерно каждый
+    // 15-й запрос зависает и не отвечает вообще. Поэтому:
+    //  - таймаут КОРОТКИЙ: успешный ответ приходит за 0.2 с, всё что дольше —
+    //    это зависание, и ждать его бессмысленно;
+    //  - неудачные не выбрасываем, а опрашиваем снова;
+    //  - результат показываем после каждого прохода, чтобы список появлялся
+    //    сразу, а не через 20 секунд.
+    async _fetchLeaderboardEntries(ids, failed) {
+        let entries = [];
+        let pending = ids.slice();
+        const plan = [
+            { timeout: 2500, concurrency: 6 },
+            { timeout: 2500, concurrency: 4 },
+            { timeout: 3000, concurrency: 3 },
+            { timeout: 3000, concurrency: 2 }
+        ];
+
+        for (let pass = 0; pass < plan.length && pending.length > 0; pass++) {
+            const step = plan[pass];
+            const result = await this._fetchEntriesPass(pending, step.timeout, step.concurrency);
+            entries = entries.concat(result.entries);
+            pending = result.missed;
+
+            this._leaderboardFailed = pending.length;
+
+            // Показываем то, что уже есть, чтобы игрок не ждал конца всех проходов
+            if (entries.length > 0 && pending.length > 0) {
+                this._renderLeaderboard(entries.slice(), this._leaderboardType, { count: pending.length });
+            }
+            // Между проходами даём базе передохнуть
+            if (pending.length > 0 && pass < plan.length - 1) await new Promise(r => setTimeout(r, 300));
+        }
+
+        failed.count = pending.length;
+        return entries;
+    }
+
+    // ===== КЭШ ТАБЛИЦЫ ЛИДЕРОВ =====
+    // Версия в ключе: если формат записей изменится, старый кэш не подхватится.
+    _loadLeaderboardCache() {
+        try {
+            const raw = localStorage.getItem('dilicLeaderboardCache_v1');
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            return (data && typeof data === 'object') ? data : null;
+        } catch (e) { return null; }
+    }
+
+    _saveLeaderboardCache() {
+        try {
+            localStorage.setItem('dilicLeaderboardCache_v1', JSON.stringify(this._leaderboardCache || {}));
+        } catch (e) { /* localStorage может быть недоступен или переполнен */ }
+    }
+
+    // Одна запись кэша: свежие данные заменяют старые, но если свежих по игроку
+    // нет (не ответил) — остаётся прошлое значение. Так список не «худеет».
+    _rememberLeaderboardEntries(entries, type) {
+        this._leaderboardCache = this._leaderboardCache || {};
+        const byId = {};
+        const previous = this._leaderboardCache[type] || [];
+        for (const e of previous) byId[e.id] = e;
+        for (const e of entries) byId[e.id] = e;      // свежие перекрывают старые
+        this._leaderboardCache[type] = Object.values(byId);
+        this._saveLeaderboardCache();
+    }
+
+    _renderLeaderboard(entries, type, failed) {
+        entries.sort((a, b) => b.value - a.value);
+        const top = entries.slice(0, 50);
+        const myName = localStorage.getItem('currentUser');
+        this.leaderboardBody.innerHTML = '';
+        top.forEach((entry, index) => {
+            const row = document.createElement('tr');
+            let medal = '';
+            if (index === 0) medal = '🥇'; else if (index === 1) medal = '🥈'; else if (index === 2) medal = '🥉';
+            row.innerHTML = `<td style="width: 60px;">${medal ? medal : index + 1}</td><td class="leaderboard-player" data-id="${entry.id}" style="cursor: pointer;">${entry.username} ${entry.realUsername === myName ? '👑' : ''}</td><td>${this.formatLeaderboardValue(entry.value, type)}</td>`;
+            const playerCell = row.querySelector('.leaderboard-player');
+            if (playerCell) playerCell.addEventListener('click', (e) => { e.stopPropagation(); this.showPlayerProfile(entry.id, entry.username); });
+            if (entry.realUsername === myName) { row.style.background = 'rgba(255,215,0,0.1)'; row.style.border = '1px solid gold'; }
+            this.leaderboardBody.appendChild(row);
+        });
+        // Если часть профилей не открылась — честно говорим об этом, а не показываем
+        // неполный список как полный
+        if (failed && failed.count > 0) {
+            const note = document.createElement('tr');
+            note.innerHTML = `<td colspan="3" class="empty-history">Часть игроков не загрузилась (${failed.count})</td>`;
+            this.leaderboardBody.appendChild(note);
+        }
+    }
+
+    // Обёртка с таймаутом: промис Firebase отменить нельзя, поэтому просто
+    // перестаём его ждать (запрос долетит в фоне и попадёт в кэш).
+    _withTimeout(promise, ms) {
+        return new Promise((resolve, reject) => {
+            let settled = false;
+            const timer = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                reject(new Error('timeout ' + ms + 'ms'));
+            }, ms);
+            promise.then(
+                (value) => { if (!settled) { settled = true; clearTimeout(timer); resolve(value); } },
+                (error) => { if (!settled) { settled = true; clearTimeout(timer); reject(error); } }
+            );
+        });
+    }
+
+    // Адрес базы для прямых REST-запросов.
+    // Берём сразу из нескольких источников: firebase.app().options в некоторых
+    // сборках пустой, поэтому первым делом смотрим на firebaseConfig из
+    // firebase-config.js — он гарантированно содержит databaseURL.
+    _dbBaseUrl() {
+        const clean = (u) => String(u || '').replace(/\/+$/, '');
+        let url = '';
+        try {
+            if (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.databaseURL) {
+                url = firebaseConfig.databaseURL;
+            }
+        } catch (e) { /* нет доступа — пробуем дальше */ }
+        if (!url) {
+            try { url = (firebase.app().options && firebase.app().options.databaseURL) || ''; } catch (e) { url = ''; }
+        }
+        if (!url) url = 'https://dilic-clicker-default-rtdb.europe-west1.firebasedatabase.app';
+        return clean(url);
+    }
+
+    // Один HTTPS-запрос к базе, без повторов внутри.
+    _restGetOnce(path, ms) {
+        const base = this._dbBaseUrl();
+        if (!base) return Promise.reject(new Error('не удалось определить адрес базы'));
+        return this._withTimeout(fetch(base + path, { cache: 'no-store' }), ms).then((res) => {
+            if (!res.ok) throw new Error('сервер ответил ' + res.status);
+            return res.text();
+        }).then((text) => (text ? JSON.parse(text) : null));
+    }
+
+    // Чтение с одной повторной попыткой: база периодически подтормаживает.
+    async _restGet(path, ms) {
+        let lastError = null;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                return await this._restGetOnce(path, ms);
+            } catch (e) {
+                lastError = e;
+                if (attempt === 1) {
+                    console.warn('Запрос к базе не удался (' + (e && e.message) + '), повторяю:', path);
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+        }
+        throw lastError;
+    }
+
+    // Список ID всех игроков (REST ?shallow=true) — без скачивания их данных.
+    // Именно этот маленький запрос отвечает быстрее всего (130 мс), но и он
+    // изредка подвисает, поэтому пробуем несколько раз: без списка таблица
+    // не построится вообще.
+    async _fetchUserIds(attempts = 3) {
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+            try {
+                const data = await this._restGetOnce('/users.json?shallow=true', 4000);
+                if (data && typeof data === 'object') {
+                    const ids = Object.keys(data);
+                    if (ids.length > 0) return ids;
+                    console.warn('Список игроков пуст — в базе нет пользователей?');
+                    return [];
+                }
+            } catch (e) {
+                console.warn('Список игроков не получен (попытка ' + attempt + ' из ' + attempts + '):', e && e.message);
+                if (attempt < attempts) await new Promise(r => setTimeout(r, 400));
+            }
+        }
+        console.warn('Не удалось получить список игроков | адрес базы:', this._dbBaseUrl());
+        return [];
     }
     
     formatLeaderboardValue(value, type) {
@@ -1729,44 +2464,131 @@ class ClickerGame {
         return value.toLocaleString();
     }
     
-    async updateUI() {
+    // Обновление интерфейса с кэшем значений: в DOM пишем только то, что реально
+    // изменилось. Раньше на каждый клик выполнялось 4× toLocaleString() и ~8 записей
+    // в DOM, даже если числа те же. Метод синхронный — раньше он был async без await,
+    // что создавало лишний Promise на каждый клик.
+    updateUI() {
+        if (!this.userData) return;
+        const cache = this._uiCache;
+
         const displayName = this.userData.settings?.displayName || this.userData.username;
-        if (this.usernameDisplay) this.usernameDisplay.textContent = displayName;
-        if (this.moneySpan) this.moneySpan.textContent = this.userData.money.toLocaleString();
-        if (this.dilicksSpan) this.dilicksSpan.textContent = this.userData.dilicks.toLocaleString();
-        if (this.clicksSpan) this.clicksSpan.textContent = this.userData.clicks.toLocaleString();
-        if (this.clickPowerSpan && this.userData) { const skinMultiplier = this.getSkinMultiplier(this.userData.currentSkin); this.clickPowerSpan.textContent = this.userData.clickPower * skinMultiplier; }
-        this.updatePlaytimeDisplay();
-        if (this.seasonProgress && this.seasonLevel) {
-            const expNeeded = this.userData.seasonLevel >= 150 ? 1 : this.getSeasonExpNeeded(this.userData.seasonLevel);
-            const progress = this.userData.seasonLevel >= 150 ? 100 : (this.userData.seasonExp / expNeeded) * 100;
-            this.seasonProgress.style.width = progress + '%';
-            this.seasonLevel.textContent = this.userData.seasonLevel;
+        if (this.usernameDisplay && cache.username !== displayName) {
+            this.usernameDisplay.textContent = displayName;
+            cache.username = displayName;
         }
-        if (document.getElementById('profile')?.classList.contains('active')) this.updateProfile();
-        if (this.wheel && this.wheel.balanceSpan) this.wheel.balanceSpan.textContent = this.userData.dilicks.toLocaleString();
+        if (this.moneySpan && cache.money !== this.userData.money) {
+            this.moneySpan.textContent = this.formatNumber(this.userData.money);
+            cache.money = this.userData.money;
+        }
+        if (this.dilicksSpan && cache.dilicks !== this.userData.dilicks) {
+            this.dilicksSpan.textContent = this.formatNumber(this.userData.dilicks);
+            cache.dilicks = this.userData.dilicks;
+        }
+        if (this.clicksSpan && cache.clicks !== this.userData.clicks) {
+            this.clicksSpan.textContent = this.formatNumber(this.userData.clicks);
+            cache.clicks = this.userData.clicks;
+        }
+        if (this.clickPowerSpan) {
+            const power = this.userData.clickPower * this.getSkinMultiplier(this.userData.currentSkin);
+            if (cache.clickPower !== power) {
+                this.clickPowerSpan.textContent = power;
+                cache.clickPower = power;
+            }
+        }
+        if (this.wheel && this.wheel.balanceSpan && cache.wheelBalance !== this.userData.dilicks) {
+            this.wheel.balanceSpan.textContent = this.formatNumber(this.userData.dilicks);
+            cache.wheelBalance = this.userData.dilicks;
+        }
+        this.updatePlaytimeDisplay();
+        // Прогресс-бар сезона — через общий батч, без полного обновления вкладки
+        this.scheduleSeasonBarSync();
+        // Профиль обновляем, только если вкладка действительно открыта
+        const profileTab = document.getElementById('profile');
+        if (profileTab && profileTab.classList.contains('active')) this.updateProfile();
     }
     
-    async saveGame() {
+    // Сохранение в Firebase с коалесценцией: раньше одна полная запись всего профиля
+    // уходила в базу НА КАЖДЫЙ КЛИК (при 10 кликах/с — 10 записей/с). Теперь изменения
+    // собираются и отправляются не чаще раза в 2 секунды, плюс принудительный сброс
+    // при сворачивании Telegram/уходе со страницы, чтобы прогресс не терялся.
+    async saveGame(immediate) {
+        this._savePending = true;
+        if (immediate) { this.flushSaveNow(); return; }
+        if (!this._saveTimer) {
+            this._saveTimer = setTimeout(() => {
+                this._saveTimer = null;
+                this._flushSave();
+            }, 2000);
+        }
+        this._bindSaveFlush();
+    }
+
+    _bindSaveFlush() {
+        if (this._saveBound) return;
+        this._saveBound = true;
+        const flush = () => this.flushSaveNow();
+        window.addEventListener('pagehide', flush);
+        window.addEventListener('beforeunload', flush);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') flush();
+        });
+    }
+
+    // Немедленный сброс отложенного сохранения (важные покупки, уход со страницы)
+    flushSaveNow() {
+        if (this._saveTimer) { clearTimeout(this._saveTimer); this._saveTimer = null; }
+        if (this._saveRetryTimer) { clearTimeout(this._saveRetryTimer); this._saveRetryTimer = null; }
+        if (this._savePending) this._flushSave();
+    }
+
+    // Если запись не прошла (пропала сеть), повторяем — иначе прогресс остался бы
+    // несохранённым до следующего действия игрока.
+    _scheduleSaveRetry() {
+        if (this._saveRetryTimer || !this.isLoaded) return;
+        this._saveRetryTimer = setTimeout(() => {
+            this._saveRetryTimer = null;
+            if (this._savePending) this._flushSave();
+        }, 5000);
+    }
+
+    _flushSave() {
         const userId = localStorage.getItem('userId');
-        if (userId && this.isLoaded) { try { await firebase.database().ref('users/' + userId).update(this.userData); } catch (error) { console.error('❌ Ошибка сохранения:', error); } }
+        if (!userId || !this.isLoaded || !this.userData) { this._savePending = true; return; }
+        this._savePending = false;
+        try {
+            firebase.database().ref('users/' + userId).update(this.userData)
+                .catch((error) => { console.error('❌ Ошибка сохранения:', error); this._savePending = true; this._scheduleSaveRetry(); });
+        } catch (error) {
+            console.error('❌ Ошибка сохранения:', error);
+            this._savePending = true;
+            this._scheduleSaveRetry();
+        }
     }
     
     async logout() {
         if (this.bubbleFrame) cancelAnimationFrame(this.bubbleFrame);
+        if (this._bubbleIdleTimer) clearTimeout(this._bubbleIdleTimer);
         if (this.autoClickerInterval) clearInterval(this.autoClickerInterval);
         if (this.playtimeInterval) clearInterval(this.playtimeInterval);
         if (this.questTimerInterval) clearInterval(this.questTimerInterval);
         if (this.banTimerInterval) clearInterval(this.banTimerInterval);
         if (this.maintenanceTimerInterval) clearInterval(this.maintenanceTimerInterval);
+        if (this._seasonBarFrame) cancelAnimationFrame(this._seasonBarFrame);
+        if (this._eventFlushTimer) { clearTimeout(this._eventFlushTimer); this._eventFlushTimer = null; }
+        this.flushEventContribution();     // не теряем вклад в ивент
+        this.flushSaveNow();               // и не теряем прогресс
         localStorage.removeItem('currentUser');
         localStorage.removeItem('userId');
         window.location.href = 'register.html';
     }
     
     createBubble() {
-        const existingBubbles = document.querySelectorAll('.bubble').length;
-        if (existingBubbles > 10) return;
+        // Раньше здесь был querySelectorAll('.bubble') на каждое создание пузыря —
+        // полный обход DOM. Теперь считаем собственные ссылки.
+        if (this._bubbleCount === undefined) this._bubbleCount = 0;
+        if (this._bubbleCount > 10) return;
+        this._bubbleCount++;
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
         const isMobile = window.innerWidth <= 768;
@@ -1778,16 +2600,27 @@ class ClickerGame {
         const duration = isMobile ? 3 + Math.random() * 2 : 4 + Math.random() * 3;
         bubble.style.animationDuration = duration + 's';
         document.body.appendChild(bubble);
-        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, duration * 1000);
+        setTimeout(() => {
+            if (bubble.parentNode) bubble.remove();
+            if (this._bubbleCount > 0) this._bubbleCount--;
+        }, duration * 1000);
     }
     
     startBubbles() {
+        // Пузыри создаются в простое: rAF-цикл, который раньше крутился постоянно
+        // (60 вызовов в секунду ради одного пузыря раз в 2.5 с), больше не нужен.
         const bubbleInterval = 2500;
-        const createBubbleOptimized = (currentTime) => {
-            if (currentTime - this.lastBubbleTime >= bubbleInterval && this.isLoaded) { this.createBubble(); this.lastBubbleTime = currentTime; }
-            this.bubbleFrame = requestAnimationFrame(createBubbleOptimized);
+        const tick = () => {
+            if (!this.isLoaded) { this._bubbleIdleTimer = setTimeout(tick, bubbleInterval); return; }
+            if (typeof requestIdleCallback === 'function') {
+                requestIdleCallback(() => this.createBubble(), { timeout: 1000 });
+            } else {
+                this.createBubble();
+            }
+            this._bubbleIdleTimer = setTimeout(tick, bubbleInterval);
         };
-        this.bubbleFrame = requestAnimationFrame(createBubbleOptimized);
+        if (this._bubbleIdleTimer) clearTimeout(this._bubbleIdleTimer);
+        this._bubbleIdleTimer = setTimeout(tick, bubbleInterval);
     }
     
     checkAchievements() {
@@ -1996,7 +2829,7 @@ class ClickerGame {
     async claimCompensation() {
         this.userData.dilicks += 4500;
         this.userData.compensationReceived = true;
-        await this.saveGame();
+        await this.saveGame(true);   // выдаётся один раз — сохраняем сразу
         this.updateUI();
         this.showToast(`✅ +4500 ${this.getDilicksIcon()} получено!`, 'success');
     }
@@ -2136,7 +2969,7 @@ class Settings {
                         importedData.username = this.game.userData.username;
                         importedData.password = this.game.userData.password;
                         this.game.userData = importedData;
-                        await this.game.saveGame();
+                        await this.game.saveGame(true);   // импорт нельзя терять при закрытии
                         this.updateUI();
                         this.game.updateUI();
                         this.game.updateInventory();
@@ -2163,7 +2996,7 @@ class Settings {
         const password = this.game.userData.password;
         const resetData = { clicks: 0, money: 1000, dilicks: 500, clickPower: 1, autoClickerLevel: 0, critChance: 5, inventory: ['classic'], currentSkin: 'classic', seasonLevel: 1, seasonExp: 0, playtime: 0, seasonClaimed: { free: [], premium: [] }, premiumPass: false, completedAchievements: [], activatedPromocodes: [], promocodesHistory: [], compensationReceived: false, rechargeBonus: 0, clickerMastery: 0, eventBooster: 0, settings: this.game.userData.settings, lastSave: Date.now(), username, password };
         this.game.userData = resetData;
-        await this.game.saveGame();
+        await this.game.saveGame(true);   // сброс прогресса пишем сразу
         this.game.updateUI();
         this.game.updateInventory();
         this.game.updateShopStatus();

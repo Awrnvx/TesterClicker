@@ -1922,12 +1922,29 @@ a {
     cursor: pointer;
     display: grid;
     place-items: center;
-    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    transition: all 0.15s ease;
+    box-shadow:
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 215, 0, 0.1) inset;
 }
 
 .lb-refresh:hover {
     background: rgba(255, 215, 0, 0.18);
-    box-shadow: 0 0 14px rgba(255, 215, 0, 0.25);
+    border-color: rgba(255, 215, 0, 0.45);
+    box-shadow:
+        0 6px 12px -6px rgba(255, 215, 0, 0.35),
+        0 0 0 0.5px rgba(255, 215, 0, 0.2) inset;
+    transform: translateY(-1px);
+}
+
+.lb-refresh:active {
+    background: rgba(255, 215, 0, 0.26);
+    transform: translateY(1px);
+    box-shadow:
+        0 2px 4px -2px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 215, 0, 0.25) inset;
 }
 
 .lb-refresh.spinning {
@@ -1962,11 +1979,11 @@ a {
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
-    backdrop-filter: blur(15px) saturate(180%);
-    -webkit-backdrop-filter: blur(15px) saturate(180%);
-    transition: all 0.2s ease;
+    backdrop-filter: blur(8px) saturate(180%);
+    -webkit-backdrop-filter: blur(8px) saturate(180%);
+    transition: all 0.15s ease;
     box-shadow:
-        0 5px 15px -5px rgba(0, 0, 0, 0.2),
+        0 4px 8px -4px rgba(0, 0, 0, 0.2),
         0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
 }
 
@@ -2009,19 +2026,20 @@ a {
 }
 
 .lb-tab:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.15);
     box-shadow:
-        0 8px 20px -8px rgba(0, 0, 0, 0.3),
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
         0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
 }
 
 .lb-tab:active {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.1);
     box-shadow:
-        0 2px 8px -4px rgba(0, 0, 0, 0.4),
+        0 2px 4px -2px rgba(0, 0, 0, 0.3),
         0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
-    transition: all 0.05s ease;
+    transform: translateY(1px);
 }
 
 .lb-tab.active,
@@ -2030,8 +2048,22 @@ a {
     border-color: rgba(255, 215, 0, 0.35);
     color: gold;
     box-shadow:
-        0 5px 15px -5px rgba(255, 215, 0, 0.25),
+        0 4px 8px -4px rgba(255, 215, 0, 0.25),
         0 0 0 0.5px rgba(255, 215, 0, 0.25) inset;
+}
+
+.lb-tab.active:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.45);
+    box-shadow:
+        0 6px 12px -6px rgba(255, 215, 0, 0.35),
+        0 0 0 0.5px rgba(255, 215, 0, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.lb-tab.active:active {
+    background: rgba(255, 215, 0, 0.25);
+    transform: translateY(1px);
 }
 
 .lb-tab.active::before {
@@ -4819,12 +4851,50 @@ body.no-liquid-animations .liquid-glass::after {
     display: none !important;
 }
 
-/* Вкладки лидерборда: в эконом-режиме остаётся плоский вид без стекла */
-body.no-liquid-animations .lb-tab {
+/* Эконом-режим: окно профиля без стекла — плотная тёмная карточка */
+body.no-liquid-animations .player-profile-card {
+    background: linear-gradient(160deg, rgba(28, 32, 44, 0.98), rgba(16, 18, 26, 0.98)) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    transition: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55) !important;
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+}
+
+body.no-liquid-animations .player-profile-card::before,
+body.no-liquid-animations .player-profile-card::after {
+    display: none !important;
+}
+
+body.no-liquid-animations .pp-stat {
+    background: rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
     box-shadow: none !important;
+    transition: transform 0.2s ease, background 0.2s ease !important;
+}
+
+/* Подъём при наведении остаётся и в эконом-режиме */
+body.no-liquid-animations .pp-stat:hover {
+    transform: translateY(-2px) !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.no-liquid-animations .player-profile-modal {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Вкладки лидерборда: в эконом-режиме остаётся плоский вид без стекла,
+   но поведение (transition/active) — как у кнопок навигации */
+body.no-liquid-animations .lb-tab,
+body.no-liquid-animations .lb-refresh {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: all 0.15s ease !important;
 }
 
 body.no-liquid-animations .lb-tab::before,
@@ -4832,8 +4902,12 @@ body.no-liquid-animations .lb-tab::after {
     display: none !important;
 }
 
-body.no-liquid-animations .lb-tab.active {
-    box-shadow: none !important;
+/* Как и у .nav-btn в эконом-режиме — без сдвига */
+body.no-liquid-animations .lb-tab:hover,
+body.no-liquid-animations .lb-tab:active,
+body.no-liquid-animations .lb-refresh:hover,
+body.no-liquid-animations .lb-refresh:active {
+    transform: none !important;
 }
 
 body.no-liquid-animations .click-btn:hover,
@@ -5129,29 +5203,199 @@ body.no-liquid-animations .nav-btn:hover {
     visibility: visible;
 }
 
+/* База: эконом-режим — плотная тёмная карточка */
 .player-profile-card {
-    max-width: 400px;
-    width: 90%;
-    background: rgba(20, 25, 35, 0.95);
-    backdrop-filter: blur(20px);
-    border: 2px solid gold;
-    border-radius: 50px;
-    padding: 30px;
-    text-align: center;
+    max-width: 420px;
+    width: 92%;
     position: relative;
+    border-radius: 34px;
+    padding: 22px 22px 24px;
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(28, 32, 44, 0.98), rgba(16, 18, 26, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
     transform: scale(0.9);
     transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Обычный режим: ровно как шапка вкладки «Профиль» (.profile-header) */
+.player-profile-card.liquid-glass {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+}
+
+.player-profile-card.liquid-glass:hover {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+}
+
+/* Контент поверх бликов стекла */
+.player-profile-card > *:not(.profile-close) {
+    position: relative;
+    z-index: 1;
 }
 
 .player-profile-modal.active .player-profile-card {
     transform: scale(1);
 }
 
+/* Шапка: имя и уровень по центру */
+.pp-head {
+    text-align: center;
+    padding: 6px 30px 18px;
+}
+
+.pp-name {
+    font-size: 26px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 6px;
+    line-height: 1.2;
+    word-break: break-word;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.pp-level {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 500;
+}
+
+.pp-level span {
+    color: gold;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* Тело: аватар слева, статистика справа */
+.pp-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pp-avatar {
+    flex: 0 0 auto;
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, #1b46e0, #0a7cf5);
+    border: 3px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 12px 28px rgba(0, 60, 200, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.pp-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Скин не выбран или картинка не загрузилась — рисуем курсор */
+.pp-avatar.no-skin img {
+    display: none;
+}
+
+.pp-avatar.no-skin::before {
+    content: "";
+    width: 46%;
+    height: 46%;
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M5.5 2.5v17.9l4.6-4.6 3 6.7 3.1-1.4-3-6.6h6.4z'/%3E%3C/svg%3E") center / contain no-repeat;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+}
+
+.pp-stats {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+/* Плашки статистики: эконом-режим — тёмные, обычный — стёклышки */
+.pp-stat {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: 12px 8px;
+    text-align: center;
+    min-width: 0;
+    transition: transform 0.2s ease, background 0.2s ease,
+                border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pp-stat:hover {
+    transform: translateY(-2px);
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.35);
+}
+
+.pp-stat.liquid-glass {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow:
+        0 5px 15px -5px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+.pp-stat.liquid-glass:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 8px 20px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+}
+
+.pp-stat-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pp-stat-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.15;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Длинные суммы (миллиарды диликов) — мельче, чтобы влезали целиком */
+.pp-stat-value.is-long {
+    font-size: 13px;
+}
+
+/* Совсем длинные (9 999 276 529,342) — ещё мельче */
+.pp-stat-value.is-xlong {
+    font-size: 11.5px;
+}
+
+
 .profile-close {
     position: absolute;
     top: 15px;
     right: 20px;
+    z-index: 2;
     background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
@@ -5255,16 +5499,78 @@ body.no-liquid-animations .nav-btn:hover {
     }
     
     .player-profile-card {
-        padding: 20px;
-        width: 95%;
+        padding: 18px 14px 18px;
+        width: 94%;
+        border-radius: 26px;
     }
-    
+
+    .pp-head {
+        padding: 4px 28px 14px;
+    }
+
+    .pp-name {
+        font-size: 21px;
+    }
+
+    .pp-level {
+        font-size: 13px;
+    }
+
+    .pp-body {
+        gap: 10px;
+    }
+
+    .pp-avatar {
+        width: 88px;
+        height: 88px;
+        border-width: 2px;
+    }
+
+    .pp-avatar.no-skin::before {
+        font-size: 40px;
+    }
+
+    .pp-stats {
+        gap: 7px;
+    }
+
+    .pp-stat {
+        padding: 9px 5px;
+        border-radius: 16px;
+    }
+
+    .pp-stat-label {
+        font-size: 9.5px;
+        letter-spacing: 0.3px;
+        margin-bottom: 4px;
+    }
+
+    .pp-stat-value {
+        font-size: 15px;
+    }
+
     .profile-close {
         width: 32px;
         height: 32px;
         font-size: 18px;
         top: 10px;
-        right: 15px;
+        right: 12px;
+    }
+}
+
+/* Совсем узкие телефоны: аватар над статистикой */
+@media (max-width: 380px) {
+    .pp-body {
+        flex-direction: column;
+    }
+
+    .pp-avatar {
+        width: 82px;
+        height: 82px;
+    }
+
+    .pp-stats {
+        width: 100%;
     }
 }
 
@@ -5575,14 +5881,31 @@ body.no-liquid-animations .nav-toggle-btn::before {
 
 /* На мобилках в режиме производительности - эмодзи по центру */
 @media (max-width: 768px) {
+    /* Раскладка 1:1 как в обычном режиме: те же 50px, тот же gap 8px,
+       тот же перенос по ширине экрана. Отличается только оформление. */
+    body.no-liquid-animations .nav-links {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    /* Кнопка ◀ всё ещё должна скрывать навигацию */
+    body.no-liquid-animations .nav-links.hidden {
+        display: none !important;
+    }
+
     body.no-liquid-animations .nav-btn {
         width: 50px !important;
         height: 50px !important;
         min-width: 50px !important;
+        max-width: 50px !important;
         padding: 0 !important;
         border-radius: 50% !important;
         background: rgba(255, 255, 255, 0.1) !important;
-        margin: 0 5px !important;
+        margin: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;

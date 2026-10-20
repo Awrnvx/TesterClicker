@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Dilic Clicker - Игра с кликерами</title>
     <!-- ?v= — сброс кеша: Telegram Desktop подолгу держит старые style.css и script.js -->
-    <link rel="stylesheet" href="style.css?v=0.0.7">
+    <link rel="stylesheet" href="style.css?v=0.1.3">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="firebase-config.js?v=0.0.7"></script>
+    <script src="firebase-config.js?v=0.1.3"></script>
     <!-- Иконки валют встроены в код: на телефоне в Telegram WebView
          внешние картинки и файлы из assets не загружаются. -->
-    <script src="currency-icons.js?v=0.0.7"></script>
+    <script src="currency-icons.js?v=0.1.3"></script>
     <script>
         const telegram = window.Telegram.WebApp;
         telegram.ready();
@@ -642,15 +642,20 @@
     </div>
 
     <div id="playerProfileModal" class="player-profile-modal">
-        <div class="player-profile-card glass-card liquid-glass">
+        <div class="player-profile-card liquid-glass">
             <button class="profile-close" id="closeProfileModal">✕</button>
-            <div class="profile-avatar"><div class="avatar-ring"><img id="modalAvatar" src="https://cdn-icons-png.flaticon.com/512/4366/4366891.png" alt="Avatar"></div></div>
-            <h2 id="modalUsername">Игрок</h2>
-            <div class="profile-stats-grid" style="margin-top: 20px;">
-                <div class="profile-stat-item"><span class="stat-label">Клики</span><span class="stat-value" id="modalClicks">0</span></div>
-                <div class="profile-stat-item"><span class="stat-label">Деньги</span><span class="stat-value" id="modalMoney">0</span></div>
-                <div class="profile-stat-item"><span class="stat-label"><img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> Дилики</span><span class="stat-value" id="modalDilicks">0</span></div>
-                <div class="profile-stat-item"><span class="stat-label">Уровень</span><span class="stat-value" id="modalLevel">1</span></div>
+            <div class="pp-head">
+                <h2 class="pp-name" id="modalUsername">Игрок</h2>
+                <div class="pp-level">Уровень: <span id="modalLevel">1</span></div>
+            </div>
+            <div class="pp-body">
+                <div class="pp-avatar"><img id="modalAvatar" src="https://cdn-icons-png.flaticon.com/512/4366/4366891.png" alt="Avatar"></div>
+                <div class="pp-stats">
+                    <div class="pp-stat liquid-glass"><span class="pp-stat-label">Всего кликов</span><span class="pp-stat-value" id="modalClicks">0</span></div>
+                    <div class="pp-stat liquid-glass"><span class="pp-stat-label">Денег</span><span class="pp-stat-value" id="modalMoney">0</span></div>
+                    <div class="pp-stat liquid-glass"><span class="pp-stat-label">Диликов</span><span class="pp-stat-value" id="modalDilicks">0</span></div>
+                    <div class="pp-stat liquid-glass"><span class="pp-stat-label">В игре</span><span class="pp-stat-value" id="modalPlaytime">0ч 0м</span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -709,6 +714,6 @@
         </div>
     </div>
     
-    <script src="script.js?v=0.0.7"></script>
+    <script src="script.js?v=0.1.3"></script>
 </body>
 </html>

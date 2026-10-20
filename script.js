@@ -2209,15 +2209,38 @@ class ClickerGame {
         try {
             const userData = await this._restGet('/users/' + playerId + '.json', 10000);
             if (!userData || typeof userData !== 'object') { this.showToast('❌ Игрок не найден', 'error'); return; }
-            const username = userData.settings?.displayName || userData.username;
+            const username = userData.settings?.displayName || userData.username || playerName || 'Игрок';
             document.getElementById('modalUsername').textContent = username;
-            document.getElementById('modalClicks').textContent = (userData.clicks || 0).toLocaleString();
-            document.getElementById('modalMoney').textContent = (userData.money || 0).toLocaleString();
-            document.getElementById('modalDilicks').textContent = (userData.dilicks || 0).toLocaleString();
+
+            // Длинные суммы (миллиарды) рисуем мельче — иначе не влезают в плашку
+            const setStat = (id, text) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = text;
+                el.classList.toggle('is-long', text.length > 11);
+                el.classList.toggle('is-xlong', text.length > 14);
+            };
+            setStat('modalClicks', this.formatNumber(userData.clicks || 0));
+            setStat('modalMoney', this.formatNumber(userData.money || 0));
+            setStat('modalDilicks', this.formatNumber(userData.dilicks || 0));
             document.getElementById('modalLevel').textContent = userData.seasonLevel || 1;
+            const playtime = Math.max(0, Math.floor(Number(userData.playtime) || 0));
+            setStat('modalPlaytime',
+                Math.floor(playtime / 3600) + 'ч ' + Math.floor((playtime % 3600) / 60) + 'м');
+
+            // Скин игрока: если его нет или картинка не загрузилась — рисуем курсор.
             const avatarImg = document.getElementById('modalAvatar');
-            if (userData.currentSkin && this.skinsData[userData.currentSkin]) avatarImg.src = this.skinsData[userData.currentSkin].image;
-            else avatarImg.src = 'https://cdn-icons-png.flaticon.com/512/4366/4366891.png';
+            const avatarBox = modal.querySelector('.pp-avatar');
+            const skin = userData.currentSkin && this.skinsData ? this.skinsData[userData.currentSkin] : null;
+            avatarImg.onerror = () => { if (avatarBox) avatarBox.classList.add('no-skin'); };
+            if (skin && skin.image) {
+                avatarImg.src = skin.image;
+                if (avatarBox) avatarBox.classList.remove('no-skin');
+            } else {
+                avatarImg.removeAttribute('src');
+                if (avatarBox) avatarBox.classList.add('no-skin');
+            }
+
             modal.classList.add('active');
             const closeBtn = document.getElementById('closeProfileModal');
             if (closeBtn) closeBtn.onclick = () => modal.classList.remove('active');

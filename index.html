@@ -408,7 +408,7 @@
                         </div>
                         <div class="settings-card glass-card liquid-glass">
                             <h3>ℹ️ О приложении</h3>
-                            <div class="settings-field"><p><strong>Версия:</strong> 3.0.0 ULTRA</p><p><strong>Разработчик:</strong> Dilic Team</p><button class="glass-btn liquid-glass" id="checkUpdatesBtn" style="width: 100%;">🔄 Проверить</button></div>
+                            <div class="settings-field"><p><strong>Версия:</strong> 0.0.4 BETA</p><p><strong>Разработчик:</strong> Dilic Team</p><button class="glass-btn liquid-glass" id="checkUpdatesBtn" style="width: 100%;">🔄 Проверить</button></div>
                         </div>
                     </div>
                 </div>
@@ -458,10 +458,30 @@
             </div>
 
             <div id="leaderboard" class="tab">
-                <div class="leaderboard-container glass-card liquid-glass">
-                    <h2>Таблица лидеров</h2>
-                    <div class="leaderboard-tabs"><button class="glass-btn small active liquid-glass" data-leaderboard="clicks">По кликам</button><button class="glass-btn small liquid-glass" data-leaderboard="money">По деньгам</button><button class="glass-btn small liquid-glass" data-leaderboard="playtime">По времени</button></div>
-                    <table class="leaderboard-table"><thead><tr><th>Место</th><th>Игрок</th><th>Показатель</th></tr></thead><tbody id="leaderboardBody"></tbody></table>
+                <div class="lb-wrap">
+                    <div class="lb-head glass-card liquid-glass">
+                        <div class="lb-head-top">
+                            <h2 class="lb-title">🏆 ТАБЛИЦА ЛИДЕРОВ</h2>
+                            <button class="lb-refresh" id="lbRefreshBtn" title="Обновить таблицу" aria-label="Обновить таблицу">⟳</button>
+                        </div>
+                        <div class="leaderboard-tabs lb-tabs">
+                            <button class="lb-tab active" data-leaderboard="clicks">👆 Клики</button>
+                            <button class="lb-tab" data-leaderboard="money"><img class="lb-tab-icon" data-currency="money" alt=""> Деньги</button>
+                            <button class="lb-tab" data-leaderboard="dilicks"><img class="lb-tab-icon" data-currency="dilicks" alt=""> Дилики</button>
+                            <button class="lb-tab" data-leaderboard="playtime">⏱ Время</button>
+                            <button class="lb-tab" data-leaderboard="season">⭐ Сезон</button>
+                        </div>
+                        <div class="lb-search-row">
+                            <input type="search" id="lbSearchInput" class="glass-input lb-search" placeholder="🔍 Найти игрока" autocomplete="off">
+                            <span class="lb-status" id="lbStatus">Загрузка…</span>
+                        </div>
+                    </div>
+                    <div class="lb-podium" id="lbPodium"></div>
+                    <div class="lb-board glass-card liquid-glass">
+                        <div class="lb-board-head"><span>#</span><span>Игрок</span><span>Результат</span></div>
+                        <div class="lb-rows" id="leaderboardBody"></div>
+                    </div>
+                    <div class="lb-self" id="lbSelf" hidden></div>
                 </div>
             </div>
 

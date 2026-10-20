@@ -30,6 +30,27 @@ const GAME_LOCAL_ICONS = {
     dilicks: (window.GAME_CURRENCY_ICONS && window.GAME_CURRENCY_ICONS.dilick) || gameAssetPath('assets/dilick.png'),
     money: (window.GAME_CURRENCY_ICONS && window.GAME_CURRENCY_ICONS.money) || gameAssetPath('assets/money.png')
 };
+
+// ============================================
+// СКРЫТЫЕ ИГРОКИ В ТАБЛИЦЕ ЛИДЕРОВ
+// ============================================
+// Сюда записывай ID игроков, которых не должно быть видно в топе.
+// ID — это ключ игрока в базе (users/<ID>), он же хранится в localStorage
+// под именем 'userId'. Скрытые игроки не видны НИКОМУ, включая создателя.
+//
+// Как добавить ещё одного: допиши его ID новой строкой в массив ниже.
+//     '-P2SMujLobiiisghghw7',   // мой аккаунт (админ)
+//     '-XXXXXXXXXXXX',          // ещё один игрок
+const HIDDEN_LEADERBOARD_IDS = [
+    '-P2SMujLobiiisghghw7'   // создатель / админ
+];
+
+// Быстрая проверка: скрыт ли игрок
+function isHiddenInLeaderboard(id) {
+    return HIDDEN_LEADERBOARD_IDS.indexOf(String(id)) !== -1;
+}
+
+
 class ClickerGame {
     constructor() {
         this.userData = null;
@@ -2260,6 +2281,7 @@ class ClickerGame {
             const entries = [];
             for (const [id, userData] of Object.entries(users)) {
                 if (!userData || typeof userData !== 'object') continue;
+                if (isHiddenInLeaderboard(id)) continue;   // скрытые не попадают в таблицу
                 entries.push(this._makeLeaderboardEntry(id, userData, type));
             }
             if (entries.length === 0) throw new Error('ветка users пуста');
@@ -2336,6 +2358,7 @@ class ClickerGame {
     // База периодически тормозит на отдельных записях, поэтому «не ответил» —
     // это нормальная ситуация, которую нужно пережить, а не выбросить игрока.
     async _fetchPlayerEntry(id, ms) {
+        if (isHiddenInLeaderboard(id)) return null;   // скрытый игрок — не читаем вовсе
         const userData = await this._restGetOnce('/users/' + id + '.json', ms);
         if (!userData || typeof userData !== 'object') return null;
         return this._makeLeaderboardEntry(id, userData, this._leaderboardType);
@@ -2417,7 +2440,7 @@ class ClickerGame {
             for (const key of Object.keys(data)) {
                 if (key.charAt(0) === '_') continue;          // служебные поля (_updated)
                 if (!Array.isArray(data[key])) { delete data[key]; continue; }
-                data[key] = data[key].filter(e => e && e.id && e.name !== undefined);
+                data[key] = data[key].filter(e => e && e.id && e.name !== undefined && !isHiddenInLeaderboard(e.id));
             }
             return data;
         } catch (e) { return null; }
@@ -2429,10 +2452,13 @@ class ClickerGame {
         } catch (e) { /* localStorage может быть недоступен или переполнен */ }
     }
 
-    // Записи нужной метрики из кэша (пустой массив, если ничего нет)
+    // Записи нужной метрики из кэша (пустой массив, если ничего нет).
+    // Скрытые игроки (HIDDEN_LEADERBOARD_IDS) отсеиваются здесь — это единая
+    // точка чтения для рендера, поэтому они не попадут ни в топ, ни в поиск.
     _lbCacheEntries(type) {
         const list = this._leaderboardCache && this._leaderboardCache[type];
-        return Array.isArray(list) ? list : [];
+        if (!Array.isArray(list)) return [];
+        return list.filter(e => e && !isHiddenInLeaderboard(e.id));
     }
 
     // Одна запись кэша: свежие данные заменяют старые, но если свежих по игроку
@@ -2440,6 +2466,9 @@ class ClickerGame {
     // replace = true — полное чтение, снимок заменяется целиком.
     _rememberLeaderboardEntries(entries, type, replace) {
         this._leaderboardCache = this._leaderboardCache || {};
+        // Скрытых игроков не храним в снимке вообще — чтобы их не было
+        // ни в таблице, ни в localStorage.
+        entries = entries.filter(e => e && !isHiddenInLeaderboard(e.id));
         let result;
         if (replace) {
             result = entries.slice();
@@ -2550,12 +2579,31 @@ class ClickerGame {
         }
 
         // ---- Своя позиция ----
+        // Скрытый из топа игрок (создатель) в списке отсутствует, но своё место
+        // он всё равно видит — считаем его по всем остальным игрокам.
         const selfBox = document.getElementById('lbSelf');
         if (selfBox) {
-            const me = myIndex >= 0 ? sorted[myIndex] : null;
+            let me = myIndex >= 0 ? sorted[myIndex] : null;
+            let myPlace = myIndex >= 0 ? myIndex + 1 : 0;
+
+            const myId = localStorage.getItem('userId') || '';
+            const canShowHidden = !state.error && !state.loading && !me &&
+                isHiddenInLeaderboard(myId) && this.userData;
+            if (canShowHidden) {
+                const settings = this.userData.settings || {};
+                me = {
+                    id: myId,
+                    name: settings.displayName || this.userData.username || 'Игрок',
+                    username: this.userData.username || '',
+                    value: this._leaderboardValue(this.userData, type)
+                };
+                // Место = сколько игроков набрали больше + 1
+                myPlace = sorted.filter(e => Number(e.value) > Number(me.value)).length + 1;
+            }
+
             if (me) {
                 selfBox.hidden = false;
-                selfBox.innerHTML = '<span class="lb-self-rank">#' + (myIndex + 1) + '</span>' +
+                selfBox.innerHTML = '<span class="lb-self-rank">#' + myPlace + '</span>' +
                     '<span class="lb-self-name">' + this._lbEscape(me.name) + '</span>' +
                     '<span class="lb-self-score">' + this._lbScoreHtml(me.value, type) + '</span>';
             } else {

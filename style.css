@@ -1946,41 +1946,106 @@ a {
     justify-content: flex-start;
 }
 
+/* Кнопки вкладок — эффекты те же, что у навигации (liquid glass) */
 .lb-tab {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
+    gap: 7px;
+    padding: 8px 16px;
     border-radius: 30px;
-    border: 0.5px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 13px;
-    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    overflow: hidden;
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    transition: all 0.2s ease;
+    box-shadow:
+        0 5px 15px -5px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+
+/* Верхний глянец */
+.lb-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 35%;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+/* Нижнее затемнение */
+.lb-tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20%;
+    background: linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.02) 70%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
 }
 
 .lb-tab:hover {
-    background: rgba(255, 255, 255, 0.09);
-    color: white;
-}
-
-.lb-tab.active {
-    background: rgba(255, 215, 0, 0.16);
-    border-color: rgba(255, 215, 0, 0.45);
-    color: gold;
-    box-shadow: 0 0 14px rgba(255, 215, 0, 0.18) inset;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 8px 20px -8px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
 }
 
 .lb-tab:active {
-    transform: translateY(1px);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow:
+        0 2px 8px -4px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
+    transition: all 0.05s ease;
+}
+
+.lb-tab.active,
+.lb-tab.active:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.35);
+    color: gold;
+    box-shadow:
+        0 5px 15px -5px rgba(255, 215, 0, 0.25),
+        0 0 0 0.5px rgba(255, 215, 0, 0.25) inset;
+}
+
+.lb-tab.active::before {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 215, 0, 0.18) 0%,
+        rgba(255, 215, 0, 0.06) 50%,
+        rgba(255, 215, 0, 0) 100%
+    );
 }
 
 .lb-tab-icon {
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -4752,6 +4817,23 @@ body.no-liquid-animations .event-card {
 body.no-liquid-animations .liquid-glass::before,
 body.no-liquid-animations .liquid-glass::after {
     display: none !important;
+}
+
+/* Вкладки лидерборда: в эконом-режиме остаётся плоский вид без стекла */
+body.no-liquid-animations .lb-tab {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+}
+
+body.no-liquid-animations .lb-tab::before,
+body.no-liquid-animations .lb-tab::after {
+    display: none !important;
+}
+
+body.no-liquid-animations .lb-tab.active {
+    box-shadow: none !important;
 }
 
 body.no-liquid-animations .click-btn:hover,

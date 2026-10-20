@@ -418,6 +418,30 @@
         .toast-notification.error { border-color: #ff6b6b; color: #ff6b6b; }
         .toast-notification.warning { border-color: #ffc107; color: #ffc107; }
 
+        /* ===== ИКОНКИ ВАЛЮТ =====
+           Без размеров картинка выводилась в натуральную величину (128×128)
+           и раздувала тосты и списки. */
+        .dilic-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: -3px;
+            object-fit: cover;
+        }
+        .toast-notification .dilic-icon {
+            width: 18px;
+            height: 18px;
+            vertical-align: -4px;
+            margin: 0 1px;
+        }
+        .top-value .dilic-icon {
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+        }
+
+
         hr { border-color: rgba(255, 215, 0, 0.2); margin: 15px 0; }
         .custom-multiplier-group { display: flex; gap: 10px; margin-top: 10px; }
         .custom-multiplier-group input {

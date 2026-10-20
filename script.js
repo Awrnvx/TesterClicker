@@ -22,9 +22,13 @@ function gameAssetPath(relativePath) {
     return relativePath;
 }
 
+// Встроенные иконки (currency-icons.js) — основной вариант. На телефоне
+// в Telegram WebView файлы из assets и внешние адреса не загружаются,
+// поэтому картинка должна быть прямо в коде. Путь к файлу остаётся
+// запасным вариантом, если скрипт со встроенными иконками не подключён.
 const GAME_LOCAL_ICONS = {
-    dilicks: gameAssetPath('assets/dilick.png'),
-    money: gameAssetPath('assets/money.png')
+    dilicks: (window.GAME_CURRENCY_ICONS && window.GAME_CURRENCY_ICONS.dilick) || gameAssetPath('assets/dilick.png'),
+    money: (window.GAME_CURRENCY_ICONS && window.GAME_CURRENCY_ICONS.money) || gameAssetPath('assets/money.png')
 };
 class ClickerGame {
     constructor() {

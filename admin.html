@@ -122,6 +122,91 @@
         }
         .admin-input-group textarea { resize: vertical; min-height: 60px; }
 
+        /* ===== ВЫБОР ИГРОКА ПО НИКУ (выдача наград) ===== */
+        .reward-picker {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+        }
+        .reward-picker input#rewardUserSearch {
+            width: 100%;
+            padding-right: 38px;
+        }
+        .reward-picker-caret {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 215, 0, 0.12);
+            color: gold;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .reward-picker-caret:hover { background: rgba(255, 215, 0, 0.25); }
+        .reward-picker.open .reward-picker-caret { transform: translateY(-50%) rotate(180deg); }
+
+        .reward-picker-list {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            max-height: 240px;
+            overflow-y: auto;
+            background: rgba(16, 20, 28, 0.98);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            border-radius: 16px;
+            padding: 6px;
+            z-index: 500;
+            display: none;
+            box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.7);
+        }
+        .reward-picker.open .reward-picker-list { display: block; }
+        .reward-picker-list::-webkit-scrollbar { width: 5px; }
+        .reward-picker-list::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .reward-picker-list::-webkit-scrollbar-thumb { background: gold; border-radius: 10px; }
+
+        .reward-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            color: white;
+            transition: background 0.12s ease;
+        }
+        .reward-option:hover,
+        .reward-option.is-highlighted { background: rgba(255, 215, 0, 0.15); }
+        .reward-option.is-selected { background: rgba(255, 215, 0, 0.22); }
+        .reward-option-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .reward-option-id {
+            font-family: monospace;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.35);
+        }
+        .reward-option-crown { color: gold; font-size: 12px; }
+        .reward-picker-empty {
+            padding: 12px 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.45);
+            text-align: center;
+        }
+
+
         /* Множители */
         .multiplier-buttons {
             display: flex;
@@ -691,9 +776,14 @@
                     <div class="admin-card">
                         <h2>🎁 ВЫДАЧА НАГРАД</h2>
                         <div class="admin-command">
-                            <div class="admin-command-code">/give &lt;ID&gt; &lt;предмет&gt; &lt;количество&gt;</div>
+                            <div class="admin-command-code">/give &lt;ник&gt; &lt;предмет&gt; &lt;количество&gt;</div>
                             <div class="admin-input-group">
-                                <input type="text" id="rewardUserId" placeholder="ID игрока">
+                                <div class="reward-picker" id="rewardPicker">
+                                    <input type="text" id="rewardUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
+                                    <input type="hidden" id="rewardUserId">
+                                    <button type="button" class="reward-picker-caret" id="rewardPickerCaret" tabindex="-1">▾</button>
+                                    <div class="reward-picker-list" id="rewardPickerList"></div>
+                                </div>
                                 <select id="rewardType">
                                     <option value="dilicks">Дилики</option>
                                     <option value="money">Деньги</option>
@@ -1330,13 +1420,194 @@
                     });
                 });
                 
+                // ===== ВЫБОР ИГРОКА ПО НИКУ (выдача наград) =====
+                const rewardPicker = document.getElementById('rewardPicker');
+                const rewardSearch = document.getElementById('rewardUserSearch');
+                const rewardUserIdInput = document.getElementById('rewardUserId');
+                const rewardPickerList = document.getElementById('rewardPickerList');
+                const rewardPickerCaret = document.getElementById('rewardPickerCaret');
+
+                let rewardUsers = null;
+                let rewardUsersLoading = null;
+                let rewardHighlight = -1;
+                let rewardFiltered = [];
+                const REWARD_LIST_LIMIT = 400;
+
+                function rewardUserName(user) {
+                    return (user && user.settings && user.settings.displayName) || (user && user.username) || 'Игрок';
+                }
+
+                function loadRewardUsers() {
+                    if (rewardUsers) return Promise.resolve(rewardUsers);
+                    if (rewardUsersLoading) return rewardUsersLoading;
+                    rewardPickerList.innerHTML = '<div class="reward-picker-empty">Загрузка игроков...</div>';
+                    rewardUsersLoading = usersRef.once('value').then(snapshot => {
+                        const data = snapshot.val() || {};
+                        rewardUsers = Object.entries(data).map(([id, user]) => ({
+                            id: id,
+                            name: rewardUserName(user),
+                            username: (user && user.username) || ''
+                        })).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+                        addDebugMessage(`👥 Игроков для выдачи: ${rewardUsers.length}`);
+                        return rewardUsers;
+                    }).catch(err => {
+                        rewardUsersLoading = null;
+                        rewardPickerList.innerHTML = '<div class="reward-picker-empty">Ошибка загрузки списка</div>';
+                        addDebugMessage(`❌ Ошибка загрузки игроков: ${err.message}`);
+                        throw err;
+                    });
+                    return rewardUsersLoading;
+                }
+
+                function renderRewardList() {
+                    const query = rewardSearch.value.trim().toLowerCase();
+                    rewardFiltered = (rewardUsers || []).filter(u =>
+                        !query ||
+                        u.name.toLowerCase().includes(query) ||
+                        u.username.toLowerCase().includes(query) ||
+                        u.id.toLowerCase().includes(query)
+                    );
+                    rewardHighlight = -1;
+
+                    if (!rewardFiltered.length) {
+                        rewardPickerList.innerHTML = '<div class="reward-picker-empty">Никого не нашли</div>';
+                        return;
+                    }
+
+                    const selectedId = rewardUserIdInput.value;
+                    const frag = document.createDocumentFragment();
+                    rewardFiltered.slice(0, REWARD_LIST_LIMIT).forEach((u, index) => {
+                        const row = document.createElement('div');
+                        row.className = 'reward-option' + (u.id === selectedId ? ' is-selected' : '');
+                        row.dataset.index = index;
+
+                        const name = document.createElement('span');
+                        name.className = 'reward-option-name';
+                        name.textContent = u.name;
+
+                        row.appendChild(name);
+                        if (u.id === CREATOR_ID) {
+                            const crown = document.createElement('span');
+                            crown.className = 'reward-option-crown';
+                            crown.textContent = '👑';
+                            row.appendChild(crown);
+                        }
+                        const idSpan = document.createElement('span');
+                        idSpan.className = 'reward-option-id';
+                        idSpan.textContent = u.id;
+                        row.appendChild(idSpan);
+
+                        frag.appendChild(row);
+                    });
+                    rewardPickerList.innerHTML = '';
+                    rewardPickerList.appendChild(frag);
+                    if (rewardFiltered.length > REWARD_LIST_LIMIT) {
+                        const hint = document.createElement('div');
+                        hint.className = 'reward-picker-empty';
+                        hint.textContent = `Показаны первые ${REWARD_LIST_LIMIT} — уточните поиск`;
+                        rewardPickerList.appendChild(hint);
+                    }
+                }
+
+                function openRewardPicker() {
+                    rewardPicker.classList.add('open');
+                    loadRewardUsers().then(() => {
+                        if (rewardPicker.classList.contains('open')) renderRewardList();
+                    }).catch(() => {});
+                }
+
+                function closeRewardPicker() {
+                    rewardPicker.classList.remove('open');
+                    rewardHighlight = -1;
+                }
+
+                function pickRewardUser(user) {
+                    rewardUserIdInput.value = user.id;
+                    rewardSearch.value = user.name;
+                    closeRewardPicker();
+                    addDebugMessage(`🎯 Выбран игрок: ${user.name} (${user.id})`);
+                }
+
+                function highlightRewardOption(next) {
+                    const rows = rewardPickerList.querySelectorAll('.reward-option');
+                    if (!rows.length) return;
+                    if (rewardHighlight >= 0 && rows[rewardHighlight]) rows[rewardHighlight].classList.remove('is-highlighted');
+                    rewardHighlight = (next + rows.length) % rows.length;
+                    rows[rewardHighlight].classList.add('is-highlighted');
+                    rows[rewardHighlight].scrollIntoView({ block: 'nearest' });
+                }
+
+                // Сброс выбранного игрока при ручном вводе
+                rewardSearch?.addEventListener('input', () => {
+                    rewardUserIdInput.value = '';
+                    if (!rewardPicker.classList.contains('open')) openRewardPicker();
+                    else renderRewardList();
+                });
+
+                rewardSearch?.addEventListener('focus', () => openRewardPicker());
+                rewardPickerCaret?.addEventListener('click', () => {
+                    if (rewardPicker.classList.contains('open')) closeRewardPicker();
+                    else { openRewardPicker(); rewardSearch.focus(); }
+                });
+
+                rewardPickerList?.addEventListener('mousedown', (e) => e.preventDefault());
+                rewardPickerList?.addEventListener('click', (e) => {
+                    const row = e.target.closest('.reward-option');
+                    if (!row) return;
+                    const user = rewardFiltered[parseInt(row.dataset.index)];
+                    if (user) pickRewardUser(user);
+                });
+
+                rewardSearch?.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (!rewardPicker.classList.contains('open')) openRewardPicker();
+                        else highlightRewardOption(rewardHighlight + 1);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        highlightRewardOption(rewardHighlight - 1);
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (rewardHighlight >= 0 && rewardFiltered[rewardHighlight]) {
+                            pickRewardUser(rewardFiltered[rewardHighlight]);
+                        } else if (rewardFiltered.length === 1) {
+                            pickRewardUser(rewardFiltered[0]);
+                        } else if (rewardFiltered.length > 1) {
+                            highlightRewardOption(0);
+                        }
+                    } else if (e.key === 'Escape') {
+                        closeRewardPicker();
+                        rewardSearch.blur();
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!rewardPicker || !rewardPicker.contains(e.target)) closeRewardPicker();
+                });
+
+                // Находит ID игрока: из списка или как введённый вручную ID
+                function resolveRewardUserId() {
+                    const picked = rewardUserIdInput.value.trim();
+                    if (picked) return picked;
+                    const typed = rewardSearch.value.trim();
+                    if (!typed) return '';
+                    const byId = (rewardUsers || []).find(u => u.id === typed);
+                    if (byId) return byId.id;
+                    const lower = typed.toLowerCase();
+                    const byName = (rewardUsers || []).find(u =>
+                        u.name.toLowerCase() === lower || u.username.toLowerCase() === lower
+                    );
+                    if (byName) return byName.id;
+                    return typed; // старый режим: вставили ID руками
+                }
+
                 // ===== ВЫДАЧА НАГРАД =====
                 document.getElementById('giveRewardBtn')?.addEventListener('click', async () => {
-                    const userId = document.getElementById('rewardUserId').value.trim();
+                    const userId = resolveRewardUserId();
                     const rewardType = document.getElementById('rewardType').value;
                     const amount = document.getElementById('rewardAmount').value;
                     if (!userId) {
-                        showToast('❌ Введите ID игрока', 'error');
+                        showToast('❌ Выберите игрока из списка', 'error');
                         return;
                     }
                     try {
@@ -1370,7 +1641,9 @@
                             }
                         }
                         document.getElementById('rewardUserId').value = '';
+                        document.getElementById('rewardUserSearch').value = '';
                         document.getElementById('rewardAmount').value = '';
+                        closeRewardPicker();
                     } catch (error) {
                         showToast('❌ Ошибка при выдаче', 'error');
                     }

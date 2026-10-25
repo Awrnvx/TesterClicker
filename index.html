@@ -93,6 +93,21 @@
         </div>
     </div>
 
+    <!-- Мини-плашка техработ для админа: не перекрывает игру -->
+    <div id="adminMaintenanceBadge" class="admin-maint-badge" style="display: none;">
+        <button class="admin-maint-toggle" id="adminMaintToggle" type="button" title="Свернуть">–</button>
+        <div class="admin-maint-body">
+            <div class="admin-maint-head">
+                <span class="admin-maint-icon" id="adminMaintIcon">🔧</span>
+                <span class="admin-maint-title" id="adminMaintTitle">Технические работы</span>
+            </div>
+            <div class="admin-maint-timer" id="adminMaintTimer" style="display: none;"></div>
+            <div class="admin-maint-progress"><div class="admin-maint-bar" id="adminMaintBar"></div></div>
+            <div class="admin-maint-hint">Это видишь только ты</div>
+        </div>
+    </div>
+
+
     <div class="game-container">
         <nav class="glass-nav liquid-glass">
             <button class="nav-toggle-btn liquid-glass" id="navToggleBtn"><span class="toggle-icon">◀</span></button>

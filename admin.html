@@ -125,13 +125,39 @@
         /* ===== ВЫБОР ИГРОКА ПО НИКУ (выдача наград) ===== */
         .reward-picker {
             position: relative;
-            flex: 1;
-            min-width: 180px;
+            flex: 1 1 180px;
+            min-width: 0;
         }
-        .reward-picker input#rewardUserSearch {
+        .reward-picker input[type="text"] {
             width: 100%;
             padding-right: 38px;
         }
+
+        /* Ровные ряды для банов: поле ника / причина / часы / кнопка */
+        .admin-input-group.ban-row,
+        .admin-input-group.unban-row {
+            display: grid;
+            align-items: stretch;
+            gap: 10px;
+        }
+        .admin-input-group.ban-row {
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 88px auto;
+        }
+        .admin-input-group.unban-row {
+            grid-template-columns: minmax(0, 1.4fr) auto;
+        }
+        .admin-input-group.ban-row > input,
+        .admin-input-group.ban-row > select,
+        .admin-input-group.unban-row > input {
+            width: 100%;
+            min-width: 0;
+        }
+        .admin-input-group.ban-row > .glass-btn,
+        .admin-input-group.unban-row > .glass-btn {
+            white-space: nowrap;
+            padding: 0 18px;
+        }
+        .admin-input-group.ban-row > #banHours { text-align: center; padding-left: 8px; padding-right: 8px; }
         .reward-picker-caret {
             position: absolute;
             top: 50%;
@@ -157,7 +183,10 @@
             position: absolute;
             top: calc(100% + 6px);
             left: 0;
-            right: 0;
+            right: auto;
+            min-width: 100%;
+            width: max-content;
+            max-width: min(360px, 90vw);
             max-height: 240px;
             overflow-y: auto;
             background: rgba(16, 20, 28, 0.98);
@@ -188,12 +217,18 @@
         .reward-option.is-highlighted { background: rgba(255, 215, 0, 0.15); }
         .reward-option.is-selected { background: rgba(255, 215, 0, 0.22); }
         .reward-option-name {
-            flex: 1;
+            flex: 1 1 auto;
+            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
         .reward-option-id {
+            flex: 0 0 auto;
+            max-width: 50%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             font-family: monospace;
             font-size: 10px;
             color: rgba(255, 255, 255, 0.35);
@@ -549,6 +584,8 @@
             .admin-header h1 { font-size: 1.6rem; }
             .admin-card { padding: 15px; }
             .admin-input-group { flex-direction: column; align-items: stretch; }
+            .admin-input-group.ban-row,
+            .admin-input-group.unban-row { grid-template-columns: 1fr; }
             .admin-input-group input, .admin-input-group select, .admin-input-group textarea, .glass-btn { width: 100%; }
             .multiplier-buttons { justify-content: center; }
             .custom-multiplier-group { flex-direction: column; }
@@ -619,19 +656,29 @@
                     <div class="admin-card">
                         <h2>🔨 УПРАВЛЕНИЕ БАНАМИ <span class="realtime-badge">LIVE</span></h2>
                         <div class="admin-command">
-                            <div class="admin-command-code">/ban &lt;ID игрока&gt; [причина] [часы]</div>
+                            <div class="admin-command-code">/ban &lt;ник&gt; [причина] [часы]</div>
                             <div class="admin-command-desc">Забанить игрока (0 часов = навсегда)</div>
-                            <div class="admin-input-group">
-                                <input type="text" id="banUserId" placeholder="ID игрока">
+                            <div class="admin-input-group ban-row">
+                                <div class="reward-picker" id="banPicker">
+                                    <input type="text" id="banUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
+                                    <input type="hidden" id="banUserId">
+                                    <button type="button" class="reward-picker-caret" id="banPickerCaret" tabindex="-1">▾</button>
+                                    <div class="reward-picker-list" id="banPickerList"></div>
+                                </div>
                                 <input type="text" id="banReason" placeholder="Причина (опционально)">
                                 <input type="number" id="banHours" placeholder="Часы (0=навсегда)" value="0">
                                 <button class="glass-btn danger-btn" id="banUserBtn">⛔ ЗАБАНИТЬ</button>
                             </div>
                         </div>
                         <div class="admin-command">
-                            <div class="admin-command-code">/unban &lt;ID игрока&gt;</div>
-                            <div class="admin-input-group">
-                                <input type="text" id="unbanUserId" placeholder="ID игрока">
+                            <div class="admin-command-code">/unban &lt;ник&gt;</div>
+                            <div class="admin-input-group unban-row">
+                                <div class="reward-picker" id="unbanPicker">
+                                    <input type="text" id="unbanUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
+                                    <input type="hidden" id="unbanUserId">
+                                    <button type="button" class="reward-picker-caret" id="unbanPickerCaret" tabindex="-1">▾</button>
+                                    <div class="reward-picker-list" id="unbanPickerList"></div>
+                                </div>
                                 <button class="glass-btn success-btn" id="unbanUserBtn">✅ РАЗБАНИТЬ</button>
                             </div>
                         </div>
@@ -1027,10 +1074,16 @@
                 function initRealtimeBans() {
                     const container = document.getElementById('bannedList');
                     if (!container) return;
-                    
-                    banRef.on('value', (snapshot) => {
-                        const bans = snapshot.val();
-                        addDebugMessage(`🔨 Баны обновлены: ${bans ? Object.keys(bans).length : 0} шт.`);
+
+                    let lastBans = null;
+
+                    function banUserName(id) {
+                        const user = (typeof pickerUsers !== 'undefined' && pickerUsers)
+                            ? pickerUsers.find(u => u.id === id) : null;
+                        return user ? user.name : id.substring(0, 12) + '...';
+                    }
+
+                    function renderBans(bans) {
                         if (!bans) {
                             container.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center;">Нет забаненных игроков</div>';
                             return;
@@ -1038,7 +1091,7 @@
                         container.innerHTML = '';
                         for (const [id, ban] of Object.entries(bans)) {
                             if (!ban.active) continue;
-                            let info = `${id.substring(0, 12)}...: ${ban.reason || 'Нарушение правил'}`;
+                            let info = `${banUserName(id)}: ${ban.reason || 'Нарушение правил'}`;
                             if (!ban.isPermanent && ban.endTime) {
                                 const remaining = Math.max(0, Math.floor((ban.endTime - Date.now()) / 1000));
                                 const hours = Math.floor(remaining / 3600);
@@ -1058,6 +1111,16 @@
                                 showToast(`✅ Игрок разбанен`, 'success');
                             };
                         });
+                    }
+
+                    banRef.on('value', (snapshot) => {
+                        lastBans = snapshot.val();
+                        addDebugMessage(`🔨 Баны обновлены: ${lastBans ? Object.keys(lastBans).length : 0} шт.`);
+                        renderBans(lastBans);
+                        // Имена игроков могли ещё не загрузиться — покажем их, как только будут
+                        if (!pickerUsers) {
+                            loadPickerUsers(null).then(() => renderBans(lastBans)).catch(() => {});
+                        }
                     });
                 }
                 
@@ -1175,11 +1238,11 @@
                 
                 // ===== БАНЫ =====
                 document.getElementById('banUserBtn')?.addEventListener('click', async () => {
-                    const userId = document.getElementById('banUserId').value.trim();
+                    const userId = banPickerApi ? banPickerApi.resolve() : '';
                     const reason = document.getElementById('banReason').value.trim() || 'Нарушение правил';
                     const hours = parseInt(document.getElementById('banHours').value) || 0;
                     if (!userId) {
-                        showToast('❌ Введите ID игрока', 'error');
+                        showToast('❌ Выберите игрока из списка', 'error');
                         return;
                     }
                     const banData = { active: true, reason: reason, bannedAt: Date.now(), isPermanent: hours === 0 };
@@ -1187,7 +1250,7 @@
                     try {
                         await banRef.child(userId).set(banData);
                         showToast(`⛔ Игрок ${userId} забанен${hours > 0 ? ` на ${hours} часов` : ' навсегда'}`, 'warning');
-                        document.getElementById('banUserId').value = '';
+                        banPickerApi?.reset();
                         document.getElementById('banReason').value = '';
                         document.getElementById('banHours').value = '0';
                     } catch (error) {
@@ -1196,15 +1259,15 @@
                 });
                 
                 document.getElementById('unbanUserBtn')?.addEventListener('click', async () => {
-                    const userId = document.getElementById('unbanUserId').value.trim();
+                    const userId = unbanPickerApi ? unbanPickerApi.resolve() : '';
                     if (!userId) {
-                        showToast('❌ Введите ID игрока', 'error');
+                        showToast('❌ Выберите игрока из списка', 'error');
                         return;
                     }
                     try {
                         await banRef.child(userId).remove();
                         showToast(`✅ Игрок ${userId} разбанен`, 'success');
-                        document.getElementById('unbanUserId').value = '';
+                        unbanPickerApi?.reset();
                     } catch (error) {
                         showToast(`❌ Ошибка: ${error.message}`, 'error');
                     }
@@ -1444,190 +1507,227 @@
                     });
                 });
                 
-                // ===== ВЫБОР ИГРОКА ПО НИКУ (выдача наград) =====
-                const rewardPicker = document.getElementById('rewardPicker');
-                const rewardSearch = document.getElementById('rewardUserSearch');
-                const rewardUserIdInput = document.getElementById('rewardUserId');
-                const rewardPickerList = document.getElementById('rewardPickerList');
-                const rewardPickerCaret = document.getElementById('rewardPickerCaret');
+                // ===== ВЫБОР ИГРОКА ПО НИКУ (награды, баны) =====
+                // Один список игроков на всю панель: грузится один раз.
+                const PICKER_LIST_LIMIT = 400;
+                let pickerUsers = null;
+                let pickerUsersLoading = null;
 
-                let rewardUsers = null;
-                let rewardUsersLoading = null;
-                let rewardHighlight = -1;
-                let rewardFiltered = [];
-                const REWARD_LIST_LIMIT = 400;
-
-                function rewardUserName(user) {
+                function pickerUserName(user) {
                     return (user && user.settings && user.settings.displayName) || (user && user.username) || 'Игрок';
                 }
 
-                function loadRewardUsers() {
-                    if (rewardUsers) return Promise.resolve(rewardUsers);
-                    if (rewardUsersLoading) return rewardUsersLoading;
-                    rewardPickerList.innerHTML = '<div class="reward-picker-empty">Загрузка игроков...</div>';
-                    rewardUsersLoading = usersRef.once('value').then(snapshot => {
+                function loadPickerUsers(placeholderList) {
+                    if (pickerUsers) return Promise.resolve(pickerUsers);
+                    if (pickerUsersLoading) return pickerUsersLoading;
+                    if (placeholderList) placeholderList.innerHTML = '<div class="reward-picker-empty">Загрузка игроков...</div>';
+                    pickerUsersLoading = usersRef.once('value').then(snapshot => {
                         const data = snapshot.val() || {};
-                        rewardUsers = Object.entries(data).map(([id, user]) => ({
+                        pickerUsers = Object.entries(data).map(([id, user]) => ({
                             id: id,
-                            name: rewardUserName(user),
+                            name: pickerUserName(user),
                             username: (user && user.username) || ''
                         })).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-                        addDebugMessage(`👥 Игроков для выдачи: ${rewardUsers.length}`);
-                        return rewardUsers;
+                        addDebugMessage(`👥 Игроков загружено: ${pickerUsers.length}`);
+                        return pickerUsers;
                     }).catch(err => {
-                        rewardUsersLoading = null;
-                        rewardPickerList.innerHTML = '<div class="reward-picker-empty">Ошибка загрузки списка</div>';
+                        pickerUsersLoading = null;
+                        if (placeholderList) placeholderList.innerHTML = '<div class="reward-picker-empty">Ошибка загрузки списка</div>';
                         addDebugMessage(`❌ Ошибка загрузки игроков: ${err.message}`);
                         throw err;
                     });
-                    return rewardUsersLoading;
+                    return pickerUsersLoading;
                 }
 
-                function renderRewardList() {
-                    const query = rewardSearch.value.trim().toLowerCase();
-                    rewardFiltered = (rewardUsers || []).filter(u =>
-                        !query ||
-                        u.name.toLowerCase().includes(query) ||
-                        u.username.toLowerCase().includes(query) ||
-                        u.id.toLowerCase().includes(query)
-                    );
-                    rewardHighlight = -1;
+                // Возвращает объект с методами resolve()/reset() для конкретного поля.
+                function createUserPicker(opts) {
+                    const picker = document.getElementById(opts.pickerId);
+                    const search = document.getElementById(opts.searchId);
+                    const hidden = document.getElementById(opts.hiddenId);
+                    const list = document.getElementById(opts.listId);
+                    const caret = document.getElementById(opts.caretId);
+                    if (!picker || !search || !hidden || !list) return null;
 
-                    if (!rewardFiltered.length) {
-                        rewardPickerList.innerHTML = '<div class="reward-picker-empty">Никого не нашли</div>';
-                        return;
+                    let highlight = -1;
+                    let filtered = [];
+
+                    function render() {
+                        const query = search.value.trim().toLowerCase();
+                        filtered = (pickerUsers || []).filter(u =>
+                            !query ||
+                            u.name.toLowerCase().includes(query) ||
+                            u.username.toLowerCase().includes(query) ||
+                            u.id.toLowerCase().includes(query)
+                        );
+                        highlight = -1;
+
+                        if (!filtered.length) {
+                            list.innerHTML = '<div class="reward-picker-empty">Никого не нашли</div>';
+                            return;
+                        }
+
+                        const selectedId = hidden.value;
+                        const frag = document.createDocumentFragment();
+                        filtered.slice(0, PICKER_LIST_LIMIT).forEach((u, index) => {
+                            const row = document.createElement('div');
+                            row.className = 'reward-option' + (u.id === selectedId ? ' is-selected' : '');
+                            row.dataset.index = index;
+
+                            const name = document.createElement('span');
+                            name.className = 'reward-option-name';
+                            name.textContent = u.name;
+                            row.appendChild(name);
+
+                            if (u.id === CREATOR_ID) {
+                                const crown = document.createElement('span');
+                                crown.className = 'reward-option-crown';
+                                crown.textContent = '👑';
+                                row.appendChild(crown);
+                            }
+                            const idSpan = document.createElement('span');
+                            idSpan.className = 'reward-option-id';
+                            idSpan.textContent = u.id;
+                            row.appendChild(idSpan);
+
+                            frag.appendChild(row);
+                        });
+                        list.innerHTML = '';
+                        list.appendChild(frag);
+                        if (filtered.length > PICKER_LIST_LIMIT) {
+                            const hint = document.createElement('div');
+                            hint.className = 'reward-picker-empty';
+                            hint.textContent = `Показаны первые ${PICKER_LIST_LIMIT} — уточните поиск`;
+                            list.appendChild(hint);
+                        }
                     }
 
-                    const selectedId = rewardUserIdInput.value;
-                    const frag = document.createDocumentFragment();
-                    rewardFiltered.slice(0, REWARD_LIST_LIMIT).forEach((u, index) => {
-                        const row = document.createElement('div');
-                        row.className = 'reward-option' + (u.id === selectedId ? ' is-selected' : '');
-                        row.dataset.index = index;
+                    function open() {
+                        picker.classList.add('open');
+                        loadPickerUsers(list).then(() => {
+                            if (picker.classList.contains('open')) render();
+                        }).catch(() => {});
+                    }
 
-                        const name = document.createElement('span');
-                        name.className = 'reward-option-name';
-                        name.textContent = u.name;
+                    function close() {
+                        picker.classList.remove('open');
+                        highlight = -1;
+                    }
 
-                        row.appendChild(name);
-                        if (u.id === CREATOR_ID) {
-                            const crown = document.createElement('span');
-                            crown.className = 'reward-option-crown';
-                            crown.textContent = '👑';
-                            row.appendChild(crown);
-                        }
-                        const idSpan = document.createElement('span');
-                        idSpan.className = 'reward-option-id';
-                        idSpan.textContent = u.id;
-                        row.appendChild(idSpan);
+                    function pick(user) {
+                        hidden.value = user.id;
+                        search.value = user.name;
+                        close();
+                        addDebugMessage(`🎯 Выбран игрок: ${user.name} (${user.id})`);
+                    }
 
-                        frag.appendChild(row);
+                    function moveHighlight(next) {
+                        const rows = list.querySelectorAll('.reward-option');
+                        if (!rows.length) return;
+                        if (highlight >= 0 && rows[highlight]) rows[highlight].classList.remove('is-highlighted');
+                        highlight = (next + rows.length) % rows.length;
+                        rows[highlight].classList.add('is-highlighted');
+                        rows[highlight].scrollIntoView({ block: 'nearest' });
+                    }
+
+                    search.addEventListener('input', () => {
+                        hidden.value = '';
+                        if (!picker.classList.contains('open')) open();
+                        else render();
                     });
-                    rewardPickerList.innerHTML = '';
-                    rewardPickerList.appendChild(frag);
-                    if (rewardFiltered.length > REWARD_LIST_LIMIT) {
-                        const hint = document.createElement('div');
-                        hint.className = 'reward-picker-empty';
-                        hint.textContent = `Показаны первые ${REWARD_LIST_LIMIT} — уточните поиск`;
-                        rewardPickerList.appendChild(hint);
-                    }
-                }
 
-                function openRewardPicker() {
-                    rewardPicker.classList.add('open');
-                    loadRewardUsers().then(() => {
-                        if (rewardPicker.classList.contains('open')) renderRewardList();
-                    }).catch(() => {});
-                }
+                    search.addEventListener('focus', () => open());
+                    caret?.addEventListener('click', () => {
+                        if (picker.classList.contains('open')) close();
+                        else { open(); search.focus(); }
+                    });
 
-                function closeRewardPicker() {
-                    rewardPicker.classList.remove('open');
-                    rewardHighlight = -1;
-                }
+                    list.addEventListener('mousedown', (e) => e.preventDefault());
+                    list.addEventListener('click', (e) => {
+                        const row = e.target.closest('.reward-option');
+                        if (!row) return;
+                        const user = filtered[parseInt(row.dataset.index)];
+                        if (user) pick(user);
+                    });
 
-                function pickRewardUser(user) {
-                    rewardUserIdInput.value = user.id;
-                    rewardSearch.value = user.name;
-                    closeRewardPicker();
-                    addDebugMessage(`🎯 Выбран игрок: ${user.name} (${user.id})`);
-                }
-
-                function highlightRewardOption(next) {
-                    const rows = rewardPickerList.querySelectorAll('.reward-option');
-                    if (!rows.length) return;
-                    if (rewardHighlight >= 0 && rows[rewardHighlight]) rows[rewardHighlight].classList.remove('is-highlighted');
-                    rewardHighlight = (next + rows.length) % rows.length;
-                    rows[rewardHighlight].classList.add('is-highlighted');
-                    rows[rewardHighlight].scrollIntoView({ block: 'nearest' });
-                }
-
-                // Сброс выбранного игрока при ручном вводе
-                rewardSearch?.addEventListener('input', () => {
-                    rewardUserIdInput.value = '';
-                    if (!rewardPicker.classList.contains('open')) openRewardPicker();
-                    else renderRewardList();
-                });
-
-                rewardSearch?.addEventListener('focus', () => openRewardPicker());
-                rewardPickerCaret?.addEventListener('click', () => {
-                    if (rewardPicker.classList.contains('open')) closeRewardPicker();
-                    else { openRewardPicker(); rewardSearch.focus(); }
-                });
-
-                rewardPickerList?.addEventListener('mousedown', (e) => e.preventDefault());
-                rewardPickerList?.addEventListener('click', (e) => {
-                    const row = e.target.closest('.reward-option');
-                    if (!row) return;
-                    const user = rewardFiltered[parseInt(row.dataset.index)];
-                    if (user) pickRewardUser(user);
-                });
-
-                rewardSearch?.addEventListener('keydown', (e) => {
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        if (!rewardPicker.classList.contains('open')) openRewardPicker();
-                        else highlightRewardOption(rewardHighlight + 1);
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        highlightRewardOption(rewardHighlight - 1);
-                    } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (rewardHighlight >= 0 && rewardFiltered[rewardHighlight]) {
-                            pickRewardUser(rewardFiltered[rewardHighlight]);
-                        } else if (rewardFiltered.length === 1) {
-                            pickRewardUser(rewardFiltered[0]);
-                        } else if (rewardFiltered.length > 1) {
-                            highlightRewardOption(0);
+                    search.addEventListener('keydown', (e) => {
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            if (!picker.classList.contains('open')) open();
+                            else moveHighlight(highlight + 1);
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            moveHighlight(highlight - 1);
+                        } else if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (highlight >= 0 && filtered[highlight]) pick(filtered[highlight]);
+                            else if (filtered.length === 1) pick(filtered[0]);
+                            else if (filtered.length > 1) moveHighlight(0);
+                        } else if (e.key === 'Escape') {
+                            close();
+                            search.blur();
                         }
-                    } else if (e.key === 'Escape') {
-                        closeRewardPicker();
-                        rewardSearch.blur();
-                    }
-                });
+                    });
 
-                document.addEventListener('click', (e) => {
-                    if (!rewardPicker || !rewardPicker.contains(e.target)) closeRewardPicker();
-                });
+                    document.addEventListener('click', (e) => {
+                        if (!picker.contains(e.target)) close();
+                    });
 
-                // Находит ID игрока: из списка или как введённый вручную ID
-                function resolveRewardUserId() {
-                    const picked = rewardUserIdInput.value.trim();
-                    if (picked) return picked;
-                    const typed = rewardSearch.value.trim();
-                    if (!typed) return '';
-                    const byId = (rewardUsers || []).find(u => u.id === typed);
-                    if (byId) return byId.id;
-                    const lower = typed.toLowerCase();
-                    const byName = (rewardUsers || []).find(u =>
-                        u.name.toLowerCase() === lower || u.username.toLowerCase() === lower
-                    );
-                    if (byName) return byName.id;
-                    return typed; // старый режим: вставили ID руками
+                    return {
+                        // ID выбранного игрока: из списка либо вставленный руками
+                        resolve() {
+                            const picked = hidden.value.trim();
+                            if (picked) return picked;
+                            const typed = search.value.trim();
+                            if (!typed) return '';
+                            const byId = (pickerUsers || []).find(u => u.id === typed);
+                            if (byId) return byId.id;
+                            const lower = typed.toLowerCase();
+                            const byName = (pickerUsers || []).find(u =>
+                                u.name.toLowerCase() === lower || u.username.toLowerCase() === lower
+                            );
+                            if (byName) return byName.id;
+                            return typed;
+                        },
+                        // Показать в поле сохранённое имя игрока
+                        setName(name) {
+                            if (!search.value.trim()) search.value = name || '';
+                        },
+                        reset() {
+                            hidden.value = '';
+                            search.value = '';
+                            close();
+                        }
+                    };
                 }
+
+                const rewardPickerApi = createUserPicker({
+                    pickerId: 'rewardPicker',
+                    searchId: 'rewardUserSearch',
+                    hiddenId: 'rewardUserId',
+                    listId: 'rewardPickerList',
+                    caretId: 'rewardPickerCaret'
+                });
+
+                const banPickerApi = createUserPicker({
+                    pickerId: 'banPicker',
+                    searchId: 'banUserSearch',
+                    hiddenId: 'banUserId',
+                    listId: 'banPickerList',
+                    caretId: 'banPickerCaret'
+                });
+
+                const unbanPickerApi = createUserPicker({
+                    pickerId: 'unbanPicker',
+                    searchId: 'unbanUserSearch',
+                    hiddenId: 'unbanUserId',
+                    listId: 'unbanPickerList',
+                    caretId: 'unbanPickerCaret'
+                });
+
 
                 // ===== ВЫДАЧА НАГРАД =====
                 document.getElementById('giveRewardBtn')?.addEventListener('click', async () => {
-                    const userId = resolveRewardUserId();
+                    const userId = rewardPickerApi ? rewardPickerApi.resolve() : '';
                     const rewardType = document.getElementById('rewardType').value;
                     const amount = document.getElementById('rewardAmount').value;
                     if (!userId) {
@@ -1667,7 +1767,7 @@
                         document.getElementById('rewardUserId').value = '';
                         document.getElementById('rewardUserSearch').value = '';
                         document.getElementById('rewardAmount').value = '';
-                        closeRewardPicker();
+                        rewardPickerApi?.reset();
                     } catch (error) {
                         showToast('❌ Ошибка при выдаче', 'error');
                     }

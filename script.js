@@ -344,6 +344,11 @@ class ClickerGame {
             if (this.maintenanceTimerInterval) clearInterval(this.maintenanceTimerInterval);
             techWorkOverlay.style.display = 'none';
             updateOverlay.style.display = 'none';
+            // Админу блокирующие экраны не показываем — только мини-плашка
+            if (isCreatorUser()) {
+                renderAdminMaintenanceBadge(data);
+                return;
+            }
             if (data && data.active === true) {
                 if (data.type === 'timer' && data.endTime) {
                     updateOverlay.style.display = 'flex';
@@ -3623,19 +3628,109 @@ class WheelOfFortune {
 // ============================================
 document.addEventListener('DOMContentLoaded', () => { window.clickerGame = new ClickerGame(); });
 
-function checkMaintenanceScreen() {
-    const userId = localStorage.getItem('userId');
-    if (userId === CREATOR_ID) {
-        const overlay1 = document.getElementById('techWorkOverlay');
-        const overlay2 = document.getElementById('updateOverlay');
-        if (overlay1) overlay1.style.display = 'none';
-        if (overlay2) overlay2.style.display = 'none';
+// ===== МИНИ-ПЛАШКА ТЕХРАБОТ ДЛЯ АДМИНА =====
+// Админу полноэкранные оверлеи не показываем: он видит компактную плашку
+// в углу с типом работ и таймером.
+let adminMaintInterval = null;
+
+function isCreatorUser() {
+    try {
+        return localStorage.getItem('userId') === CREATOR_ID;
+    } catch (e) {
+        return false;
+    }
+}
+
+function hideMaintenanceOverlays() {
+    const techWorkOverlay = document.getElementById('techWorkOverlay');
+    const updateOverlay = document.getElementById('updateOverlay');
+    if (techWorkOverlay) techWorkOverlay.style.display = 'none';
+    if (updateOverlay) updateOverlay.style.display = 'none';
+}
+
+function formatMaintTime(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function renderAdminMaintenanceBadge(data) {
+    const badge = document.getElementById('adminMaintenanceBadge');
+    if (!badge) return;
+
+    if (adminMaintInterval) { clearInterval(adminMaintInterval); adminMaintInterval = null; }
+
+    const active = !!(data && data.active === true);
+    if (!active) { badge.style.display = 'none'; return; }
+
+    const timerEl = document.getElementById('adminMaintTimer');
+    const barEl = document.getElementById('adminMaintBar');
+    const iconEl = document.getElementById('adminMaintIcon');
+    const titleEl = document.getElementById('adminMaintTitle');
+
+    const isUpdate = data.type === 'timer' && !!data.endTime;
+    if (iconEl) iconEl.textContent = isUpdate ? '🆙' : '🔧';
+    if (titleEl) titleEl.textContent = isUpdate ? 'До обновы' : 'Технические работы';
+
+    badge.style.display = 'block';
+
+    if (!data.endTime) {
+        if (timerEl) timerEl.style.display = 'none';
+        if (barEl) barEl.style.width = '0%';
         return;
     }
+
+    const duration = data.duration || 3600;
+    const tick = () => {
+        const remaining = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
+        if (remaining <= 0) {
+            badge.style.display = 'none';
+            if (adminMaintInterval) { clearInterval(adminMaintInterval); adminMaintInterval = null; }
+            return;
+        }
+        if (timerEl) {
+            timerEl.style.display = 'block';
+            timerEl.textContent = formatMaintTime(remaining);
+        }
+        if (barEl) {
+            const progress = ((duration - remaining) / duration) * 100;
+            barEl.style.width = Math.max(0, Math.min(100, progress)) + '%';
+        }
+    };
+
+    tick();
+    adminMaintInterval = setInterval(tick, 1000);
+}
+
+(function initAdminMaintBadgeToggle() {
+    const bind = () => {
+        const toggle = document.getElementById('adminMaintToggle');
+        const badge = document.getElementById('adminMaintenanceBadge');
+        if (!toggle || !badge) return;
+        toggle.addEventListener('click', () => {
+            const collapsed = badge.classList.toggle('collapsed');
+            toggle.textContent = collapsed ? '+' : '–';
+            toggle.title = collapsed ? 'Развернуть' : 'Свернуть';
+        });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+    else bind();
+})();
+
+function checkMaintenanceScreen() {
     const maintRef = firebase.database().ref('maintenance');
     maintRef.once('value').then(snapshot => {
         const data = snapshot.val();
+        // Админу — только мини-плашка, без полноэкранной блокировки
+        if (isCreatorUser()) {
+            hideMaintenanceOverlays();
+            if (window.timerInterval) clearInterval(window.timerInterval);
+            renderAdminMaintenanceBadge(data);
+            return;
+        }
         const normalOverlay = document.getElementById('techWorkOverlay');
+
         const updateOverlay = document.getElementById('updateOverlay');
         const timerDiv = document.getElementById('techWorkTimer');
         const updateTimerDiv = document.getElementById('updateTimer');
@@ -3709,7 +3804,13 @@ function checkAllScreens() {
         updateOverlay.style.display = 'none';
         if (activeTechInterval) clearInterval(activeTechInterval);
         if (activeUpdateInterval) clearInterval(activeUpdateInterval);
+        // Админу вместо блокирующих экранов — мини-плашка
+        if (isCreatorUser()) {
+            renderAdminMaintenanceBadge(data);
+            return;
+        }
         if (!data || data.active !== true) return;
+
         if (data.type !== 'timer' || !data.endTime) {
             techWorkOverlay.style.display = 'flex';
             const timerDiv = document.getElementById('techWorkTimer');

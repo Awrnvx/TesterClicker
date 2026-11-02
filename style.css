@@ -4814,13 +4814,13 @@ a {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
-/* Карточка Диликового урагана */
-#uraganEventCard {
-    border: 2px solid rgba(255, 215, 0, 0.3) !important;
+/* Карточка Хэллоуина */
+#halloweenEventCard {
+    border: 2px solid rgba(255, 140, 26, 0.45) !important;
 }
 
-#uraganEventCard:hover {
-    border: 2px solid rgba(255, 215, 0, 0.6) !important;
+#halloweenEventCard:hover {
+    border: 2px solid rgba(255, 140, 26, 0.9) !important;
 }
 
 /* Карточка Колеса фортуны */
@@ -4865,7 +4865,7 @@ a {
 }
 
 /* Дополнительно для карточки урагана, если ивент не активен */
-#uraganEventCard.disabled,
+#halloweenEventCard.disabled,
 #wheelEventCard.disabled {
     pointer-events: none !important;
     cursor: not-allowed !important;
@@ -4904,7 +4904,7 @@ a {
 }
 
 /* Дополнительно для карточки урагана и колеса, если ивент не активен */
-#uraganEventCard.disabled,
+#halloweenEventCard.disabled,
 #wheelEventCard.disabled {
     pointer-events: none !important;
     cursor: not-allowed !important;
@@ -6056,29 +6056,45 @@ body.no-liquid-animations .nav-toggle-btn::before {
     }
 }
 
-/* ===== НОВЫЕ СКИНЫ ДЛЯ ИВЕНТА ДИЛИКОВЫЙ УРАГАН ===== */
-.skin-uragan-top3 {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 100, 0, 0.2));
-    border: 2px solid #ff6600;
-    box-shadow: 0 0 30px rgba(255, 102, 0, 0.5);
+/* ===== ЦВЕТНЫЕ СКИНЫ =====
+   Цвет задаётся переменными на самой карточке (--skin-accent / --skin-bg-a /
+   --skin-bg-b / --skin-glow), а ниже одна общая группа правил рисует рамку,
+   фон и свечение. Так цвет не сбивается на золотой, когда скин экипирован:
+   раньше класс .inventory-item.active перекрашивал карточку в gold. */
+.skin-uragan-top3   { --skin-accent: #2f9bff; --skin-bg-a: rgba(47, 155, 255, 0.22); --skin-bg-b: rgba(0, 80, 255, 0.22);  --skin-glow: rgba(47, 155, 255, 0.55); }
+.skin-uragan-top10  { --skin-accent: #00ffff; --skin-bg-a: rgba(0, 255, 255, 0.16); --skin-bg-b: rgba(255, 215, 0, 0.14);  --skin-glow: rgba(0, 255, 255, 0.45); }
+.skin-uragan-top50  { --skin-accent: #ffd700; --skin-bg-a: rgba(255, 215, 0, 0.14); --skin-bg-b: rgba(255, 215, 0, 0.06);  --skin-glow: rgba(255, 215, 0, 0.35); }
+.skin-uragan-top100 { --skin-accent: silver;  --skin-bg-a: rgba(255, 255, 255, 0.1); --skin-bg-b: rgba(200, 200, 200, 0.05); --skin-glow: rgba(192, 192, 192, 0.35); }
+.skin-wheel-dragon  { --skin-accent: #a855f7; --skin-bg-a: rgba(168, 85, 247, 0.24); --skin-bg-b: rgba(80, 20, 160, 0.24);  --skin-glow: rgba(168, 85, 247, 0.6); }
+.skin-halloween     { --skin-accent: #ff8c1a; --skin-bg-a: rgba(255, 140, 26, 0.22); --skin-bg-b: rgba(150, 40, 180, 0.22); --skin-glow: rgba(255, 140, 26, 0.55); }
+
+/* Карточка в инвентаре и плашка в коллекции — цвет всегда, в том числе экипированные */
+.inventory-item[class*="skin-"],
+.skin-tag[class*="skin-"] {
+    border: 2px solid var(--skin-accent);
+    background: linear-gradient(135deg, var(--skin-bg-a), var(--skin-bg-b));
+    box-shadow: 0 0 26px var(--skin-glow);
 }
 
-.skin-uragan-top10 {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(0, 255, 255, 0.15));
-    border: 2px solid #00ffff;
-    box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+/* Экипированный скин: тот же цвет, только ярче и с внутренней обводкой */
+.inventory-item[class*="skin-"].active,
+.skin-tag[class*="skin-"].active {
+    border-color: var(--skin-accent);
+    box-shadow: 0 0 34px var(--skin-glow), 0 0 0 1px var(--skin-accent) inset;
+    filter: brightness(1.12);
 }
 
-.skin-uragan-top50 {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(255, 215, 0, 0.08));
-    border: 2px solid #ffd700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+/* Кружок с картинкой тоже в цвете скина */
+.inventory-item[class*="skin-"] .skin-preview,
+.inventory-item[class*="skin-"].active .skin-preview {
+    border-color: var(--skin-accent);
+    box-shadow: 0 0 18px var(--skin-glow);
 }
 
-.skin-uragan-top100 {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.05));
-    border: 2px solid silver;
-    box-shadow: 0 0 15px rgba(192, 192, 192, 0.3);
+/* Название в коллекции — в цвет скина */
+.skin-tag[class*="skin-"].active span {
+    color: var(--skin-accent);
+    text-shadow: 0 0 10px var(--skin-accent);
 }
 
 .toast-notification img {
@@ -7335,3 +7351,478 @@ h3 .dilic-icon-lg {
     }
 }
 
+
+/* ============================================
+   ХЭЛЛОУИН: баннер на главной и экран ивента
+   ============================================ */
+.halloween-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 720px;
+    margin: 0 auto 18px;
+    padding: 14px 20px;
+    border-radius: 26px;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(255, 140, 26, 0.18), rgba(122, 46, 0, 0.22), rgba(90, 24, 122, 0.22));
+    border: 1px solid rgba(255, 140, 26, 0.45);
+    box-shadow: 0 10px 30px -12px rgba(255, 140, 26, 0.55);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.halloween-banner:hover,
+.halloween-banner:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(255, 170, 60, 0.9);
+    box-shadow: 0 14px 36px -10px rgba(255, 140, 26, 0.75);
+    outline: none;
+}
+.hb-emoji {
+    font-size: 2rem;
+    line-height: 1;
+    animation: halloweenFloat 2.6s ease-in-out infinite;
+}
+.hb-emoji:last-child { animation-delay: 0.8s; }
+.hb-body { flex: 1; min-width: 0; }
+.hb-title {
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    color: #ffb347;
+    text-shadow: 0 0 14px rgba(255, 140, 26, 0.6);
+}
+.hb-text {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 2px;
+}
+.halloween-title-emoji {
+    display: inline-block;
+    animation: halloweenFloat 2.6s ease-in-out infinite;
+}
+@keyframes halloweenFloat {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50%      { transform: translateY(-5px) rotate(4deg); }
+}
+
+/* Карточка ивента в списке */
+.halloween-card {
+    border-color: rgba(255, 140, 26, 0.55) !important;
+    box-shadow: 0 0 26px -6px rgba(255, 140, 26, 0.5);
+}
+.halloween-card .event-icon {
+    animation: halloweenFloat 2.6s ease-in-out infinite;
+}
+
+/* Экран ивента */
+.halloween-page {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.halloween-header {
+    text-align: center;
+    padding: 26px 22px;
+    border-radius: 34px;
+    background: linear-gradient(135deg, rgba(255, 140, 26, 0.12), rgba(90, 24, 122, 0.18));
+    border: 1px solid rgba(255, 140, 26, 0.35);
+}
+.halloween-header h1 {
+    font-size: 1.9rem;
+    line-height: 1.2;
+    background: linear-gradient(135deg, #ffd08a, #ff8c1a 45%, #c86bff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.halloween-header p {
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.9rem;
+}
+
+.halloween-pool {
+    padding: 22px;
+    border-radius: 30px;
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(255, 140, 26, 0.3);
+    text-align: center;
+}
+.halloween-pool-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffb347;
+    letter-spacing: 0.03em;
+}
+.halloween-pool-value {
+    font-size: 2.4rem;
+    font-weight: 900;
+    margin: 6px 0 4px;
+    color: #fff;
+    text-shadow: 0 0 24px rgba(255, 140, 26, 0.75);
+}
+.halloween-pool .progress-bar {
+    background: rgba(255, 255, 255, 0.08);
+    height: 18px;
+}
+.halloween-pool .progress-fill {
+    background: linear-gradient(90deg, #ff8c1a, #ffd08a, #c86bff);
+    box-shadow: 0 0 16px rgba(255, 140, 26, 0.7);
+}
+.halloween-pool-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+.halloween-hint {
+    margin-top: 12px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+@media (max-width: 600px) {
+    .halloween-banner { padding: 12px 14px; gap: 10px; }
+    .hb-emoji { font-size: 1.6rem; }
+    .hb-title { font-size: 0.9rem; }
+    .halloween-header h1 { font-size: 1.45rem; }
+    .halloween-pool-value { font-size: 1.9rem; }
+}
+
+/* ===== ПЛАТФОРМА КЛИКЕРА В ЦВЕТЕ СКИНА ===== */
+.clicker-card.skin-themed {
+    border: 2px solid var(--skin-accent);
+    background: linear-gradient(180deg, var(--skin-tint), rgba(255, 255, 255, 0.02) 55%);
+    box-shadow: 0 0 42px var(--skin-glow), 0 10px 20px -10px rgba(0, 0, 0, 0.35);
+}
+.clicker-card.skin-themed:hover {
+    border-color: var(--skin-accent);
+    background: linear-gradient(180deg, var(--skin-tint), rgba(255, 255, 255, 0.03) 55%);
+    box-shadow: 0 0 52px var(--skin-glow), 0 15px 30px -15px rgba(0, 0, 0, 0.45);
+}
+.clicker-card.skin-themed h1 {
+    color: var(--skin-accent);
+    text-shadow: 0 0 18px var(--skin-glow);
+}
+
+.click-btn.skin-themed {
+    box-shadow:
+        0 0 0 3px var(--skin-accent),
+        0 0 38px var(--skin-glow),
+        0 15px 30px -10px rgba(0, 0, 0, 0.45);
+}
+.click-btn.skin-themed:hover {
+    box-shadow:
+        0 0 0 3px var(--skin-accent),
+        0 0 48px var(--skin-glow),
+        0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== КОНФЕТНЫЙ БОНУС НА ГЛАВНОЙ ===== */
+.candy-bonus {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 720px;
+    margin: 0 auto 18px;
+    padding: 12px 16px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(255, 140, 26, 0.12), rgba(90, 24, 122, 0.16));
+    border: 1px solid rgba(255, 140, 26, 0.35);
+}
+.cb-emoji { font-size: 1.7rem; line-height: 1; }
+.cb-body { flex: 1; min-width: 0; }
+.cb-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #ffb347;
+}
+.cb-text { font-size: 0.75rem; color: rgba(255, 255, 255, 0.65); }
+.cb-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 16px;
+    border-radius: 18px;
+    border: 1px solid #ff8c1a;
+    background: rgba(255, 140, 26, 0.18);
+    color: #ffd08a;
+    font-weight: 800;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+.cb-btn:hover:not(:disabled) { background: rgba(255, 140, 26, 0.3); transform: translateY(-1px); }
+.cb-btn:disabled,
+.cb-btn.disabled { opacity: 0.55; cursor: not-allowed; }
+.cb-btn-timer { font-size: 0.7rem; font-weight: 600; color: rgba(255, 255, 255, 0.7); font-variant-numeric: tabular-nums; }
+
+/* ===== НАГРАДЫ ХЭЛЛОУИН-ИВЕНТА ===== */
+.hw-rewards-section {
+    padding: 20px;
+    border-radius: 30px;
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(255, 140, 26, 0.3);
+}
+.hw-rewards-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffb347;
+    text-align: center;
+    letter-spacing: 0.03em;
+}
+.hw-rewards-sub {
+    text-align: center;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 6px 0 14px;
+}
+.hw-rewards-list { display: flex; flex-direction: column; gap: 10px; }
+.hw-reward {
+    padding: 12px 14px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hw-reward.ready {
+    border-color: rgba(255, 140, 26, 0.7);
+    box-shadow: 0 0 20px -4px rgba(255, 140, 26, 0.6);
+    background: rgba(255, 140, 26, 0.08);
+}
+.hw-reward.claimed { opacity: 0.6; }
+.hw-reward-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+.hw-reward-candy { color: #ffd08a; font-weight: 800; white-space: nowrap; }
+.hw-reward-label { color: #fff; text-align: right; }
+.hw-reward-bar { height: 8px; margin: 8px 0 6px; background: rgba(255, 255, 255, 0.08); }
+.hw-reward-bar .progress-fill { background: linear-gradient(90deg, #ff8c1a, #ffd08a); }
+.hw-reward-status {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    text-align: center;
+}
+.hw-reward-status.done { color: #4caf50; font-weight: 700; }
+.hw-reward-btn {
+    width: 100%;
+    margin-top: 4px;
+    padding: 8px 14px;
+    border-radius: 16px;
+    background: rgba(255, 140, 26, 0.22);
+    border: 1px solid #ff8c1a;
+    color: #ffd08a;
+    font-weight: 800;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.hw-reward-btn:hover { background: rgba(255, 140, 26, 0.34); }
+
+@media (max-width: 600px) {
+    .candy-bonus { padding: 10px 12px; gap: 8px; }
+    .cb-emoji { font-size: 1.4rem; }
+    .cb-title { font-size: 0.78rem; }
+    .cb-btn { padding: 7px 12px; font-size: 0.72rem; }
+}
+
+/* ===== ХЭЛЛОУИНСКИЙ ДЕКОР ГЛАВНОЙ =====
+   Лёгкие эмодзи по краям: только прозрачность и transform, без фильтров,
+   чтобы не нагружать телефон. В режиме экономии скрываются. */
+#main { position: relative; }
+.hw-decor {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+.hw-decor span {
+    position: absolute;
+    font-size: 2rem;
+    opacity: 0.16;
+    animation: hwDecorFloat 10s ease-in-out infinite;
+    will-change: transform;
+}
+.hw-decor span:nth-child(1) { top: 6%;  left: 3%;  animation-delay: 0s; }
+.hw-decor span:nth-child(2) { top: 22%; right: 4%; animation-delay: 1.4s; font-size: 2.4rem; }
+.hw-decor span:nth-child(3) { top: 48%; left: 6%;  animation-delay: 2.8s; font-size: 1.7rem; }
+.hw-decor span:nth-child(4) { top: 68%; right: 7%; animation-delay: 0.7s; }
+.hw-decor span:nth-child(5) { top: 84%; left: 4%;  animation-delay: 3.6s; font-size: 1.8rem; }
+.hw-decor span:nth-child(6) { top: 36%; right: 2%; animation-delay: 2.1s; font-size: 1.6rem; }
+
+@keyframes hwDecorFloat {
+    0%, 100% { transform: translateY(0) rotate(-6deg); }
+    50%      { transform: translateY(-14px) rotate(6deg); }
+}
+
+body.no-liquid-animations .hw-decor { display: none; }
+
+@media (max-width: 600px) {
+    .hw-decor span { font-size: 1.5rem; opacity: 0.13; }
+}
+
+/* Декор и баннер теперь есть в каждом разделе — табам нужен свой контекст */
+.content > .tab { position: relative; }
+
+/* ===== ФИЛЬТРЫ ИНВЕНТАРЯ ===== */
+.inv-filters {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 auto 8px;
+    padding: 0 20px;
+}
+.inv-filter-btn {
+    position: relative;
+    padding: 9px 22px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 5px 15px -5px rgba(0, 0, 0, 0.2),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    overflow: hidden;
+}
+.inv-filter-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 35%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+}
+.inv-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    transform: translateY(-1px);
+}
+.inv-filter-btn:active {
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow:
+        0 2px 8px -4px rgba(0, 0, 0, 0.4),
+        0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
+    transform: translateY(1px);
+}
+.inv-filter-btn.active {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+/* Радужная кнопка «ЛИМИТКИ» */
+.inv-filter-btn.limited {
+    background: linear-gradient(90deg, #ff5f6d, #ffc371, #47e891, #43c6ff, #a855f7, #ff5f6d);
+    background-size: 300% 100%;
+    animation: invRainbow 6s linear infinite;
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    box-shadow:
+        0 5px 15px -5px rgba(0, 0, 0, 0.2),
+        0 0 18px -4px rgba(168, 85, 247, 0.6),
+        0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+.inv-filter-btn.limited:hover {
+    box-shadow:
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        0 0 18px -4px rgba(168, 85, 247, 0.7),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15) inset;
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+.inv-filter-btn.limited.active {
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow:
+        0 2px 8px -4px rgba(0, 0, 0, 0.4),
+        0 0 18px -4px rgba(168, 85, 247, 0.7),
+        0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
+    filter: brightness(1.12);
+    transform: translateY(1px);
+}
+@keyframes invRainbow {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+}
+body.no-liquid-animations .inv-filter-btn {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
+}
+body.no-liquid-animations .inv-filter-btn::before { display: none !important; }
+body.no-liquid-animations .inv-filter-btn:hover { background: rgba(255, 255, 255, 0.08) !important; }
+body.no-liquid-animations .inv-filter-btn.active { background: rgba(255, 255, 255, 0.1) !important; border-color: rgba(255, 255, 255, 0.2) !important; }
+body.no-liquid-animations .inv-filter-btn.limited {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(67, 198, 255, 0.3)) !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    box-shadow: none !important;
+    animation: none !important;
+}
+body.no-liquid-animations .inv-filter-btn.limited:hover {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.45), rgba(67, 198, 255, 0.38)) !important;
+}
+body.no-liquid-animations .inv-filter-btn.limited.active {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.5), rgba(67, 198, 255, 0.42)) !important;
+    border-color: rgba(168, 85, 247, 0.7) !important;
+}
+
+.inventory-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 30px 16px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+/* ===== НАГРАДЫ ЗА ТОП-3 ===== */
+.hw-top-rewards-list { display: flex; flex-direction: column; gap: 10px; }
+.hw-top-reward {
+    padding: 12px 14px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+}
+.hw-top-reward.paid {
+    border-color: rgba(76, 175, 80, 0.55);
+    background: rgba(76, 175, 80, 0.08);
+}
+.hw-top-reward-place {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: #ffd08a;
+    letter-spacing: 0.02em;
+}
+.hw-top-reward-value {
+    font-size: 0.82rem;
+    color: #fff;
+    margin-top: 4px;
+}
+.hw-top-reward-status {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 4px;
+}
+.hw-top-reward.paid .hw-top-reward-status { color: #4caf50; font-weight: 700; }

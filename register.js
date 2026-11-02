@@ -180,6 +180,9 @@ class UserManager {
                 promocodesHistory: [],
                 compensationReceived: false,
                 eventContribution: 0,
+                halloweenContribution: 0,
+                halloweenClaimed: [],
+                halloweenBonusAt: 0,
                 dailyQuests: {
                     lastReset: Date.now(),
                     clicks: 0,

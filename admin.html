@@ -721,12 +721,12 @@
                         </div>
                     </div>
                     
-                    <!-- ДИЛИКОВЫЙ УРАГАН -->
+                    <!-- ХЭЛЛОУИН -->
                     <div class="admin-card">
-                        <h2>ДИЛИКОВЫЙ УРАГАН</h2>
+                        <h2>🎃 ДИЛИКОВЫЙ ХЭЛЛОУИН</h2>
                         
                         <div class="admin-command">
-                            <div class="admin-command-code">/start event dilicks</div>
+                            <div class="admin-command-code">/start event halloween</div>
                             <div class="admin-command-desc">🚀 Запустить ивент на N дней</div>
                             <div class="admin-input-group">
                                 <input type="number" id="uraganDays" placeholder="дней" value="7" min="1" max="365">
@@ -735,42 +735,24 @@
                         </div>
                         
                         <div class="admin-command">
-                            <div class="admin-command-code">/stop event dilicks</div>
+                            <div class="admin-command-code">/stop event halloween</div>
                             <div class="admin-command-desc">⏹️ Остановить ивент</div>
                             <button class="glass-btn danger-btn" id="stopDilicksEventBtn">ОСТАНОВИТЬ</button>
                         </div>
                         
                         <div class="admin-command">
-                            <div class="admin-command-code">/set multiplier</div>
-                            <div class="multiplier-buttons" id="multiplierButtons">
-                                <button class="multiplier-btn" data-mult="2">x2</button>
-                                <button class="multiplier-btn" data-mult="3">x3</button>
-                                <button class="multiplier-btn" data-mult="5">x5</button>
-                                <button class="multiplier-btn" data-mult="10">x10</button>
-                                <button class="multiplier-btn" data-mult="20">x20</button>
-                                <button class="multiplier-btn" data-mult="30">x30</button>
-                                <button class="multiplier-btn" data-mult="50">x50</button>
-                                <button class="multiplier-btn" data-mult="100">x100</button>
-                                <button class="multiplier-btn" data-mult="200">x200</button>
-                                <button class="multiplier-btn" data-mult="500">x500</button>
-                                <button class="multiplier-btn" data-mult="1000">x1000</button>
-                                <button class="multiplier-btn" data-mult="2500">x2500</button>
-                                <button class="multiplier-btn" data-mult="5000">x5000</button>
-                                <button class="multiplier-btn" data-mult="10000">x10000</button>
-                                <button class="multiplier-btn" data-mult="100000">x100K</button>
-                                <button class="multiplier-btn" data-mult="1000000">x1M</button>
-                                <button class="multiplier-btn" data-mult="10000000">x10M</button>
-                            </div>
-                            <div class="custom-multiplier-group">
-                                <input type="number" id="customMultiplier" placeholder="Свой множитель" value="100" min="1">
-                                <button class="glass-btn" id="setCustomMultiplierBtn">УСТАНОВИТЬ</button>
+                            <div class="admin-command-code">🎯 ЦЕЛЬ КОПИЛКИ</div>
+                            <div class="admin-command-desc">Сколько конфет нужно собрать всем вместе</div>
+                            <div class="admin-input-group">
+                                <input type="number" id="halloweenGoalInput" placeholder="цель" value="1000000">
+                                <button class="glass-btn" id="setHalloweenGoalBtn">УСТАНОВИТЬ</button>
                             </div>
                         </div>
                         
                         <div class="admin-command">
-                            <div class="admin-command-code">💰 КОПИЛКА</div>
+                            <div class="admin-command-code">🍬 КОПИЛКА КОНФЕТ</div>
                             <div class="admin-input-group">
-                                <input type="number" id="poolAmount" placeholder="количество" value="1000000">
+                                <input type="number" id="poolAmount" placeholder="количество" value="1000">
                                 <button class="glass-btn success-btn" id="addPoolBtn">➕ ДОБАВИТЬ</button>
                             </div>
                             <div class="admin-input-group" style="margin-top: 8px;">
@@ -785,51 +767,28 @@
                         </div>
                         
                         <div class="admin-command">
-                            <div class="admin-command-code">📅 ДЕНЬ ИВЕНТА</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="eventDay" placeholder="день" value="1" min="1" max="30">
-                                <button class="glass-btn" id="setEventDayBtn">УСТАНОВИТЬ ДЕНЬ</button>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">🔄 ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ</div>
-                            <div class="admin-command-desc">Обновить задания ивента для всех игроков</div>
-                            <button class="glass-btn warning-btn" id="forceRefreshQuestsBtn">ОБНОВИТЬ ЗАДАНИЯ</button>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">🌍 ГЛОБАЛЬНЫЙ ВИШЛИСТ</div>
-                            <div class="admin-input-group">
-                                <select id="globalWishlistItem">
-                                    <option value="dilicks_10000">10 000</option>
-                                    <option value="dilicks_50000">50 000</option>
-                                    <option value="dilicks_100000">100 000</option>
-                                    <option value="money_50000">50 000</option>
-                                    <option value="money_100000">100 000</option>
-                                    <option value="skin_dragon">Скин Дракона ✨</option>
-                                    <option value="upgrade_boost">Усилитель x10 ⚡</option>
-                                </select>
-                                <button class="glass-btn" id="setGlobalWishlistBtn">УСТАНОВИТЬ</button>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-command">
                             <div class="admin-command-code">🏆 ТОП УЧАСТНИКОВ</div>
                             <button class="glass-btn" id="loadTopBtn" style="width: 100%;">🔄 ЗАГРУЗИТЬ ТОП</button>
                             <div id="topList" class="top-list" style="display: none;"></div>
                         </div>
+
+                        <div class="admin-command">
+                            <div class="admin-command-code">🎁 ВЫДАТЬ НАГРАДЫ ТОП-3</div>
+                            <div class="admin-command-desc">🥇 1 000 000 монет + 100 000 диликов · 🥈 500 000 + 50 000 · 🥉 250 000 + 25 000</div>
+                            <button class="glass-btn success-btn" id="payHalloweenTopBtn" style="width: 100%;">🎁 ВЫДАТЬ НАГРАДЫ ТОП-3</button>
+                            <div id="halloweenTopPaidInfo" class="admin-status" style="margin-top: 8px;">Награды ещё не выданы</div>
+                        </div>
                         
                         <!-- ОЧИСТКА ТОПА -->
                         <div class="admin-command">
-                            <div class="admin-command-code">/uragan clear top</div>
-                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ ТОП УЧАСТНИКОВ ИВЕНТА (обнулить вклад всех игроков)</div>
+                            <div class="admin-command-code">/halloween clear top</div>
+                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ ТОП УЧАСТНИКОВ ИВЕНТА (обнулить конфеты всех игроков)</div>
                             <button class="glass-btn danger-btn" id="clearUraganTopBtn" style="background:rgba(244,67,54,0.2);width:100%;">⚠️ ОЧИСТИТЬ ВЕСЬ ТОП ИВЕНТА</button>
                         </div>
                         
                         <div class="admin-command">
-                            <div class="admin-command-code">/uragan clear player &lt;ID&gt;</div>
-                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ ВКЛАД КОНКРЕТНОГО ИГРОКА</div>
+                            <div class="admin-command-code">/halloween clear player &lt;ID&gt;</div>
+                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ КОНФЕТЫ КОНКРЕТНОГО ИГРОКА</div>
                             <div class="admin-input-group">
                                 <input type="text" id="clearPlayerId" placeholder="ID игрока">
                                 <button class="glass-btn warning-btn" id="clearPlayerBtn">ОЧИСТИТЬ ИГРОКА</button>
@@ -837,8 +796,8 @@
                         </div>
                         
                         <div class="admin-command">
-                            <div class="admin-command-code">/uragan clear admin</div>
-                            <div class="admin-command-desc">👑 ОЧИСТИТЬ ВКЛАД АДМИНИСТРАТОРА</div>
+                            <div class="admin-command-code">/halloween clear admin</div>
+                            <div class="admin-command-desc">👑 ОЧИСТИТЬ КОНФЕТЫ АДМИНИСТРАТОРА</div>
                             <button class="glass-btn danger-btn" id="clearAdminBtn" style="background:rgba(244,67,54,0.3);">👑 ОЧИСТИТЬ АДМИНА</button>
                         </div>
                     </div>
@@ -866,7 +825,7 @@
                                 <button class="glass-btn success-btn" id="giveRewardBtn">ВЫДАТЬ</button>
                             </div>
                             <div class="admin-command-desc" style="margin-top: 8px; font-size: 11px;">
-                                📝 Скины: classic, neon, monsters_skin, dragon_skin, wheel_dragon_skin
+                                📝 Скины: classic, neon, monsters_skin, dragon_skin, wheel_dragon_skin, halloween_pumpkin
                             </div>
                         </div>
                         <div class="admin-command">
@@ -1316,77 +1275,62 @@
                     showToast('✅ Все экраны техработ отключены', 'success');
                 });
                 
-                // ===== ДИЛИКОВЫЙ УРАГАН =====
+                // ===== ХЭЛЛОУИН =====
                 document.getElementById('startDilicksEventBtn')?.addEventListener('click', async () => {
                     const days = parseInt(document.getElementById('uraganDays').value) || 7;
-                    await eventsRef.child('dilicksHurricane').set({ active: true, startTime: Date.now(), endTime: Date.now() + days * 24 * 60 * 60 * 1000, duration: days, multiplier: 2, day: 1, totalPool: 0 });
-                    showToast(`<img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> Ивент запущен на ${days} дней!`, 'success');
+                    const snap = await eventsRef.child('halloween').once('value');
+                    const current = snap.val() || {};
+                    await eventsRef.child('halloween').set({
+                        active: true,
+                        startTime: Date.now(),
+                        endTime: Date.now() + days * 24 * 60 * 60 * 1000,
+                        duration: days,
+                        goal: current.goal || 1000000,
+                        totalPool: current.totalPool || 0
+                    });
+                    showToast(`🎃 Хэллоуин-ивент запущен на ${days} дней!`, 'success');
                 });
                 
                 document.getElementById('stopDilicksEventBtn')?.addEventListener('click', async () => {
-                    await eventsRef.child('dilicksHurricane').set({ active: false });
-                    showToast('⏹️ Ивент остановлен', 'success');
+                    await eventsRef.child('halloween').update({ active: false });
+                    showToast('⏹️ Хэллоуин-ивент остановлен', 'success');
                 });
                 
-                document.querySelectorAll('.multiplier-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        await eventsRef.child('dilicksHurricane').update({ multiplier: parseInt(btn.dataset.mult) });
-                        showToast(`⚡ Множитель изменен на x${parseInt(btn.dataset.mult)}`, 'success');
-                    });
-                });
-                
-                document.getElementById('setCustomMultiplierBtn')?.addEventListener('click', async () => {
-                    const mult = parseInt(document.getElementById('customMultiplier').value);
-                    if (!mult || mult < 1) return showToast('❌ Введите корректный множитель', 'error');
-                    await eventsRef.child('dilicksHurricane').update({ multiplier: mult });
-                    showToast(`⚡ Множитель изменен на x${mult}`, 'success');
+                document.getElementById('setHalloweenGoalBtn')?.addEventListener('click', async () => {
+                    const goal = parseInt(document.getElementById('halloweenGoalInput').value);
+                    if (!goal || goal < 1) return showToast('❌ Введите корректную цель', 'error');
+                    await eventsRef.child('halloween').update({ goal: goal });
+                    showToast(`🎯 Цель копилки: ${goal.toLocaleString()} 🍬`, 'success');
                 });
                 
                 document.getElementById('addPoolBtn')?.addEventListener('click', async () => {
                     const amount = parseInt(document.getElementById('poolAmount').value);
-                    if (!amount || amount < 1) return showToast('❌ Введите сумму', 'error');
-                    const snap = await eventsRef.child('dilicksHurricane').once('value');
-                    await eventsRef.child('dilicksHurricane').update({ totalPool: (snap.val()?.totalPool || 0) + amount });
-                    showToast(`💰 Добавлено ${amount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
+                    if (!amount || amount < 1) return showToast('❌ Введите количество', 'error');
+                    const snap = await eventsRef.child('halloween').once('value');
+                    await eventsRef.child('halloween').update({ totalPool: (snap.val()?.totalPool || 0) + amount });
+                    showToast(`🍬 Добавлено ${amount.toLocaleString()} конфет`, 'success');
                 });
                 
                 document.getElementById('setPoolBtn')?.addEventListener('click', async () => {
                     const amount = parseInt(document.getElementById('setPoolAmount').value);
-                    if (isNaN(amount) || amount < 0) return showToast('❌ Введите корректную сумму', 'error');
-                    await eventsRef.child('dilicksHurricane').update({ totalPool: amount });
-                    showToast(`💰 Копилка установлена на ${amount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
+                    if (isNaN(amount) || amount < 0) return showToast('❌ Введите корректное значение', 'error');
+                    await eventsRef.child('halloween').update({ totalPool: amount });
+                    showToast(`🍬 Копилка установлена на ${amount.toLocaleString()}`, 'success');
                 });
                 
                 document.getElementById('removePoolBtn')?.addEventListener('click', async () => {
                     const amount = parseInt(document.getElementById('removePoolAmount').value);
-                    if (!amount || amount < 1) return showToast('❌ Введите сумму', 'error');
-                    const snap = await eventsRef.child('dilicksHurricane').once('value');
-                    await eventsRef.child('dilicksHurricane').update({ totalPool: Math.max(0, (snap.val()?.totalPool || 0) - amount) });
-                    showToast(`➖ Вычтено ${amount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
+                    if (!amount || amount < 1) return showToast('❌ Введите количество', 'error');
+                    const snap = await eventsRef.child('halloween').once('value');
+                    await eventsRef.child('halloween').update({ totalPool: Math.max(0, (snap.val()?.totalPool || 0) - amount) });
+                    showToast(`➖ Вычтено ${amount.toLocaleString()} конфет`, 'success');
                 });
                 
                 document.getElementById('resetPoolBtn')?.addEventListener('click', async () => {
-                    if (confirm('⚠️ Сбросить копилку в 0?')) {
-                        await eventsRef.child('dilicksHurricane').update({ totalPool: 0 });
-                        showToast('💰 Копилка сброшена', 'success');
+                    if (confirm('⚠️ Сбросить копилку конфет в 0?')) {
+                        await eventsRef.child('halloween').update({ totalPool: 0 });
+                        showToast('🍬 Копилка сброшена', 'success');
                     }
-                });
-                
-                document.getElementById('setEventDayBtn')?.addEventListener('click', async () => {
-                    const day = parseInt(document.getElementById('eventDay').value);
-                    if (!day || day < 1 || day > 30) return showToast('❌ Введите день от 1 до 30', 'error');
-                    await eventsRef.child('dilicksHurricane').update({ day: day });
-                    showToast(`📅 День ивента изменен на ${day}`, 'success');
-                });
-                
-                document.getElementById('forceRefreshQuestsBtn')?.addEventListener('click', async () => {
-                    await eventsRef.child('dilicksHurricane').update({ lastQuestReset: Date.now() });
-                    showToast('🔄 Задания обновлены', 'success');
-                });
-                
-                document.getElementById('setGlobalWishlistBtn')?.addEventListener('click', async () => {
-                    await eventsRef.child('dilicksHurricane').child('globalWishlist').set(document.getElementById('globalWishlistItem').value);
-                    showToast(`🌍 Вишлист установлен`, 'success');
                 });
                 
                 document.getElementById('loadTopBtn')?.addEventListener('click', async () => {
@@ -1398,7 +1342,7 @@
                         const users = snapshot.val();
                         const topPlayers = [];
                         for (const [id, user] of Object.entries(users)) {
-                            const contribution = user.eventContribution || 0;
+                            const contribution = user.halloweenContribution || 0;
                             if (contribution > 0) {
                                 topPlayers.push({ name: user.settings?.displayName || user.username, contribution, id });
                             }
@@ -1407,7 +1351,7 @@
                         topListDiv.innerHTML = '';
                         topPlayers.slice(0, 10).forEach((player, index) => {
                             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
-                            topListDiv.innerHTML += `<div class="top-item"><div class="top-rank">${medal}</div><div class="top-name">${player.name} ${player.id === CREATOR_ID ? '👑' : ''}</div><div class="top-value">${player.contribution.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div></div>`;
+                            topListDiv.innerHTML += `<div class="top-item"><div class="top-rank">${medal}</div><div class="top-name">${player.name} ${player.id === CREATOR_ID ? '👑' : ''}</div><div class="top-value">${player.contribution.toLocaleString()} 🍬</div></div>`;
                         });
                         if (topPlayers.length === 0) topListDiv.innerHTML = '<div class="top-item">Пока нет участников</div>';
                         addDebugMessage(`🏆 Топ загружен: ${topPlayers.length} участников`);
@@ -1417,11 +1361,76 @@
                     }
                 });
                 
+                // ===== ВЫДАЧА НАГРАД ТОП-3 =====
+                document.getElementById('payHalloweenTopBtn')?.addEventListener('click', async () => {
+                    if (!confirm('🎁 Выдать награды текущему топ-3 по конфетам?\n\n🥇 1 000 000 монет + 100 000 диликов\n🥈 500 000 + 50 000\n🥉 250 000 + 25 000\n\nПовторная выдача начислит награды ещё раз!')) return;
+                    try {
+                        const snapshot = await usersRef.once('value');
+                        const users = snapshot.val() || {};
+                        const top = Object.entries(users)
+                            .map(([id, user]) => ({
+                                id,
+                                name: user?.settings?.displayName || user?.username || id,
+                                contribution: Number(user?.halloweenContribution) || 0
+                            }))
+                            .filter(p => p.contribution > 0)
+                            .sort((a, b) => b.contribution - a.contribution)
+                            .slice(0, 3);
+                        if (top.length === 0) return showToast('❌ Нет участников с конфетами', 'error');
+
+                        const rewards = [
+                            { money: 1000000, dilicks: 100000 },
+                            { money: 500000, dilicks: 50000 },
+                            { money: 250000, dilicks: 25000 }
+                        ];
+                        const paid = {};
+                        for (let i = 0; i < top.length; i++) {
+                            const player = top[i];
+                            const reward = rewards[i];
+                            await usersRef.child(player.id).transaction((user) => {
+                                if (!user) return user;
+                                user.money = (Number(user.money) || 0) + reward.money;
+                                user.dilicks = (Number(user.dilicks) || 0) + reward.dilicks;
+                                return user;
+                            });
+                            paid[i + 1] = {
+                                id: player.id,
+                                name: player.name,
+                                contribution: player.contribution,
+                                money: reward.money,
+                                dilicks: reward.dilicks
+                            };
+                            addDebugMessage(`🎁 ${i + 1} место: ${player.name} (+${reward.money} монет, +${reward.dilicks} диликов)`);
+                        }
+                        await eventsRef.child('halloween').update({ topRewardsPaid: Object.assign({ paidAt: Date.now() }, paid) });
+                        showToast('🎁 Награды топ-3 выданы!', 'success');
+                    } catch (error) {
+                        showToast(`❌ Ошибка выдачи: ${error.message}`, 'error');
+                        addDebugMessage(`❌ Ошибка выдачи наград топ-3: ${error.message}`);
+                    }
+                });
+
+                // Статус выдачи наград топ-3
+                eventsRef.child('halloween/topRewardsPaid').on('value', (snapshot) => {
+                    const paid = snapshot.val();
+                    const el = document.getElementById('halloweenTopPaidInfo');
+                    if (!el) return;
+                    if (!paid) {
+                        el.textContent = 'Награды ещё не выданы';
+                        el.className = 'admin-status';
+                        return;
+                    }
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const lines = [1, 2, 3].filter(p => paid[p]).map(p => `${medals[p - 1]} ${paid[p].name || paid[p].id}`);
+                    el.textContent = '✅ Выдано: ' + (lines.length ? lines.join(' • ') : 'нет');
+                    el.className = 'admin-status active';
+                });
+
                 // ===== ОЧИСТКА ВСЕГО ТОПА =====
                 document.getElementById('clearUraganTopBtn')?.addEventListener('click', () => {
                     showConfirmModal(
                         '⚠️ ОЧИСТКА ТОПА ИВЕНТА',
-                        'Вы уверены, что хотите ОБНУЛИТЬ вклад ВСЕХ игроков в ивенте "Диликовый ураган"?\n\nВключая админа! Это действие НЕЛЬЗЯ отменить!'
+                        'Вы уверены, что хотите ОБНУЛИТЬ конфеты ВСЕХ игроков в хэллоуин-ивенте?\n\nВключая админа! Это действие НЕЛЬЗЯ отменить!'
                     , async () => {
                         showToast('🔄 Очистка топа ивента...', 'warning');
                         addDebugMessage('🗑️ Начинаем очистку топа ивента');
@@ -1430,15 +1439,15 @@
                             const users = snapshot.val();
                             let count = 0;
                             for (const [id, user] of Object.entries(users)) {
-                                if (user.eventContribution && user.eventContribution > 0) {
-                                    await usersRef.child(id).update({ eventContribution: 0 });
+                                if (user.halloweenContribution && user.halloweenContribution > 0) {
+                                    await usersRef.child(id).update({ halloweenContribution: 0 });
                                     count++;
                                     if (count % 10 === 0) await new Promise(r => setTimeout(r, 50));
                                 }
                             }
                             // Принудительно обнуляем админа
-                            await usersRef.child(CREATOR_ID).update({ eventContribution: 0 });
-                            await eventsRef.child('dilicksHurricane').update({ totalPool: 0 });
+                            await usersRef.child(CREATOR_ID).update({ halloweenContribution: 0 });
+                            await eventsRef.child('halloween').update({ totalPool: 0 });
                             showToast(`✅ Очищено ${count + 1} игроков! Копилка сброшена.`, 'success');
                             addDebugMessage(`✅ Очищено ${count + 1} игроков, копилка сброшена`);
                             const topList = document.getElementById('topList');
@@ -1475,8 +1484,8 @@
                             }
                             const userData = snapshot.val();
                             const username = userData.settings?.displayName || userData.username;
-                            await playerRef.update({ eventContribution: 0 });
-                            showToast(`✅ Очищен вклад игрока ${username} (${playerId})`, 'success');
+                            await playerRef.update({ halloweenContribution: 0 });
+                            showToast(`✅ Очищены конфеты игрока ${username} (${playerId})`, 'success');
                             addDebugMessage(`✅ Очищен вклад игрока ${username} (${playerId})`);
                             document.getElementById('clearPlayerId').value = '';
                             const topList = document.getElementById('topList');
@@ -1495,8 +1504,8 @@
                         `Вы уверены, что хотите ОБНУЛИТЬ вклад администратора (${CREATOR_ID})?\n\nЭто действие НЕЛЬЗЯ отменить!`
                     , async () => {
                         try {
-                            await usersRef.child(CREATOR_ID).update({ eventContribution: 0 });
-                            showToast(`✅ Вклад администратора обнулен!`, 'success');
+                            await usersRef.child(CREATOR_ID).update({ halloweenContribution: 0 });
+                            showToast(`✅ Конфеты администратора обнулены!`, 'success');
                             addDebugMessage(`✅ Обнулен администратор ${CREATOR_ID}`);
                             const topList = document.getElementById('topList');
                             if (topList && topList.style.display === 'block') document.getElementById('loadTopBtn')?.click();

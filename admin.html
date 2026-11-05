@@ -1,1840 +1,741 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Dilic Admin | Панель управления</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DILIC ADMIN</title>
+<style>
+/* ============================================================
+   ТОКЕНЫ
+   ============================================================ */
+:root {
+    --gold: #FFD700;
+    --gold-line: rgba(255, 215, 0, 0.28);
+    --orange: #ff8c1a;
+    --orange-l: #ffb347;
+    --violet: #5a187a;
+    --blue: #4aa3ff;
+    --danger: #ff6b6b;
+    --ok: #4CAF50;
+    --ios-green: rgba(52, 199, 89, 0.85);
+    --warn: #ffc107;
+    --muted: rgba(255, 255, 255, 0.55);
+    --faint: rgba(255, 255, 255, 0.35);
+    --line: rgba(255, 255, 255, 0.1);
+    --glass: rgba(255, 255, 255, 0.045);
+    --glass-strong: rgba(255, 255, 255, 0.08);
+    --blur: blur(15px) saturate(180%);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; } 
+*, *::before, *::after { user-select: none; -webkit-user-select: none; -moz-user-select: none; }
+::selection { background: transparent; color: inherit }
+::-moz-selection { background: transparent }
+input.field, textarea.field { user-select: text; -webkit-user-select: text; }
+/* единый стеклянный скролл вместо браузерного — применяется ко всем спискам сразу */
+::-webkit-scrollbar { width: 8px; height: 8px }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.04); border-radius: 8px }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 215, 0, 0.55), rgba(255, 140, 26, 0.55));
+  border-radius: 8px; border: 2px solid rgba(255, 255, 255, 0.06);
+}
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 26, 0.9)) }
+::-webkit-scrollbar-corner { background: transparent }
+@keyframes scrollIn { from { opacity: 0; transform: translateY(6px) scale(.98) } to { opacity: 1; transform: none } }
+html { height: 100%; }
+body {
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    color: #fff;
+    background:
+        radial-gradient(ellipse 55% 40% at 6% -4%, rgba(255, 140, 26, 0.10), transparent 70%),
+        radial-gradient(ellipse 50% 40% at 96% 104%, rgba(90, 24, 122, 0.20), transparent 70%),
+        linear-gradient(135deg, #0a0c15 0%, #121520 50%, #0a0c15 100%);
+    background-attachment: fixed;
+}
 
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #0a0c15 0%, #121520 50%, #0a0c15 100%);
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
-        }
+/* ============================================================
+   LIQUID GLASS — базовая поверхность
+   ============================================================ */
+.lg {
+    position: relative;
+    background: var(--glass);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    overflow: hidden;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.lg::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 35%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0));
+    pointer-events: none; z-index: 1;
+}
+.lg > * { position: relative; z-index: 2; }
 
-        /* ===== ОСНОВНЫЕ СТИЛИ ===== */
-        .admin-page { min-height: 100vh; }
-        .admin-panel { max-width: 1200px; margin: 0 auto; }
+/* ============================================================
+   ХЕДЕР — liquid glass островок: парит, не касается краёв и верха
+   ============================================================ */
+.nav-island-wrap { width: min(1280px, calc(100vw - 24px)); margin: 0 auto; padding: 12px 0 78px; }
+.glass-nav {
+    position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateZ(0); width: min(1280px, calc(100vw - 24px)); z-index: 1000;
+    background: rgba(15, 18, 25, 0.6);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.75), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    padding: 14px 22px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.glass-nav::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 42%; border-top-left-radius: inherit; border-top-right-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0)); pointer-events: none; z-index: 0 }
+.glass-nav > * { position: relative; z-index: 1 }
+.nav-brand { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
+.nav-bt { min-width: 0; white-space: nowrap }
+.nav-logo {
+    width: 36px; height: 36px; border-radius: 13px; display: grid; place-items: center; font-size: 18px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.26), rgba(255, 140, 26, 0.22));
+    border: 0.5px solid rgba(255, 215, 0, 0.42); box-shadow: 0 4px 10px -4px rgba(255, 215, 0, 0.55);
+}
+.nav-title { white-space: nowrap; font-size: 13.5px; font-weight: 900; letter-spacing: 0.4px; line-height: 1.15; color: var(--gold); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) }
+.nav-sub { font-size: 9px; color: var(--faint); letter-spacing: 0.06em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap }
+.nav-links { display: flex; gap: 6px; padding: 2px; flex: 0 1 auto; justify-content: center; min-width: 0 }
+.nav-links::-webkit-scrollbar { display: none }
+.nav-btn {
+    position: relative; overflow: hidden; z-index: 1;
+    background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff; padding: 9px 15px; border-radius: 30px; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 500; letter-spacing: 0.3px;
+    backdrop-filter: blur(8px) saturate(180%); -webkit-backdrop-filter: blur(8px) saturate(180%);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.15s ease; white-space: nowrap; display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+}
+.nav-btn::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 45%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)); pointer-events: none }
+.nav-btn > * { position: relative; z-index: 2 }
+.nav-btn:hover { background: var(--glass-strong); border-color: rgba(255, 255, 255, 0.16); transform: translateY(-1px) }
+.nav-btn:active { background: rgba(255, 255, 255, 0.12); transform: translateY(1px) }
+.nav-btn.active {
+    background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 215, 0, 0.42); color: var(--gold);
+    box-shadow: 0 4px 10px -4px rgba(255, 215, 0, 0.55), 0 0 0 0.5px rgba(255, 255, 255, 0.2) inset;
+}
+.nav-count { font-size: 9.5px; font-weight: 800; padding: 1px 6px; border-radius: 20px; background: rgba(76, 175, 80, 0.22); color: var(--ok) }
+.nav-count.off { background: rgba(255, 255, 255, 0.07); color: var(--muted) }
+.nav-count.wait { background: rgba(255, 193, 7, 0.2); color: var(--warn) }
+.user-info { display: flex; align-items: center; gap: 7px; flex-shrink: 0 }
 
-        .admin-header {
-            text-align: center;
-            padding: 30px;
-            margin-bottom: 25px;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(20px);
-            border-radius: 32px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-        }
-        .admin-header h1 { color: gold; font-size: 2.2rem; margin-bottom: 10px; }
-        .admin-header p { color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; }
-        .admin-info {
-            margin-top: 15px;
-            padding: 8px 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 40px;
-            display: inline-block;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.8);
-            font-family: monospace;
-        }
+.hide-s { white-space: nowrap }
+.currency.compact span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block }
+.currency {
+    background: rgba(0, 0, 0, 0.22); border: 0.5px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 12px; border-radius: 30px; display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.06) inset;
+}
+.currency .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted) }
+.currency.on { color: #7ddb81; border-color: rgba(76, 175, 80, 0.35) } .currency.on .dot { background: var(--ok); animation: blip 1.8s infinite }
+.currency.wait { color: var(--warn); border-color: rgba(255, 193, 7, 0.35) } .currency.wait .dot { background: var(--warn); animation: blip 1s infinite }
+.currency.bad { color: var(--danger); border-color: rgba(244, 67, 54, 0.35) } .currency.bad .dot { background: var(--danger) }
+@keyframes blip { 0%, 100% { opacity: 0.35 } 50% { opacity: 1 } }
 
-        /* Карточки */
-        .admin-card {
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(12px);
-            border-radius: 28px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .admin-card h2 {
-            color: white;
-            font-size: 1.3rem;
-            margin-bottom: 18px;
-            border-left: 3px solid gold;
-            padding-left: 12px;
-        }
-        .admin-card h2 span {
-            font-size: 0.7rem;
-            background: rgba(76, 175, 80, 0.2);
-            padding: 2px 8px;
-            border-radius: 20px;
-            margin-left: 8px;
-            color: #4CAF50;
-        }
+/* ============================================================
+   КНОПКИ / ЧИПЫ — liquid glass на каждой
+   ============================================================ */
+.btn {
+    position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--glass); border: 0.5px solid rgba(255, 255, 255, 0.12);
+    color: #fff; padding: 9px 17px; border-radius: 30px; cursor: pointer;
+    font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+    backdrop-filter: blur(8px) saturate(180%); -webkit-backdrop-filter: blur(8px) saturate(180%);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.15s ease; white-space: nowrap;
+}
+.btn::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 48%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04) 60%, rgba(255, 255, 255, 0)); pointer-events: none }
+.btn > * { position: relative; z-index: 2 }
+.btn:hover { background: var(--glass-strong); border-color: rgba(255, 255, 255, 0.18); transform: translateY(-1px); box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.16) inset }
+.btn:active { background: rgba(255, 255, 255, 0.12); transform: translateY(1px) }
+.btn.gold { color: var(--gold); border-color: rgba(255, 215, 0, 0.34); background: rgba(255, 215, 0, 0.1) }
+.btn.ok { color: #7ddb81; border-color: rgba(76, 175, 80, 0.34); background: rgba(76, 175, 80, 0.15) }
+.btn.danger { color: var(--danger); border-color: rgba(244, 67, 54, 0.34); background: rgba(244, 67, 54, 0.15) }
+.btn.warn { color: var(--warn); border-color: rgba(255, 193, 7, 0.34); background: rgba(255, 193, 7, 0.14) }
+.btn.hal { color: #ffe0b8; border-color: rgba(255, 140, 26, 0.5); background: linear-gradient(135deg, rgba(255, 140, 26, 0.3), rgba(122, 46, 0, 0.28)) }
+.btn.solid {
+    color: #23170a; border-color: rgba(255, 215, 0, 0.75); font-weight: 800; text-shadow: none;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.95), rgba(255, 140, 26, 0.9));
+    box-shadow: 0 8px 18px -8px rgba(255, 190, 60, 0.75), 0 0 0 0.5px rgba(255, 255, 255, 0.35) inset;
+}
+.btn.xs { padding: 7px 12px; font-size: 10.5px; letter-spacing: 0.4px }
+.btn.wide { width: 100% }
+.btn[disabled] { opacity: 0.4; pointer-events: none }
 
-        /* Команды */
-        .admin-command {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 215, 0, 0.15);
-        }
-        .admin-command-code {
-            font-family: monospace;
-            font-size: 0.85rem;
-            color: gold;
-            background: rgba(255, 215, 0, 0.1);
-            padding: 4px 12px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        .admin-command-desc {
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 12px;
-            font-size: 0.8rem;
-        }
+.chip {
+    position: relative; overflow: hidden;
+    background: var(--glass); border: 0.5px solid rgba(255, 255, 255, 0.12);
+    color: var(--muted); padding: 6px 12px; border-radius: 20px; cursor: pointer;
+    font-family: inherit; font-size: 11.5px; font-weight: 700;
+    backdrop-filter: blur(8px) saturate(180%); -webkit-backdrop-filter: blur(8px) saturate(180%);
+    box-shadow: 0 3px 8px -4px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.14s ease;
+}
+.chip::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 50%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)); pointer-events: none }
+.chip > * { position: relative; z-index: 2 }
+.chip:hover { background: var(--glass-strong); color: #fff }
+.chip.active { color: var(--gold); border-color: rgba(255, 215, 0, 0.45); background: rgba(255, 215, 0, 0.16) }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
 
-        /* Группы ввода */
-        .admin-input-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        .admin-input-group input,
-        .admin-input-group select,
-        .admin-input-group textarea {
-            flex: 1;
-            min-width: 120px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            color: white;
-            padding: 10px 14px;
-            border-radius: 16px;
-            font-size: 14px;
-        }
-        .admin-input-group input:focus,
-        .admin-input-group select:focus,
-        .admin-input-group textarea:focus {
-            outline: none;
-            border-color: gold;
-        }
-        .admin-input-group textarea { resize: vertical; min-height: 60px; }
+/* ============================================================
+   ПОЛЯ — тоже liquid glass
+   ============================================================ */
+.field {
+    background: rgba(0, 0, 0, 0.28); border: 0.5px solid rgba(255, 255, 255, 0.12); color: #fff;
+    padding: 9px 13px; border-radius: 16px; font-size: 13px; font-family: inherit; width: 100%; min-width: 0;
+    backdrop-filter: blur(10px) saturate(170%); -webkit-backdrop-filter: blur(10px) saturate(170%);
+    box-shadow: 0 3px 10px -6px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+    transition: border-color 0.16s ease, background 0.16s ease;
+}
+.field:focus { outline: none; border-color: var(--gold); background: rgba(0, 0, 0, 0.36) }
+.field::placeholder { color: rgba(255, 255, 255, 0.3) }
+textarea.field { resize: vertical; min-height: 56px }
+label.fl { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 5px }
 
-        /* ===== ВЫБОР ИГРОКА ПО НИКУ (выдача наград) ===== */
-        .reward-picker {
-            position: relative;
-            flex: 1 1 180px;
-            min-width: 0;
-        }
-        .reward-picker input[type="text"] {
-            width: 100%;
-            padding-right: 38px;
-        }
+/* СОБСТВЕННЫЙ ВЫПАДАШЕК (вместо select — там скрол не стеклянный) */
+.pick { position: relative; flex: 0 1 auto; min-width: 0 }
+.pick-btn {
+    width: 100%; display: flex; align-items: center; gap: 8px; cursor: pointer;
+    background: rgba(0, 0, 0, 0.28); border: 0.5px solid rgba(255, 255, 255, 0.12); color: #fff;
+    padding: 9px 13px; border-radius: 16px; font-size: 13px; font-family: inherit;
+    backdrop-filter: blur(10px) saturate(170%); -webkit-backdrop-filter: blur(10px) saturate(170%);
+    box-shadow: 0 3px 10px -6px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+}
+.pick-btn .arw { margin-left: auto; font-size: 10px; color: var(--muted) }
+.pick.open .pick-btn { border-color: var(--gold) }
+.pop {
+    position: absolute; z-index: 900; left: 0; right: 0; top: calc(100% + 6px);
+    max-height: 220px; overflow-y: auto; padding: 6px; border-radius: 18px; display: none; flex-direction: column; gap: 5px;
+    background: rgba(16, 20, 28, 0.9); border: 0.5px solid var(--gold-line);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.85), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+.pick.open .pop { display: flex; animation: scrollIn 0.18s ease }
+/* скролл выпадашки — общий стеклянный */
+.opt {
+    display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 13px; cursor: pointer; font-size: 12.5px;
+    background: rgba(255, 255, 255, 0.04); border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.opt:hover { background: rgba(255, 215, 0, 0.12); border-color: rgba(255, 215, 0, 0.3) }
+.opt.sel { border-color: rgba(255, 215, 0, 0.5); background: rgba(255, 215, 0, 0.14); color: var(--gold) }
 
-        /* Ровные ряды для банов: поле ника / причина / часы / кнопка */
-        .admin-input-group.ban-row,
-        .admin-input-group.unban-row {
-            display: grid;
-            align-items: stretch;
-            gap: 10px;
-        }
-        .admin-input-group.ban-row {
-            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 88px auto;
-        }
-        .admin-input-group.unban-row {
-            grid-template-columns: minmax(0, 1.4fr) auto;
-        }
-        .admin-input-group.ban-row > input,
-        .admin-input-group.ban-row > select,
-        .admin-input-group.unban-row > input {
-            width: 100%;
-            min-width: 0;
-        }
-        .admin-input-group.ban-row > .glass-btn,
-        .admin-input-group.unban-row > .glass-btn {
-            white-space: nowrap;
-            padding: 0 18px;
-        }
-        .admin-input-group.ban-row > #banHours { text-align: center; padding-left: 8px; padding-right: 8px; }
-        .reward-picker-caret {
-            position: absolute;
-            top: 50%;
-            right: 8px;
-            transform: translateY(-50%);
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 215, 0, 0.12);
-            color: gold;
-            font-size: 12px;
-            line-height: 1;
-            cursor: pointer;
-            display: grid;
-            place-items: center;
-            transition: background 0.15s ease, transform 0.15s ease;
-        }
-        .reward-picker-caret:hover { background: rgba(255, 215, 0, 0.25); }
-        .reward-picker.open .reward-picker-caret { transform: translateY(-50%) rotate(180deg); }
+/* ============================================================
+   СПИСКИ / СТРОКИ — стеклянные, без внешних скролов
+   ============================================================ */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 18px 22px 44px }
+.view { display: none }
+.view.active { display: block; animation: viewIn 0.26s ease }
+@keyframes viewIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+.vhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 13px }
+.vhead h2 { font-size: 16px; font-weight: 900; letter-spacing: 0.3px }
+.vhead p { font-size: 11px; color: var(--faint) }
+.vhead .right { margin-left: auto; display: flex; gap: 7px; flex-wrap: wrap; align-items: center }
+.card { padding: 15px }
+.card-h { display: flex; align-items: center; gap: 9px; margin-bottom: 11px; flex-wrap: wrap }
+.card-h h3 { font-size: 12.5px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 7px }
+.card-h .right { margin-left: auto; display: flex; gap: 7px; align-items: center }
+.cmd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; color: var(--gold);
+    background: rgba(255, 215, 0, 0.09); padding: 3px 10px; border-radius: 20px; border: 0.5px solid rgba(255, 215, 0, 0.2);
+}
+.hint { font-size: 11px; color: var(--muted); line-height: 1.5 }
+.hint b { color: rgba(255, 255, 255, 0.85) }
+.grid { display: grid; gap: 13px }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)) }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)) }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+.sep { margin-top: 11px; padding-top: 11px; border-top: 1px dashed rgba(255, 255, 255, 0.1) }
+.blk-h { display: flex; align-items: center; gap: 8px; font-size: 9.5px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 800 }
+.blk-h .line { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.07) }
+.list { display: flex; flex-direction: column; gap: 7px }
+.empty { text-align: center; color: var(--faint); font-size: 12px; padding: 14px 0 }
+.li {
+    display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 16px; flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.04); border: 0.5px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px) saturate(170%); -webkit-backdrop-filter: blur(10px) saturate(170%);
+    box-shadow: 0 3px 10px -6px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.07) inset;
+}
+.li .l-main { flex: 1 1 150px; min-width: 0 }
+.li .l-t { font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis }
+.li .l-s { font-size: 10px; color: var(--faint); margin-top: 2px }
+.top-li {
+    display: flex; align-items: center; gap: 9px; padding: 7px 11px; border-radius: 14px; font-size: 12.5px;
+    background: rgba(255, 255, 255, 0.04); border: 0.5px solid rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(10px) saturate(170%); -webkit-backdrop-filter: blur(10px) saturate(170%);
+}
+.top-li .r { width: 24px; font-weight: 900; color: var(--gold) }
+.top-li .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.top-li .v { font-weight: 800; color: var(--orange-l); font-family: ui-monospace, Menlo, monospace; font-size: 12px }
+.pill { font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 20px; border: 0.5px solid; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px) }
+.pill.good { color: #7ddb81; border-color: rgba(76, 175, 80, 0.4); background: rgba(76, 175, 80, 0.14) }
+.pill.warn { color: var(--warn); border-color: rgba(255, 193, 7, 0.4); background: rgba(255, 193, 7, 0.14) }
+.pill.bad { color: var(--danger); border-color: rgba(244, 67, 54, 0.4); background: rgba(244, 67, 54, 0.14) }
+.pill.off { color: var(--muted); border-color: rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.05) }
+.tile { padding: 12px 14px }
+.tile .t-n { font-size: 9.5px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700 }
+.tile .t-v { font-size: 16px; font-weight: 900; margin-top: 4px }
+.tile .t-s { font-size: 10px; color: var(--faint); margin-top: 2px }
+.tile.gold .t-v { color: var(--gold) } .tile.good .t-v { color: #7ddb81 } .tile.bad .t-v { color: var(--danger) }
+.cd {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 16px; flex-wrap: wrap;
+    background: rgba(0, 0, 0, 0.26); border: 0.5px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px) saturate(170%); -webkit-backdrop-filter: blur(10px) saturate(170%);
+}
+.cd .lab { font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint) }
+.cd .val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 16px; font-weight: 800; color: var(--gold) }
+.cd.wait .val { color: var(--warn) } .cd.bad .val { color: var(--danger) }
+.cd .bar { flex: 1 1 80px; height: 5px; border-radius: 4px; background: rgba(255, 255, 255, 0.09); overflow: hidden; min-width: 60px }
+.cd .fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold), var(--orange)); width: 0%; transition: width 0.9s linear }
+.bar-lite { flex: 1 1 80px; height: 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.09); overflow: hidden; min-width: 70px }
+.bar-lite i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold), var(--orange)) }
 
-        .reward-picker-list {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0;
-            right: auto;
-            min-width: 100%;
-            width: max-content;
-            max-width: min(360px, 90vw);
-            max-height: 240px;
-            overflow-y: auto;
-            background: rgba(16, 20, 28, 0.98);
-            border: 1px solid rgba(255, 215, 0, 0.25);
-            border-radius: 16px;
-            padding: 6px;
-            z-index: 500;
-            display: none;
-            box-shadow: 0 16px 32px -12px rgba(0, 0, 0, 0.7);
-        }
-        .reward-picker.open .reward-picker-list { display: block; }
-        .reward-picker-list::-webkit-scrollbar { width: 5px; }
-        .reward-picker-list::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        .reward-picker-list::-webkit-scrollbar-thumb { background: gold; border-radius: 10px; }
+/* ============================================================
+   ОБНОВЫ (только включение/убирание)
+   ============================================================ */
+.up { padding: 14px; display: flex; flex-direction: column; gap: 11px }
+.up.on-card { border-color: rgba(255, 140, 26, 0.45); box-shadow: 0 12px 30px -16px rgba(255, 140, 26, 0.7), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset }
+.up.off-card { opacity: 0.72 }
+.up-head { display: flex; align-items: center; gap: 11px; flex-wrap: wrap }
+.up-ic { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-size: 21px; flex: 0 0 auto;
+    background: linear-gradient(135deg, rgba(255, 140, 26, 0.26), rgba(90, 24, 122, 0.32)); border: 0.5px solid rgba(255, 140, 26, 0.4) }
+.up-tt { flex: 1 1 170px; min-width: 0 }
+.up-tt .t1 { font-size: 14px; font-weight: 900 }
+.up-tt .t2 { font-size: 10.5px; color: var(--faint); margin-top: 3px; display: flex; gap: 7px; flex-wrap: wrap; align-items: center }
+.tag { font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 20px; border: 0.5px solid }
+.tag.hal { color: var(--orange-l); border-color: rgba(255, 140, 26, 0.45); background: rgba(255, 140, 26, 0.12) }
+.up-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
 
-        .reward-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 13px;
-            color: white;
-            transition: background 0.12s ease;
-        }
-        .reward-option:hover,
-        .reward-option.is-highlighted { background: rgba(255, 215, 0, 0.15); }
-        .reward-option.is-selected { background: rgba(255, 215, 0, 0.22); }
-        .reward-option-name {
-            flex: 1 1 auto;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .reward-option-id {
-            flex: 0 0 auto;
-            max-width: 50%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-family: monospace;
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.35);
-        }
-        .reward-option-crown { color: gold; font-size: 12px; }
-        .reward-picker-empty {
-            padding: 12px 10px;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.45);
-            text-align: center;
-        }
+/* ============================================================
+   ЭКРАНЫ РАБОТ: карточки тем
+   ============================================================ */
+.themes { display: flex; gap: 9px; flex-wrap: wrap }
+.theme-card {
+    flex: 0 0 auto; width: 122px; padding: 12px 8px; border-radius: 18px; cursor: pointer; text-align: center; position: relative; overflow: hidden;
+    background: var(--glass); border: 0.5px solid rgba(255, 255, 255, 0.12); transition: all 0.16s ease;
+    backdrop-filter: blur(10px) saturate(180%); -webkit-backdrop-filter: blur(10px) saturate(180%);
+    box-shadow: 0 4px 10px -6px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+}
+.theme-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 40%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)); pointer-events: none }
+.theme-card > * { position: relative; z-index: 2 }
+.theme-card:hover { transform: translateY(-2px); background: var(--glass-strong) }
+.theme-card.sel { border-color: var(--tc); background: var(--tc-bg); box-shadow: 0 10px 24px -14px var(--tc-glow), 0 0 0 0.5px rgba(255, 255, 255, 0.16) inset }
+.theme-card .ti { font-size: 23px; display: block }
+.theme-card .tn { font-size: 11px; font-weight: 800; margin-top: 5px }
+.theme-card .td { font-size: 9px; color: var(--faint); margin-top: 2px }
+.theme-card[data-theme="classic"] { --tc: rgba(74, 163, 255, 0.6); --tc-bg: rgba(74, 163, 255, 0.12); --tc-glow: rgba(74, 163, 255, 0.7) }
+.theme-card[data-theme="halloween"] { --tc: rgba(255, 140, 26, 0.7); --tc-bg: rgba(255, 140, 26, 0.14); --tc-glow: rgba(255, 140, 26, 0.8) }
 
+/* ============================================================
+   ВЫБОР ИГРОКА (как в старой админке)
+   ============================================================ */
+.picker { position: relative; flex: 1 1 190px; min-width: 0 }
+.picker .field { padding-right: 36px }
+.picker .caret {
+    position: absolute; top: 50%; right: 7px; transform: translateY(-50%);
+    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    display: grid; place-items: center; font-size: 11px; color: var(--muted);
+    background: var(--glass); border: 0.5px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.picker .caret:hover { color: #fff; border-color: rgba(255, 215, 0, 0.4) }
+.plist {
+    position: absolute; z-index: 900; left: 0; right: 0; top: calc(100% + 6px);
+    max-height: 210px; overflow-y: auto; padding: 6px; border-radius: 18px; display: none; flex-direction: column; gap: 5px;
+    background: rgba(16, 20, 28, 0.9); border: 0.5px solid var(--gold-line);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.85), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset;
+}
+.picker.open .plist { display: flex; animation: scrollIn 0.18s ease }
+/* скролл списка — общий стеклянный */
+.popt {
+    display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 13px; cursor: pointer; font-size: 12.5px;
+    background: rgba(255, 255, 255, 0.04); border: 0.5px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.popt:hover { background: rgba(255, 215, 0, 0.12); border-color: rgba(255, 215, 0, 0.3) }
+.popt.sel { border-color: rgba(255, 215, 0, 0.5); background: rgba(255, 215, 0, 0.14) }
+.popt .pn { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.popt .crown { font-size: 11px }
+.popt .pid { margin-left: auto; font-size: 9.5px; color: var(--faint); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px }
+.pempty { text-align: center; color: var(--faint); font-size: 11.5px; padding: 9px 0 }
+.ban-row { display: grid; gap: 8px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 92px auto; align-items: stretch }
+.unb-row { display: grid; gap: 8px; grid-template-columns: minmax(0, 1.4fr) auto; align-items: stretch }
+@media (max-width: 620px) { .ban-row, .unb-row { grid-template-columns: 1fr 1fr } }
 
-        /* Множители */
-        .multiplier-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0;
-        }
-        .multiplier-btn {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: gold;
-            padding: 6px 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.15s ease;
-        }
-        .multiplier-btn:hover { background: rgba(255, 215, 0, 0.2); transform: scale(1.02); }
-
-        /* Кнопки */
-        .glass-btn {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.15s ease;
-        }
-        .glass-btn:hover { background: rgba(255, 215, 0, 0.2); transform: translateY(-1px); }
-        .glass-btn:active { transform: translateY(1px); }
-
-        .danger-btn { background: rgba(244, 67, 54, 0.15); border-color: rgba(244, 67, 54, 0.3); color: #ff6b6b; }
-        .danger-btn:hover { background: rgba(244, 67, 54, 0.25); }
-        .success-btn { background: rgba(76, 175, 80, 0.15); border-color: rgba(76, 175, 80, 0.3); color: #4CAF50; }
-        .success-btn:hover { background: rgba(76, 175, 80, 0.25); }
-        .warning-btn { background: rgba(255, 193, 7, 0.15); border-color: rgba(255, 193, 7, 0.3); color: #ffc107; }
-        .warning-btn:hover { background: rgba(255, 193, 7, 0.25); }
-
-        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
-
-        /* Списки */
-        .announcements-list, .ban-list, .top-list, .polls-list {
-            max-height: 350px;
-            overflow-y: auto;
-            margin-top: 10px;
-        }
-        .announcements-list::-webkit-scrollbar, .ban-list::-webkit-scrollbar,
-        .top-list::-webkit-scrollbar, .polls-list::-webkit-scrollbar { width: 5px; }
-        .announcements-list::-webkit-scrollbar-track, .ban-list::-webkit-scrollbar-track,
-        .top-list::-webkit-scrollbar-track, .polls-list::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        .announcements-list::-webkit-scrollbar-thumb, .ban-list::-webkit-scrollbar-thumb,
-        .top-list::-webkit-scrollbar-thumb, .polls-list::-webkit-scrollbar-thumb { background: gold; border-radius: 10px; }
-
-        /* Анонсы */
-        .announcement-item {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-        }
-        .announcement-text { flex: 1; font-size: 13px; color: white; word-break: break-word; }
-        .announcement-date { font-size: 10px; color: rgba(255, 255, 255, 0.4); }
-        .announcement-delete {
-            background: rgba(244, 67, 54, 0.15);
-            border: none;
-            color: #ff6b6b;
-            padding: 5px 12px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 11px;
-        }
-        .announcement-delete:hover { background: rgba(244, 67, 54, 0.3); }
-
-        /* Баны */
-        .ban-item {
-            background: rgba(244, 67, 54, 0.1);
-            border-radius: 16px;
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            border: 1px solid rgba(244, 67, 54, 0.2);
-        }
-        .ban-info { flex: 1; font-size: 12px; color: rgba(255, 255, 255, 0.8); }
-        .ban-unban {
-            background: rgba(76, 175, 80, 0.15);
-            border: none;
-            color: #4CAF50;
-            padding: 4px 12px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 11px;
-        }
-        .ban-unban:hover { background: rgba(76, 175, 80, 0.3); }
-
-        /* Топ */
-        .top-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 12px;
-        }
-        .top-rank { width: 35px; color: gold; }
-        .top-name { flex: 1; color: white; }
-        .top-value { color: gold; }
-
-        /* Статус */
-        .admin-status {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 20px;
-            text-align: center;
-            font-size: 14px;
-        }
-        .admin-status.active { background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.3); color: #ff6b6b; }
-        .admin-status.inactive { background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); color: #4CAF50; }
-        .admin-timer { font-family: monospace; font-size: 1.2rem; font-weight: bold; color: gold; text-align: center; margin-top: 10px; }
-
-        .error-message {
-            background: rgba(244, 67, 54, 0.15);
-            border: 1px solid rgba(244, 67, 54, 0.3);
-            color: #ff6b6b;
-            padding: 20px;
-            border-radius: 24px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .events-status-info {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            padding: 15px;
-            line-height: 1.8;
-            color: white;
-            font-size: 13px;
-        }
-        .realtime-badge {
-            display: inline-block;
-            background: rgba(76, 175, 80, 0.2);
-            border-radius: 20px;
-            padding: 2px 8px;
-            font-size: 9px;
-            color: #4CAF50;
-            margin-left: 8px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-
-        .debug-console {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 16px;
-            padding: 10px 12px;
-            margin-bottom: 20px;
-            font-size: 11px;
-            font-family: monospace;
-            color: #0f0;
-            max-height: 100px;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
-        .debug-console::-webkit-scrollbar { width: 4px; }
-        .debug-console::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-        .debug-console::-webkit-scrollbar-thumb { background: gold; border-radius: 10px; }
-
-        .back-link {
-            display: inline-block;
-            margin-top: 20px;
-            color: gold;
-            text-decoration: none;
-            padding: 10px 20px;
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 30px;
-            transition: all 0.2s ease;
-        }
-        .back-link:hover { background: rgba(255, 215, 0, 0.2); transform: translateY(-1px); }
-
-        .toast-notification {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(20, 25, 35, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid gold;
-            border-radius: 50px;
-            padding: 12px 24px;
-            color: white;
-            font-size: 0.9rem;
-            z-index: 20001;
-            transition: transform 0.3s ease;
-            max-width: 90%;
-            text-align: center;
-            pointer-events: none;
-        }
-        .toast-notification.show { transform: translateX(-50%) translateY(0); }
-        .toast-notification.success { border-color: #4CAF50; color: #4CAF50; }
-        .toast-notification.error { border-color: #ff6b6b; color: #ff6b6b; }
-        .toast-notification.warning { border-color: #ffc107; color: #ffc107; }
-
-        /* ===== ИКОНКИ ВАЛЮТ =====
-           Без размеров картинка выводилась в натуральную величину (128×128)
-           и раздувала тосты и списки. */
-        .dilic-icon {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: inline-block;
-            vertical-align: -3px;
-            object-fit: cover;
-        }
-        .toast-notification .dilic-icon {
-            width: 18px;
-            height: 18px;
-            vertical-align: -4px;
-            margin: 0 1px;
-        }
-        .top-value .dilic-icon {
-            width: 14px;
-            height: 14px;
-            vertical-align: -2px;
-        }
+/* ============================================================
+   ОПРОСЫ (активный опрос)
+   ============================================================ */
+.poll-card { border-radius: 18px; padding: 12px; background: rgba(255, 255, 255, 0.04); border: 0.5px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px) saturate(170%); -webkit-backdrop-filter: blur(10px) saturate(170%) }
+.poll-q { font-size: 13px; font-weight: 800 }
+.poll-opt { display: grid; grid-template-columns: minmax(90px, 1.2fr) 1fr auto; gap: 9px; align-items: center; margin-top: 8px; padding: 7px 10px; border-radius: 14px; background: rgba(0, 0, 0, 0.26); border: 0.5px solid rgba(255, 255, 255, 0.1) }
+.poll-opt .po-t { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.poll-opt .po-c { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--gold); white-space: nowrap }
+/* ============================================================
+   ЛОГ / ТОСТ / МОДАЛКА
+   ============================================================ */
 
 
-        hr { border-color: rgba(255, 215, 0, 0.2); margin: 15px 0; }
-        .custom-multiplier-group { display: flex; gap: 10px; margin-top: 10px; }
-        .custom-multiplier-group input {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 16px;
-        }
 
-        /* ===== СТИЛИ ДЛЯ ОПРОСОВ ===== */
-        .poll-item {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-        }
-        .poll-question { font-size: 14px; font-weight: bold; color: gold; margin-bottom: 12px; }
-        .poll-options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
-        .poll-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            flex-wrap: wrap;
-        }
-        .poll-option-text { flex: 1; font-size: 12px; color: white; }
-        .poll-option-votes { font-size: 11px; color: gold; min-width: 70px; text-align: right; }
-        .poll-option-bar { width: 100px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; }
-        .poll-option-bar-fill { height: 100%; background: linear-gradient(90deg, gold, #ffaa00); width: 0%; border-radius: 2px; transition: width 0.3s ease; }
-        .poll-total-votes { font-size: 10px; color: rgba(255, 255, 255, 0.4); margin-top: 10px; text-align: right; }
-        .poll-delete {
-            background: rgba(244, 67, 54, 0.15);
-            border: none;
-            color: #ff6b6b;
-            padding: 4px 12px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 11px;
-            margin-top: 8px;
-        }
-        .poll-delete:hover { background: rgba(244, 67, 54, 0.3); }
 
-        /* ===== МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ===== */
-        .confirm-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(15px);
-            z-index: 30000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        .confirm-modal.active { opacity: 1; visibility: visible; }
-        .confirm-modal-content {
-            max-width: 400px;
-            width: 90%;
-            background: rgba(20, 25, 35, 0.95);
-            backdrop-filter: blur(20px);
-            border: 2px solid #ff6b6b;
-            border-radius: 30px;
-            padding: 25px;
-            text-align: center;
-            animation: modalAppear 0.3s ease;
-        }
-        @keyframes modalAppear { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .confirm-modal-content h3 { color: #ff6b6b; font-size: 1.5rem; margin-bottom: 15px; }
-        .confirm-modal-content p { color: white; margin-bottom: 20px; line-height: 1.5; }
-        .confirm-modal-buttons { display: flex; gap: 15px; justify-content: center; }
-        .confirm-btn {
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid #ff6b6b;
-            color: #ff6b6b;
-            padding: 10px 25px;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .confirm-btn:hover { background: rgba(244, 67, 54, 0.4); transform: scale(1.02); }
-        .cancel-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 10px 25px;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .cancel-btn:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.02); }
 
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-            .admin-grid { grid-template-columns: 1fr; }
-            .admin-header h1 { font-size: 1.6rem; }
-            .admin-card { padding: 15px; }
-            .admin-input-group { flex-direction: column; align-items: stretch; }
-            .admin-input-group.ban-row,
-            .admin-input-group.unban-row { grid-template-columns: 1fr; }
-            .admin-input-group input, .admin-input-group select, .admin-input-group textarea, .glass-btn { width: 100%; }
-            .multiplier-buttons { justify-content: center; }
-            .custom-multiplier-group { flex-direction: column; }
-            .poll-option { flex-direction: column; align-items: flex-start; }
-            .poll-option-votes { text-align: left; }
-        }
-    </style>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="firebase-config.js"></script>
-    <!-- Иконки валют встроены в код: на телефоне в Telegram WebView
-         внешние картинки и файлы из assets не загружаются. -->
-    <script src="currency-icons.js"></script>
+
+/* ЛОГ — плашка в правом нижнем углу */
+.logbadge { position: fixed; right: 14px; top: 12px; z-index: 1001; width: min(300px, calc(100vw - 28px)); border-radius: 20px; padding: 9px 11px; display: none }
+.logbadge.on { display: block; animation: viewIn 0.24s ease }
+.logbadge.lg { background: rgba(16, 20, 28, 0.9); border: 0.5px solid rgba(255, 255, 255, 0.12); box-shadow: 0 16px 32px -14px rgba(0, 0, 0, 0.8) }
+.logbadge .lb-h { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 800; color: var(--gold) }
+.logbadge .lb-h .btn { margin-left: auto }
+.log { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: #86efac; line-height: 1.6; height: 104px; overflow-y: auto; margin-top: 7px; overscroll-behavior: contain }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 130px); z-index: 1200;
+    background: rgba(20, 25, 35, 0.95); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    border: 0.5px solid var(--gold); border-radius: 40px; padding: 11px 22px; font-size: 12.5px; font-weight: 700;
+    max-width: 92vw; text-align: center; transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none }
+.toast.show { transform: translate(-50%, 0) }
+.toast.ok { border-color: var(--ok); color: #7ddb81 } .toast.err { border-color: var(--danger); color: var(--danger) } .toast.warn { border-color: var(--warn); color: var(--warn) }
+.modal { position: fixed; inset: 0; z-index: 1100; display: none; align-items: center; justify-content: center; padding: 16px;
+    background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px) }
+.modal.on { display: flex; animation: fadeIn 0.25s ease }
+.modal-in { width: min(420px, 100%); padding: 18px; border-radius: 24px; background: rgba(20, 25, 35, 0.9); border: 0.5px solid var(--gold-line);
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.9), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset; animation: viewIn 0.3s ease;
+    display: flex; flex-direction: column; gap: 11px; max-height: 88dvh; overflow-y: auto; position: relative }
+.modal-in::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 34%; background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0)); pointer-events: none }
+.modal-in > * { position: relative; z-index: 2 }
+.modal-in h3 { font-size: 15px; font-weight: 900 }
+
+@media (max-width: 860px) {
+    .nav-island-wrap { width: calc(100vw - 16px); }
+    .glass-nav { flex-wrap: wrap; padding: 10px 12px; gap: 8px }
+    .nav-brand { order: 1; margin-right: auto } .user-info { order: 2 } .nav-links { order: 3; width: 100%; justify-content: flex-start }
+    .nav-sub { display: none }
+    .user-info .hide-s { display: none }
+    .logbadge { top: auto; bottom: 14px; right: 12px }
+    .wrap { padding: 14px 12px 70px }
+    .g2, .g3 { grid-template-columns: 1fr }
+}
+</style>
 </head>
 <body>
-    <div class="admin-page">
-        <div class="admin-panel">
-            <div class="admin-header">
-                <h1>🛠️ DILIC ADMIN</h1>
-                <p>Расширенная панель управления техническими работами, ивентами и игроками</p>
-                <div class="admin-info">🔐 Твой ID: <span id="adminUserId">-</span></div>
-            </div>
-            
-            <div class="debug-console" id="debugConsole">
-                🔍 Ожидание инициализации...<br>
-            </div>
-            
-            <div id="accessError" class="error-message" style="display: none;"></div>
-            
-            <div id="adminContent" style="display: none;">
-                <div class="admin-grid">
-                    <!-- ГЛОБАЛЬНЫЕ АНОНСЫ -->
-                    <div class="admin-card">
-                        <h2>📢 ГЛОБАЛЬНЫЕ АНОНСЫ <span class="realtime-badge">LIVE</span></h2>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/announce &lt;текст&gt;</div>
-                            <div class="admin-command-desc">Отправить сообщение всем игрокам (появится вверху экрана сразу)</div>
-                            <div class="admin-input-group">
-                                <textarea id="announceText" rows="2" placeholder="Текст анонса..."></textarea>
-                                <button class="glass-btn success-btn" id="sendAnnounceBtn">📢 ОТПРАВИТЬ</button>
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">АКТИВНЫЕ АНОНСЫ (обновляются автоматически)</div>
-                            <div id="announcementsList" class="announcements-list">Загрузка...</div>
-                        </div>
-                    </div>
-                    
-                    <!-- ОПРОСЫ -->
-                    <div class="admin-card">
-                        <h2>📊 ОПРОСЫ <span class="realtime-badge">LIVE</span></h2>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/poll &lt;вопрос&gt; | &lt;вариант1&gt; | &lt;вариант2&gt;</div>
-                            <div class="admin-command-desc">Создать опрос (варианты через | )</div>
-                            <div class="admin-input-group">
-                                <input type="text" id="pollQuestion" placeholder="Вопрос опроса...">
-                                <input type="text" id="pollOptions" placeholder="Варианты через | (Да|Нет|Возможно)">
-                                <button class="glass-btn success-btn" id="createPollBtn">📊 СОЗДАТЬ ОПРОС</button>
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">АКТИВНЫЕ ОПРОСЫ (обновляются автоматически)</div>
-                            <div id="pollsList" class="polls-list">Загрузка...</div>
-                        </div>
-                    </div>
-                    
-                    <!-- УПРАВЛЕНИЕ БАНАМИ -->
-                    <div class="admin-card">
-                        <h2>🔨 УПРАВЛЕНИЕ БАНАМИ <span class="realtime-badge">LIVE</span></h2>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/ban &lt;ник&gt; [причина] [часы]</div>
-                            <div class="admin-command-desc">Забанить игрока (0 часов = навсегда)</div>
-                            <div class="admin-input-group ban-row">
-                                <div class="reward-picker" id="banPicker">
-                                    <input type="text" id="banUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
-                                    <input type="hidden" id="banUserId">
-                                    <button type="button" class="reward-picker-caret" id="banPickerCaret" tabindex="-1">▾</button>
-                                    <div class="reward-picker-list" id="banPickerList"></div>
-                                </div>
-                                <input type="text" id="banReason" placeholder="Причина (опционально)">
-                                <input type="number" id="banHours" placeholder="Часы (0=навсегда)" value="0">
-                                <button class="glass-btn danger-btn" id="banUserBtn">⛔ ЗАБАНИТЬ</button>
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/unban &lt;ник&gt;</div>
-                            <div class="admin-input-group unban-row">
-                                <div class="reward-picker" id="unbanPicker">
-                                    <input type="text" id="unbanUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
-                                    <input type="hidden" id="unbanUserId">
-                                    <button type="button" class="reward-picker-caret" id="unbanPickerCaret" tabindex="-1">▾</button>
-                                    <div class="reward-picker-list" id="unbanPickerList"></div>
-                                </div>
-                                <button class="glass-btn success-btn" id="unbanUserBtn">✅ РАЗБАНИТЬ</button>
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">ЗАБАНЕННЫЕ ИГРОКИ (обновляются автоматически)</div>
-                            <div id="bannedList" class="ban-list">Загрузка...</div>
-                        </div>
-                    </div>
-                    
-                    <!-- ТЕХНИЧЕСКИЕ РАБОТЫ -->
-                    <div class="admin-card">
-                        <h2>🔧 ТЕХНИЧЕСКИЕ РАБОТЫ</h2>
-                        <div id="maintenanceStatus" class="admin-status inactive">✅ Технические работы ОТКЛЮЧЕНЫ</div>
-                        <div id="maintenanceTimerDisplay" class="admin-timer" style="display: none;"></div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/technical work</div>
-                            <div class="admin-command-desc">🔧 Включить бесконечный экран техработ</div>
-                            <button class="glass-btn warning-btn" id="techWorkBtn">ВЫПОЛНИТЬ</button>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/technical work time &lt;секунды&gt;</div>
-                            <div class="admin-command-desc">⏱️ Включить экран обновления с таймером</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="techWorkSeconds" placeholder="секунды" value="30" min="1" max="86400">
-                                <button class="glass-btn" id="updateTimeBtn">ВЫПОЛНИТЬ</button>
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/update screen &lt;секунды&gt;</div>
-                            <div class="admin-command-desc">🆙 Показать экран обновления с прогресс-баром</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="updateScreenSeconds" placeholder="секунды" value="60">
-                                <button class="glass-btn warning-btn" id="updateScreenBtn">ПОКАЗАТЬ</button>
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/not technical work</div>
-                            <div class="admin-command-desc">✅ Выключить все экраны техработ</div>
-                            <button class="glass-btn danger-btn" id="notTechWorkBtn">ВЫПОЛНИТЬ</button>
-                        </div>
-                    </div>
-                    
-                    <!-- ХЭЛЛОУИН -->
-                    <div class="admin-card">
-                        <h2>🎃 ДИЛИКОВЫЙ ХЭЛЛОУИН</h2>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">/start event halloween</div>
-                            <div class="admin-command-desc">🚀 Запустить ивент на N дней</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="uraganDays" placeholder="дней" value="7" min="1" max="365">
-                                <button class="glass-btn success-btn" id="startDilicksEventBtn">ЗАПУСТИТЬ</button>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">/stop event halloween</div>
-                            <div class="admin-command-desc">⏹️ Остановить ивент</div>
-                            <button class="glass-btn danger-btn" id="stopDilicksEventBtn">ОСТАНОВИТЬ</button>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">🎯 ЦЕЛЬ КОПИЛКИ</div>
-                            <div class="admin-command-desc">Сколько конфет нужно собрать всем вместе</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="halloweenGoalInput" placeholder="цель" value="1000000">
-                                <button class="glass-btn" id="setHalloweenGoalBtn">УСТАНОВИТЬ</button>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">🍬 КОПИЛКА КОНФЕТ</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="poolAmount" placeholder="количество" value="1000">
-                                <button class="glass-btn success-btn" id="addPoolBtn">➕ ДОБАВИТЬ</button>
-                            </div>
-                            <div class="admin-input-group" style="margin-top: 8px;">
-                                <input type="number" id="setPoolAmount" placeholder="установить значение">
-                                <button class="glass-btn" id="setPoolBtn">🎯 УСТАНОВИТЬ</button>
-                            </div>
-                            <div class="admin-input-group" style="margin-top: 8px;">
-                                <input type="number" id="removePoolAmount" placeholder="вычесть">
-                                <button class="glass-btn danger-btn" id="removePoolBtn">➖ ВЫЧЕСТЬ</button>
-                                <button class="glass-btn danger-btn" id="resetPoolBtn">🗑️ СБРОСИТЬ</button>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">🏆 ТОП УЧАСТНИКОВ</div>
-                            <button class="glass-btn" id="loadTopBtn" style="width: 100%;">🔄 ЗАГРУЗИТЬ ТОП</button>
-                            <div id="topList" class="top-list" style="display: none;"></div>
-                        </div>
 
-                        <div class="admin-command">
-                            <div class="admin-command-code">🎁 ВЫДАТЬ НАГРАДЫ ТОП-3</div>
-                            <div class="admin-command-desc">🥇 1 000 000 монет + 100 000 диликов · 🥈 500 000 + 50 000 · 🥉 250 000 + 25 000</div>
-                            <button class="glass-btn success-btn" id="payHalloweenTopBtn" style="width: 100%;">🎁 ВЫДАТЬ НАГРАДЫ ТОП-3</button>
-                            <div id="halloweenTopPaidInfo" class="admin-status" style="margin-top: 8px;">Награды ещё не выданы</div>
-                        </div>
-                        
-                        <!-- ОЧИСТКА ТОПА -->
-                        <div class="admin-command">
-                            <div class="admin-command-code">/halloween clear top</div>
-                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ ТОП УЧАСТНИКОВ ИВЕНТА (обнулить конфеты всех игроков)</div>
-                            <button class="glass-btn danger-btn" id="clearUraganTopBtn" style="background:rgba(244,67,54,0.2);width:100%;">⚠️ ОЧИСТИТЬ ВЕСЬ ТОП ИВЕНТА</button>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">/halloween clear player &lt;ID&gt;</div>
-                            <div class="admin-command-desc">🗑️ ОЧИСТИТЬ КОНФЕТЫ КОНКРЕТНОГО ИГРОКА</div>
-                            <div class="admin-input-group">
-                                <input type="text" id="clearPlayerId" placeholder="ID игрока">
-                                <button class="glass-btn warning-btn" id="clearPlayerBtn">ОЧИСТИТЬ ИГРОКА</button>
-                            </div>
-                        </div>
-                        
-                        <div class="admin-command">
-                            <div class="admin-command-code">/halloween clear admin</div>
-                            <div class="admin-command-desc">👑 ОЧИСТИТЬ КОНФЕТЫ АДМИНИСТРАТОРА</div>
-                            <button class="glass-btn danger-btn" id="clearAdminBtn" style="background:rgba(244,67,54,0.3);">👑 ОЧИСТИТЬ АДМИНА</button>
-                        </div>
-                    </div>
-                    
-                    <!-- ВЫДАЧА НАГРАД -->
-                    <div class="admin-card">
-                        <h2>🎁 ВЫДАЧА НАГРАД</h2>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/give &lt;ник&gt; &lt;предмет&gt; &lt;количество&gt;</div>
-                            <div class="admin-input-group">
-                                <div class="reward-picker" id="rewardPicker">
-                                    <input type="text" id="rewardUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
-                                    <input type="hidden" id="rewardUserId">
-                                    <button type="button" class="reward-picker-caret" id="rewardPickerCaret" tabindex="-1">▾</button>
-                                    <div class="reward-picker-list" id="rewardPickerList"></div>
-                                </div>
-                                <select id="rewardType">
-                                    <option value="dilicks">Дилики</option>
-                                    <option value="money">Деньги</option>
-                                    <option value="skin">✨ Скин</option>
-                                </select>
-                            </div>
-                            <div class="admin-input-group">
-                                <input type="text" id="rewardAmount" placeholder="количество / ID скина">
-                                <button class="glass-btn success-btn" id="giveRewardBtn">ВЫДАТЬ</button>
-                            </div>
-                            <div class="admin-command-desc" style="margin-top: 8px; font-size: 11px;">
-                                📝 Скины: classic, neon, monsters_skin, dragon_skin, wheel_dragon_skin, halloween_pumpkin
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/give all &lt;предмет&gt; &lt;количество&gt;</div>
-                            <div class="admin-command-desc">⚠️ ВНИМАНИЕ! Выдать ВСЕМ игрокам</div>
-                            <div class="admin-input-group">
-                                <select id="giveAllType">
-                                    <option value="dilicks">Дилики</option>
-                                    <option value="money">Деньги</option>
-                                </select>
-                                <input type="number" id="giveAllAmount" placeholder="количество">
-                                <button class="glass-btn warning-btn" id="giveAllBtn">⚠️ ВЫДАТЬ ВСЕМ</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- КОЛЕСО ФОРТУНЫ -->
-                    <div class="admin-card">
-                        <h2>🎡 КОЛЕСО ФОРТУНЫ</h2>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/start event wheel</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="wheelDays" placeholder="дней" value="150" min="1" max="365">
-                                <button class="glass-btn success-btn" id="startWheelEventBtn">ЗАПУСТИТЬ</button>
-                            </div>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/stop event wheel</div>
-                            <button class="glass-btn danger-btn" id="stopWheelEventBtn">ОСТАНОВИТЬ</button>
-                        </div>
-                        <div class="admin-command">
-                            <div class="admin-command-code">/set spin cost</div>
-                            <div class="admin-input-group">
-                                <input type="number" id="spinCostInput" placeholder="стоимость" value="2500" min="1">
-                                <button class="glass-btn" id="setSpinCostBtn">УСТАНОВИТЬ</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- СТАТУС ИВЕНТОВ -->
-                    <div class="admin-card">
-                        <h2>📊 СТАТУС ИВЕНТОВ</h2>
-                        <div id="eventsStatus" class="events-status-info">Загрузка...</div>
-                        <button class="glass-btn" id="refreshStatusBtn" style="margin-top: 15px; width: 100%;">🔄 ОБНОВИТЬ СТАТУС</button>
-                    </div>
-                </div>
-            </div>
-            
-            <a href="index.html" class="back-link">← Вернуться в игру</a>
+<!-- ================= ХЕДЕР — liquid glass островок ================= -->
+<div class="nav-island-wrap">
+<nav class="glass-nav">
+    <div class="nav-brand">
+        <div class="nav-logo">🛠️</div>
+        <div class="nav-bt"><div class="nav-title">DILIC ADMIN</div><div class="nav-sub" id="adminUid">UID: creator_dilik</div></div>
+    </div>
+
+    <div class="nav-links" id="navLinks">
+        <button class="nav-btn active" data-view="updates"><span>🚀</span><span>Обновы</span><span class="nav-count off" id="ncUpd">нет</span></button>
+        <button class="nav-btn" data-view="screens"><span>🖥</span><span>Экраны работ</span><span class="nav-count off" id="ncScr">выкл</span></button>
+        <button class="nav-btn" data-view="events"><span>🎃</span><span>Ивенты</span><span class="nav-count off" id="ncEvt">нет</span></button>
+        <button class="nav-btn" data-view="social"><span>🗳</span><span>Анонсы и опросы</span></button>
+        <button class="nav-btn" data-view="players"><span>👥</span><span>Игроки</span></button>
+    </div>
+
+    <div class="user-info">
+        <div class="currency hide-s" id="pillUpd" title="Статус обнов"><span class="dot"></span><span id="pillUpdT">обнов нет</span></div>
+        <div class="currency hide-s" id="pillScr" title="Экран работ"><span class="dot"></span><span id="pillScrT">открыта</span></div>
+        <button class="btn xs" id="btnLog">📟</button>
+    </div>
+</nav>
+</div><!-- /nav-island-wrap -->
+
+<div class="wrap">
+
+<!-- ================= ОБНОВЫ ================= -->
+<section class="view active" data-view="updates">
+    <div class="vhead">
+        <div><h2>🚀 Обновы</h2><p>Список задан в коде. Здесь только показать обнову игрокам или убрать её</p></div>
+    </div>
+    <div class="grid g2" id="updList"></div>
+    <div class="lg card" style="margin-top:13px">
+        <div class="card-h"><h3>Что сейчас видят игроки</h3><span class="cmd">live</span></div>
+        <div class="grid g3" style="gap:9px" id="sysMirror"></div>
+    </div>
+
+</section>
+
+<!-- ================= ЭКРАНЫ РАБОТ ================= -->
+<section class="view" data-view="screens">
+    <div class="vhead">
+        <div><h2>🖥 Экраны работ</h2><p>Тема экрана и сколько он идёт. Дальше кнопку СИНХРО жми в разделе «Обновы»</p></div>
+    </div>
+
+    <div class="lg card" style="margin-bottom:13px">
+        <div class="card-h"><h3>🎨 Тема экрана работ</h3><span class="cmd">/screen theme</span>
+            <span class="currency on" style="margin-left:auto"><span class="dot"></span><span id="themeName">—</span></span></div>
+        <div class="themes" id="themeRow">
+            <div class="theme-card" data-theme="classic"><span class="ti">🔧</span><span class="tn">Обычные</span><span class="td">нейтральные</span></div>
+            <div class="theme-card sel" data-theme="halloween"><span class="ti">🎃</span><span class="tn">Хэллоуин</span><span class="td">тыквы, призраки</span></div>
         </div>
     </div>
-    
-    <script>
-        (function() {
-            let attempts = 0;
-            const maxAttempts = 20;
-            let adminTimerInterval = null;
-            let maintRef = null;
-            let eventsRef = null;
-            let usersRef = null;
-            let announcementsRef = null;
-            let banRef = null;
-            let pollsRef = null;
-            
-            function addDebugMessage(msg) {
-                const debugDiv = document.getElementById('debugConsole');
-                if (debugDiv) {
-                    const time = new Date().toLocaleTimeString();
-                    debugDiv.innerHTML += `<div>[${time}] ${msg}</div>`;
-                    debugDiv.scrollTop = debugDiv.scrollHeight;
-                    while (debugDiv.children.length > 30) {
-                        debugDiv.removeChild(debugDiv.firstChild);
-                    }
-                }
-                console.log(msg);
-            }
-            
-            function showToast(message, type) {
-                addDebugMessage(`TOAST [${type}]: ${message}`);
-                const existingToast = document.querySelector('.toast-notification');
-                if (existingToast) existingToast.remove();
-                
-                const toast = document.createElement('div');
-                toast.className = `toast-notification ${type}`;
-                toast.innerHTML = message;
-                document.body.appendChild(toast);
-                
-                setTimeout(() => toast.classList.add('show'), 10);
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
-            }
-            
-            function showConfirmModal(title, message, onConfirm) {
-                const modal = document.createElement('div');
-                modal.className = 'confirm-modal';
-                modal.innerHTML = `
-                    <div class="confirm-modal-content">
-                        <h3>${title}</h3>
-                        <p>${message}</p>
-                        <div class="confirm-modal-buttons">
-                            <button class="confirm-btn">✅ ДА, ОЧИСТИТЬ</button>
-                            <button class="cancel-btn">❌ ОТМЕНА</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                setTimeout(() => modal.classList.add('active'), 10);
-                
-                modal.querySelector('.confirm-btn').onclick = () => {
-                    onConfirm();
-                    modal.classList.remove('active');
-                    setTimeout(() => modal.remove(), 300);
-                };
-                modal.querySelector('.cancel-btn').onclick = () => {
-                    modal.classList.remove('active');
-                    setTimeout(() => modal.remove(), 300);
-                };
-            }
-            
-            const waitForConfig = setInterval(() => {
-                attempts++;
-                if (typeof firebase !== 'undefined' && firebase.database && typeof CREATOR_ID !== 'undefined') {
-                    clearInterval(waitForConfig);
-                    addDebugMessage('✅ Firebase загружен, проверяем доступ...');
-                    checkAccess();
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(waitForConfig);
-                    addDebugMessage('❌ Ошибка: Firebase не загрузился');
-                    const errorDiv = document.getElementById('accessError');
-                    if (errorDiv) {
-                        errorDiv.style.display = 'block';
-                        errorDiv.innerHTML = '⚠️ Ошибка загрузки конфигурации. Проверьте firebase-config.js и подключение Firebase.';
-                    }
-                }
-            }, 500);
-            
-            function checkAccess() {
-                const userId = localStorage.getItem('userId');
-                addDebugMessage(`Проверка доступа: userId=${userId}, CREATOR_ID=${CREATOR_ID}`);
-                
-                if (!userId) {
-                    document.getElementById('accessError').style.display = 'block';
-                    document.getElementById('accessError').innerHTML = '⚠️ Вы не авторизованы. Сначала войдите в игру';
-                    addDebugMessage('❌ Доступ запрещен: нет userId');
-                    return;
-                }
-                if (userId !== CREATOR_ID) {
-                    document.getElementById('accessError').style.display = 'block';
-                    document.getElementById('accessError').innerHTML = `⚠️ У вас нет доступа.<br><br>Ваш ID: ${userId}<br>ID создателя: ${CREATOR_ID}<br><br>Только создатель игры может заходить в админ-панель.`;
-                    addDebugMessage(`❌ Доступ запрещен: userId ${userId} не равен CREATOR_ID`);
-                    return;
-                }
-                document.getElementById('adminContent').style.display = 'block';
-                document.getElementById('adminUserId').textContent = userId;
-                addDebugMessage('✅ Доступ разрешен, инициализируем админ-панель');
-                initAdminControls();
-            }
-            
-            function initAdminControls() {
-                maintRef = firebase.database().ref('maintenance');
-                eventsRef = firebase.database().ref('events');
-                usersRef = firebase.database().ref('users');
-                announcementsRef = firebase.database().ref('announcements');
-                banRef = firebase.database().ref('ban');
-                pollsRef = firebase.database().ref('polls');
-                
-                addDebugMessage('📡 Firebase ссылки инициализированы');
-                
-                // ===== АНОНСЫ (РЕАЛЬНОЕ ВРЕМЯ) =====
-                function initRealtimeAnnouncements() {
-                    const container = document.getElementById('announcementsList');
-                    if (!container) return;
-                    
-                    announcementsRef.on('value', (snapshot) => {
-                        const announcements = snapshot.val();
-                        addDebugMessage(`📢 Анонсы обновлены: ${announcements ? Object.keys(announcements).length : 0} шт.`);
-                        if (!announcements) {
-                            container.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center;">Нет анонсов</div>';
-                            return;
-                        }
-                        container.innerHTML = '';
-                        const sorted = Object.entries(announcements).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
-                        for (const [id, ann] of sorted) {
-                            const div = document.createElement('div');
-                            div.className = 'announcement-item';
-                            div.innerHTML = `
-                                <div class="announcement-text">${(ann.text || '').substring(0, 100)}</div>
-                                <div class="announcement-date">${ann.date || 'неизвестно'}</div>
-                                <button class="announcement-delete" data-id="${id}">🗑️</button>
-                            `;
-                            container.appendChild(div);
-                        }
-                        document.querySelectorAll('.announcement-delete').forEach(btn => {
-                            btn.onclick = async () => {
-                                await announcementsRef.child(btn.dataset.id).remove();
-                                showToast('🗑️ Анонс удален', 'success');
-                            };
-                        });
-                    });
-                }
-                
-                // ===== БАНЫ (РЕАЛЬНОЕ ВРЕМЯ) =====
-                function initRealtimeBans() {
-                    const container = document.getElementById('bannedList');
-                    if (!container) return;
 
-                    let lastBans = null;
+    <div class="grid g2">
+        <div class="lg card">
+            <div class="card-h"><h3>🔧 Бесконечные техработы</h3><span class="cmd">/technical work</span></div>
+            <div class="row">
+                <button class="btn xs warn" id="scrInfOn">🔧 Включить</button>
+                <button class="btn xs ok" id="scrInfOff">✅ Выключить</button>
+            </div>
+            <p class="hint sep">Игроки видят шторку работ без таймера — когда починка долгая.</p>
+        </div>
 
-                    function banUserName(id) {
-                        const user = (typeof pickerUsers !== 'undefined' && pickerUsers)
-                            ? pickerUsers.find(u => u.id === id) : null;
-                        return user ? user.name : id.substring(0, 12) + '...';
-                    }
+        <div class="lg card">
+            <div class="card-h"><h3>⏱ Экран обновы с таймером</h3><span class="cmd">/update screen &lt;сек&gt;</span></div>
+            <div class="chips" id="scrPresets">
+                <button class="chip" data-s="60">1м</button><button class="chip" data-s="300">5м</button>
+                <button class="chip" data-s="900">15м</button><button class="chip" data-s="1800">30м</button>
+                <button class="chip" data-s="3600">1ч</button><button class="chip" data-s="21600">6ч</button>
+                <button class="chip" data-s="86400">1сут</button>
+            </div>
+            <div class="row" style="margin-top:9px">
+                <input class="field" id="scrSec" type="number" placeholder="свои секунды" min="1" max="86400" style="max-width:150px">
+                <button class="btn xs gold" id="scrTimerOn">🆙 Включить экран</button>
+            </div>
+            <div class="cd" style="margin-top:11px">
+                <div><div class="lab">Осталось</div><div class="val" id="scrLeft">—</div></div>
+                <div class="bar"><div class="fill" id="scrBar"></div></div>
+            </div>
+            <p class="hint" style="margin-top:9px">Таймер идёт сам. Жми <b>СИНХРО</b> в разделе <b>Обновы</b> — обнова привяжется к концу этого таймера и у игроков пройдёт <b>катсцена</b>. Без СИНХРО обнова не появится.</p>
+        </div>
+    </div>
+</section>
 
-                    function renderBans(bans) {
-                        if (!bans) {
-                            container.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center;">Нет забаненных игроков</div>';
-                            return;
-                        }
-                        container.innerHTML = '';
-                        for (const [id, ban] of Object.entries(bans)) {
-                            if (!ban.active) continue;
-                            let info = `${banUserName(id)}: ${ban.reason || 'Нарушение правил'}`;
-                            if (!ban.isPermanent && ban.endTime) {
-                                const remaining = Math.max(0, Math.floor((ban.endTime - Date.now()) / 1000));
-                                const hours = Math.floor(remaining / 3600);
-                                const mins = Math.floor((remaining % 3600) / 60);
-                                info += ` (осталось: ${hours}ч ${mins}м)`;
-                            } else {
-                                info += ' (НАВСЕГДА)';
-                            }
-                            const div = document.createElement('div');
-                            div.className = 'ban-item';
-                            div.innerHTML = `<div class="ban-info">${info}</div><button class="ban-unban" data-id="${id}">Разбан</button>`;
-                            container.appendChild(div);
-                        }
-                        document.querySelectorAll('.ban-unban').forEach(btn => {
-                            btn.onclick = async () => {
-                                await banRef.child(btn.dataset.id).remove();
-                                showToast(`✅ Игрок разбанен`, 'success');
-                            };
-                        });
-                    }
+<!-- ================= ИВЕНТЫ ================= -->
+<section class="view" data-view="events">
+    <div class="vhead">
+        <div><h2>🎃 Ивенты</h2><p>Хэллоуин и Колесо фортуны — как в старой админке, только компактнее</p></div>
+        <div class="right"><span class="currency" id="evState"><span class="dot"></span><span id="evStateT">ивентов нет</span></span></div>
+    </div>
 
-                    banRef.on('value', (snapshot) => {
-                        lastBans = snapshot.val();
-                        addDebugMessage(`🔨 Баны обновлены: ${lastBans ? Object.keys(lastBans).length : 0} шт.`);
-                        renderBans(lastBans);
-                        // Имена игроков могли ещё не загрузиться — покажем их, как только будут
-                        if (!pickerUsers) {
-                            loadPickerUsers(null).then(() => renderBans(lastBans)).catch(() => {});
-                        }
-                    });
-                }
-                
-                // ===== ОПРОСЫ (РЕАЛЬНОЕ ВРЕМЯ) =====
-                function initRealtimePolls() {
-                    const container = document.getElementById('pollsList');
-                    if (!container) return;
-                    
-                    pollsRef.on('value', (snapshot) => {
-                        const polls = snapshot.val();
-                        addDebugMessage(`📊 Опросы обновлены: ${polls ? Object.keys(polls).length : 0} шт.`);
-                        if (!polls) {
-                            container.innerHTML = '<div style="color:rgba(255,255,255,0.5); text-align:center;">Нет активных опросов</div>';
-                            return;
-                        }
-                        container.innerHTML = '';
-                        const sorted = Object.entries(polls).sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
-                        for (const [id, poll] of sorted) {
-                            const totalVotes = poll.options ? Object.values(poll.options).reduce((sum, opt) => sum + (opt.votes || 0), 0) : 0;
-                            const div = document.createElement('div');
-                            div.className = 'poll-item';
-                            div.innerHTML = `
-                                <div class="poll-question">📊 ${poll.question || 'Без вопроса'}</div>
-                                <div class="poll-options">
-                                    ${poll.options ? Object.entries(poll.options).map(([optId, opt]) => {
-                                        const percent = totalVotes > 0 ? ((opt.votes || 0) / totalVotes * 100).toFixed(1) : 0;
-                                        return `
-                                            <div class="poll-option">
-                                                <div class="poll-option-text">${opt.text}</div>
-                                                <div class="poll-option-votes">${(opt.votes || 0).toLocaleString()} гол. (${percent}%)</div>
-                                                <div class="poll-option-bar"><div class="poll-option-bar-fill" style="width: ${percent}%"></div></div>
-                                            </div>
-                                        `;
-                                    }).join('') : 'Нет вариантов'}
-                                </div>
-                                <div class="poll-total-votes">Всего голосов: ${totalVotes.toLocaleString()}</div>
-                                <button class="poll-delete" data-id="${id}">🗑️ Удалить опрос</button>
-                            `;
-                            container.appendChild(div);
-                        }
-                        document.querySelectorAll('.poll-delete').forEach(btn => {
-                            btn.onclick = async () => {
-                                if (confirm('Удалить этот опрос?')) {
-                                    await pollsRef.child(btn.dataset.id).remove();
-                                    showToast('📊 Опрос удален', 'success');
-                                }
-                            };
-                        });
-                    });
-                }
-                
-                // ===== ОТПРАВКА АНОНСА =====
-                document.getElementById('sendAnnounceBtn')?.addEventListener('click', async () => {
-                    const text = document.getElementById('announceText').value.trim();
-                    if (!text) {
-                        showToast('❌ Введите текст анонса', 'error');
-                        return;
-                    }
-                    try {
-                        await announcementsRef.push().set({
-                            text: text,
-                            date: new Date().toLocaleString(),
-                            timestamp: Date.now(),
-                            isPinned: false
-                        });
-                        document.getElementById('announceText').value = '';
-                        showToast('✅ Анонс отправлен всем игрокам!', 'success');
-                        addDebugMessage(`✅ Анонс отправлен: ${text}`);
-                    } catch (error) {
-                        showToast(`❌ Ошибка: ${error.message}`, 'error');
-                    }
-                });
-                
-                // ===== СОЗДАНИЕ ОПРОСА =====
-                document.getElementById('createPollBtn')?.addEventListener('click', async () => {
-                    const question = document.getElementById('pollQuestion').value.trim();
-                    const optionsStr = document.getElementById('pollOptions').value.trim();
-                    
-                    if (!question) {
-                        showToast('❌ Введите вопрос опроса', 'error');
-                        return;
-                    }
-                    if (!optionsStr) {
-                        showToast('❌ Введите варианты ответов через |', 'error');
-                        return;
-                    }
-                    
-                    const optionsList = optionsStr.split('|').map(opt => opt.trim()).filter(opt => opt);
-                    if (optionsList.length < 2) {
-                        showToast('❌ Добавьте минимум 2 варианта ответа через |', 'error');
-                        return;
-                    }
-                    
-                    const options = {};
-                    optionsList.forEach((opt, index) => {
-                        options[`opt_${index}`] = { text: opt, votes: 0 };
-                    });
-                    
-                    try {
-                        await pollsRef.push().set({
-                            question: question,
-                            options: options,
-                            timestamp: Date.now(),
-                            createdAt: new Date().toLocaleString()
-                        });
-                        showToast('✅ Опрос создан! Игроки видят его в реальном времени', 'success');
-                        addDebugMessage(`✅ Опрос создан: ${question} (${optionsList.length} вариантов)`);
-                        document.getElementById('pollQuestion').value = '';
-                        document.getElementById('pollOptions').value = '';
-                    } catch (error) {
-                        showToast('❌ Ошибка создания опроса', 'error');
-                        addDebugMessage(`❌ Ошибка создания опроса: ${error.message}`);
-                    }
-                });
-                
-                // ===== БАНЫ =====
-                document.getElementById('banUserBtn')?.addEventListener('click', async () => {
-                    const userId = banPickerApi ? banPickerApi.resolve() : '';
-                    const reason = document.getElementById('banReason').value.trim() || 'Нарушение правил';
-                    const hours = parseInt(document.getElementById('banHours').value) || 0;
-                    if (!userId) {
-                        showToast('❌ Выберите игрока из списка', 'error');
-                        return;
-                    }
-                    const banData = { active: true, reason: reason, bannedAt: Date.now(), isPermanent: hours === 0 };
-                    if (hours > 0) banData.endTime = Date.now() + (hours * 60 * 60 * 1000);
-                    try {
-                        await banRef.child(userId).set(banData);
-                        showToast(`⛔ Игрок ${userId} забанен${hours > 0 ? ` на ${hours} часов` : ' навсегда'}`, 'warning');
-                        banPickerApi?.reset();
-                        document.getElementById('banReason').value = '';
-                        document.getElementById('banHours').value = '0';
-                    } catch (error) {
-                        showToast(`❌ Ошибка: ${error.message}`, 'error');
-                    }
-                });
-                
-                document.getElementById('unbanUserBtn')?.addEventListener('click', async () => {
-                    const userId = unbanPickerApi ? unbanPickerApi.resolve() : '';
-                    if (!userId) {
-                        showToast('❌ Выберите игрока из списка', 'error');
-                        return;
-                    }
-                    try {
-                        await banRef.child(userId).remove();
-                        showToast(`✅ Игрок ${userId} разбанен`, 'success');
-                        unbanPickerApi?.reset();
-                    } catch (error) {
-                        showToast(`❌ Ошибка: ${error.message}`, 'error');
-                    }
-                });
-                
-                // ===== ТЕХРАБОТЫ =====
-                function updateStatusDisplay() {
-                    maintRef.once('value').then(snapshot => {
-                        const data = snapshot.val();
-                        const statusDiv = document.getElementById('maintenanceStatus');
-                        if (data && data.active === true) {
-                            statusDiv.className = 'admin-status active';
-                            statusDiv.innerHTML = data.endTime ? '🔧 ЭКРАН АКТИВЕН' : '🔧 ТЕХРАБОТЫ ВКЛЮЧЕНЫ';
-                        } else {
-                            statusDiv.className = 'admin-status inactive';
-                            statusDiv.innerHTML = '✅ Технические работы ОТКЛЮЧЕНЫ';
-                        }
-                    });
-                }
-                
-                document.getElementById('updateTimeBtn')?.addEventListener('click', async () => {
-                    const seconds = parseInt(document.getElementById('techWorkSeconds').value);
-                    if (!seconds || seconds < 1) return showToast('❌ Введите корректное время', 'error');
-                    await maintRef.set({ active: true, startTime: Date.now(), endTime: Date.now() + seconds * 1000, duration: seconds, type: 'timer' });
-                    updateStatusDisplay();
-                    showToast(`🆙 Экран обновления включен на ${seconds} сек`, 'success');
-                });
-                
-                document.getElementById('techWorkBtn')?.addEventListener('click', async () => {
-                    await maintRef.set({ active: true, startTime: Date.now(), endTime: null, type: 'infinite' });
-                    updateStatusDisplay();
-                    showToast('🔧 Технические работы включены', 'warning');
-                });
-                
-                document.getElementById('updateScreenBtn')?.addEventListener('click', async () => {
-                    const seconds = parseInt(document.getElementById('updateScreenSeconds').value);
-                    if (!seconds || seconds < 1) return showToast('❌ Введите корректное время', 'error');
-                    await maintRef.set({ active: true, type: 'timer', startTime: Date.now(), endTime: Date.now() + seconds * 1000, duration: seconds });
-                    showToast(`🆙 Экран обновы включен на ${seconds} секунд`, 'success');
-                    updateStatusDisplay();
-                });
-                
-                document.getElementById('notTechWorkBtn')?.addEventListener('click', async () => {
-                    await maintRef.set({ active: false });
-                    updateStatusDisplay();
-                    showToast('✅ Все экраны техработ отключены', 'success');
-                });
-                
-                // ===== ХЭЛЛОУИН =====
-                document.getElementById('startDilicksEventBtn')?.addEventListener('click', async () => {
-                    const days = parseInt(document.getElementById('uraganDays').value) || 7;
-                    const snap = await eventsRef.child('halloween').once('value');
-                    const current = snap.val() || {};
-                    await eventsRef.child('halloween').set({
-                        active: true,
-                        startTime: Date.now(),
-                        endTime: Date.now() + days * 24 * 60 * 60 * 1000,
-                        duration: days,
-                        goal: current.goal || 1000000,
-                        totalPool: current.totalPool || 0
-                    });
-                    showToast(`🎃 Хэллоуин-ивент запущен на ${days} дней!`, 'success');
-                });
-                
-                document.getElementById('stopDilicksEventBtn')?.addEventListener('click', async () => {
-                    await eventsRef.child('halloween').update({ active: false });
-                    showToast('⏹️ Хэллоуин-ивент остановлен', 'success');
-                });
-                
-                document.getElementById('setHalloweenGoalBtn')?.addEventListener('click', async () => {
-                    const goal = parseInt(document.getElementById('halloweenGoalInput').value);
-                    if (!goal || goal < 1) return showToast('❌ Введите корректную цель', 'error');
-                    await eventsRef.child('halloween').update({ goal: goal });
-                    showToast(`🎯 Цель копилки: ${goal.toLocaleString()} 🍬`, 'success');
-                });
-                
-                document.getElementById('addPoolBtn')?.addEventListener('click', async () => {
-                    const amount = parseInt(document.getElementById('poolAmount').value);
-                    if (!amount || amount < 1) return showToast('❌ Введите количество', 'error');
-                    const snap = await eventsRef.child('halloween').once('value');
-                    await eventsRef.child('halloween').update({ totalPool: (snap.val()?.totalPool || 0) + amount });
-                    showToast(`🍬 Добавлено ${amount.toLocaleString()} конфет`, 'success');
-                });
-                
-                document.getElementById('setPoolBtn')?.addEventListener('click', async () => {
-                    const amount = parseInt(document.getElementById('setPoolAmount').value);
-                    if (isNaN(amount) || amount < 0) return showToast('❌ Введите корректное значение', 'error');
-                    await eventsRef.child('halloween').update({ totalPool: amount });
-                    showToast(`🍬 Копилка установлена на ${amount.toLocaleString()}`, 'success');
-                });
-                
-                document.getElementById('removePoolBtn')?.addEventListener('click', async () => {
-                    const amount = parseInt(document.getElementById('removePoolAmount').value);
-                    if (!amount || amount < 1) return showToast('❌ Введите количество', 'error');
-                    const snap = await eventsRef.child('halloween').once('value');
-                    await eventsRef.child('halloween').update({ totalPool: Math.max(0, (snap.val()?.totalPool || 0) - amount) });
-                    showToast(`➖ Вычтено ${amount.toLocaleString()} конфет`, 'success');
-                });
-                
-                document.getElementById('resetPoolBtn')?.addEventListener('click', async () => {
-                    if (confirm('⚠️ Сбросить копилку конфет в 0?')) {
-                        await eventsRef.child('halloween').update({ totalPool: 0 });
-                        showToast('🍬 Копилка сброшена', 'success');
-                    }
-                });
-                
-                document.getElementById('loadTopBtn')?.addEventListener('click', async () => {
-                    const topListDiv = document.getElementById('topList');
-                    topListDiv.style.display = 'block';
-                    topListDiv.innerHTML = '<div class="top-item">Загрузка...</div>';
-                    try {
-                        const snapshot = await usersRef.once('value');
-                        const users = snapshot.val();
-                        const topPlayers = [];
-                        for (const [id, user] of Object.entries(users)) {
-                            const contribution = user.halloweenContribution || 0;
-                            if (contribution > 0) {
-                                topPlayers.push({ name: user.settings?.displayName || user.username, contribution, id });
-                            }
-                        }
-                        topPlayers.sort((a, b) => b.contribution - a.contribution);
-                        topListDiv.innerHTML = '';
-                        topPlayers.slice(0, 10).forEach((player, index) => {
-                            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
-                            topListDiv.innerHTML += `<div class="top-item"><div class="top-rank">${medal}</div><div class="top-name">${player.name} ${player.id === CREATOR_ID ? '👑' : ''}</div><div class="top-value">${player.contribution.toLocaleString()} 🍬</div></div>`;
-                        });
-                        if (topPlayers.length === 0) topListDiv.innerHTML = '<div class="top-item">Пока нет участников</div>';
-                        addDebugMessage(`🏆 Топ загружен: ${topPlayers.length} участников`);
-                    } catch (error) {
-                        topListDiv.innerHTML = '<div class="top-item">Ошибка загрузки</div>';
-                        addDebugMessage(`❌ Ошибка загрузки топа: ${error.message}`);
-                    }
-                });
-                
-                // ===== ВЫДАЧА НАГРАД ТОП-3 =====
-                document.getElementById('payHalloweenTopBtn')?.addEventListener('click', async () => {
-                    if (!confirm('🎁 Выдать награды текущему топ-3 по конфетам?\n\n🥇 1 000 000 монет + 100 000 диликов\n🥈 500 000 + 50 000\n🥉 250 000 + 25 000\n\nПовторная выдача начислит награды ещё раз!')) return;
-                    try {
-                        const snapshot = await usersRef.once('value');
-                        const users = snapshot.val() || {};
-                        const top = Object.entries(users)
-                            .map(([id, user]) => ({
-                                id,
-                                name: user?.settings?.displayName || user?.username || id,
-                                contribution: Number(user?.halloweenContribution) || 0
-                            }))
-                            .filter(p => p.contribution > 0)
-                            .sort((a, b) => b.contribution - a.contribution)
-                            .slice(0, 3);
-                        if (top.length === 0) return showToast('❌ Нет участников с конфетами', 'error');
+    <div class="grid g2">
+        <div class="lg card">
+            <div class="card-h"><h3>🎃 Диликовый Хэллоуин</h3><span class="cmd">/start event halloween</span></div>
+            <div class="row">
+                <input class="field" id="evDays" type="number" value="7" min="1" max="365" style="max-width:90px">
+                <button class="btn xs ok" id="evStart">🚀 Запустить</button>
+                <button class="btn xs danger" id="evStop">⏹ Остановить</button>
+            </div>
+            <div class="chips" id="evPresets" style="margin-top:9px">
+                <button class="chip" data-d="1">1д</button><button class="chip" data-d="3">3д</button>
+                <button class="chip" data-d="7">7д</button><button class="chip" data-d="14">14д</button>
+                <button class="chip" data-d="30">30д</button>
+            </div>
+            <div class="cd" style="margin-top:11px">
+                <div><div class="lab">До конца</div><div class="val" id="evLeft">—</div></div>
+                <div class="bar"><div class="fill" id="evBar"></div></div>
+            </div>
 
-                        const rewards = [
-                            { money: 1000000, dilicks: 100000 },
-                            { money: 500000, dilicks: 50000 },
-                            { money: 250000, dilicks: 25000 }
-                        ];
-                        const paid = {};
-                        for (let i = 0; i < top.length; i++) {
-                            const player = top[i];
-                            const reward = rewards[i];
-                            await usersRef.child(player.id).transaction((user) => {
-                                if (!user) return user;
-                                user.money = (Number(user.money) || 0) + reward.money;
-                                user.dilicks = (Number(user.dilicks) || 0) + reward.dilicks;
-                                return user;
-                            });
-                            paid[i + 1] = {
-                                id: player.id,
-                                name: player.name,
-                                contribution: player.contribution,
-                                money: reward.money,
-                                dilicks: reward.dilicks
-                            };
-                            addDebugMessage(`🎁 ${i + 1} место: ${player.name} (+${reward.money} монет, +${reward.dilicks} диликов)`);
-                        }
-                        await eventsRef.child('halloween').update({ topRewardsPaid: Object.assign({ paidAt: Date.now() }, paid) });
-                        showToast('🎁 Награды топ-3 выданы!', 'success');
-                    } catch (error) {
-                        showToast(`❌ Ошибка выдачи: ${error.message}`, 'error');
-                        addDebugMessage(`❌ Ошибка выдачи наград топ-3: ${error.message}`);
-                    }
-                });
+            <div class="blk-h sep">🍬 Копилка конфет<span class="line"></span></div>
+            <div class="row" style="margin-top:9px">
+                <input class="field" id="poolAmount" type="number" value="1000" placeholder="количество">
+                <button class="btn xs ok" id="addPoolBtn">➕ Добавить</button>
+                <button class="btn xs danger" id="removePoolBtn">➖ Вычесть</button>
+                <button class="btn xs" id="resetPoolBtn">🗑 Сброс</button>
+            </div>
+            <div class="row" style="margin-top:8px">
+                <input class="field" id="halloweenGoalInput" type="number" value="1000000" placeholder="цель">
+                <button class="btn xs gold" id="setHalloweenGoalBtn">🎯 Установить цель</button>
+            </div>
+            <div class="cd" style="margin-top:11px">
+                <div><div class="lab">Собрали</div><div class="val" id="evPoolVal">0</div></div>
+                <div class="bar"><div class="fill" id="evPoolBar"></div></div>
+                <div><div class="lab">Цель</div><div class="val" id="evGoalVal">0</div></div>
+            </div>
+        </div>
 
-                // Статус выдачи наград топ-3
-                eventsRef.child('halloween/topRewardsPaid').on('value', (snapshot) => {
-                    const paid = snapshot.val();
-                    const el = document.getElementById('halloweenTopPaidInfo');
-                    if (!el) return;
-                    if (!paid) {
-                        el.textContent = 'Награды ещё не выданы';
-                        el.className = 'admin-status';
-                        return;
-                    }
-                    const medals = ['🥇', '🥈', '🥉'];
-                    const lines = [1, 2, 3].filter(p => paid[p]).map(p => `${medals[p - 1]} ${paid[p].name || paid[p].id}`);
-                    el.textContent = '✅ Выдано: ' + (lines.length ? lines.join(' • ') : 'нет');
-                    el.className = 'admin-status active';
-                });
+        <div class="lg card">
+            <div class="card-h"><h3>🏆 Топ участников</h3><span class="cmd">/halloween top</span>
+                <span class="right"><button class="btn xs" id="loadTopBtn">🔄 Загрузить</button></span></div>
+            <div class="list" id="topList"></div>
+            <div class="blk-h sep">🎁 Награды топ-3<span class="line"></span></div>
+            <p class="hint" style="margin-top:8px">🥇 1 000 000 монет + 100 000 диликов · 🥈 500 000 + 50 000 · 🥉 250 000 + 25 000</p>
+            <div class="row" style="margin-top:9px"><button class="btn xs ok wide" id="payHalloweenTopBtn">🎁 Выдать награды топ-3</button></div>
+            <div class="hint" id="halloweenTopPaidInfo" style="margin-top:8px">Награды ещё не выданы</div>
 
-                // ===== ОЧИСТКА ВСЕГО ТОПА =====
-                document.getElementById('clearUraganTopBtn')?.addEventListener('click', () => {
-                    showConfirmModal(
-                        '⚠️ ОЧИСТКА ТОПА ИВЕНТА',
-                        'Вы уверены, что хотите ОБНУЛИТЬ конфеты ВСЕХ игроков в хэллоуин-ивенте?\n\nВключая админа! Это действие НЕЛЬЗЯ отменить!'
-                    , async () => {
-                        showToast('🔄 Очистка топа ивента...', 'warning');
-                        addDebugMessage('🗑️ Начинаем очистку топа ивента');
-                        try {
-                            const snapshot = await usersRef.once('value');
-                            const users = snapshot.val();
-                            let count = 0;
-                            for (const [id, user] of Object.entries(users)) {
-                                if (user.halloweenContribution && user.halloweenContribution > 0) {
-                                    await usersRef.child(id).update({ halloweenContribution: 0 });
-                                    count++;
-                                    if (count % 10 === 0) await new Promise(r => setTimeout(r, 50));
-                                }
-                            }
-                            // Принудительно обнуляем админа
-                            await usersRef.child(CREATOR_ID).update({ halloweenContribution: 0 });
-                            await eventsRef.child('halloween').update({ totalPool: 0 });
-                            showToast(`✅ Очищено ${count + 1} игроков! Копилка сброшена.`, 'success');
-                            addDebugMessage(`✅ Очищено ${count + 1} игроков, копилка сброшена`);
-                            const topList = document.getElementById('topList');
-                            if (topList && topList.style.display === 'block') document.getElementById('loadTopBtn')?.click();
-                        } catch (error) {
-                            showToast('❌ Ошибка при очистке топа', 'error');
-                            addDebugMessage(`❌ Ошибка очистки топа: ${error.message}`);
-                        }
-                    });
-                });
-                
-                // ===== ОЧИСТКА КОНКРЕТНОГО ИГРОКА =====
-                document.getElementById('clearPlayerBtn')?.addEventListener('click', async () => {
-                    const playerId = document.getElementById('clearPlayerId').value.trim();
-                    if (!playerId) {
-                        showToast('❌ Введите ID игрока', 'error');
-                        return;
-                    }
-                    
-                    let message = `Вы уверены, что хотите ОБНУЛИТЬ вклад игрока с ID: ${playerId}?\n\nЭто действие НЕЛЬЗЯ отменить!`;
-                    if (playerId === CREATOR_ID) {
-                        message = `⚠️ ВНИМАНИЕ! Вы собираетесь обнулить АДМИНИСТРАТОРА (${playerId})!\n\nВы уверены?`;
-                    }
-                    
-                    showConfirmModal('⚠️ ОЧИСТКА ИГРОКА', message, async () => {
-                        showToast(`🔄 Очистка игрока ${playerId}...`, 'warning');
-                        addDebugMessage(`🗑️ Очистка игрока ${playerId}`);
-                        try {
-                            const playerRef = usersRef.child(playerId);
-                            const snapshot = await playerRef.once('value');
-                            if (!snapshot.exists()) {
-                                showToast('❌ Игрок с таким ID не найден', 'error');
-                                return;
-                            }
-                            const userData = snapshot.val();
-                            const username = userData.settings?.displayName || userData.username;
-                            await playerRef.update({ halloweenContribution: 0 });
-                            showToast(`✅ Очищены конфеты игрока ${username} (${playerId})`, 'success');
-                            addDebugMessage(`✅ Очищен вклад игрока ${username} (${playerId})`);
-                            document.getElementById('clearPlayerId').value = '';
-                            const topList = document.getElementById('topList');
-                            if (topList && topList.style.display === 'block') document.getElementById('loadTopBtn')?.click();
-                        } catch (error) {
-                            showToast('❌ Ошибка при очистке игрока', 'error');
-                            addDebugMessage(`❌ Ошибка очистки игрока: ${error.message}`);
-                        }
-                    });
-                });
-                
-                // ===== ОЧИСТКА АДМИНА =====
-                document.getElementById('clearAdminBtn')?.addEventListener('click', () => {
-                    showConfirmModal(
-                        '👑 ОЧИСТКА АДМИНИСТРАТОРА',
-                        `Вы уверены, что хотите ОБНУЛИТЬ вклад администратора (${CREATOR_ID})?\n\nЭто действие НЕЛЬЗЯ отменить!`
-                    , async () => {
-                        try {
-                            await usersRef.child(CREATOR_ID).update({ halloweenContribution: 0 });
-                            showToast(`✅ Конфеты администратора обнулены!`, 'success');
-                            addDebugMessage(`✅ Обнулен администратор ${CREATOR_ID}`);
-                            const topList = document.getElementById('topList');
-                            if (topList && topList.style.display === 'block') document.getElementById('loadTopBtn')?.click();
-                        } catch (error) {
-                            showToast('❌ Ошибка при очистке', 'error');
-                            addDebugMessage(`❌ Ошибка очистки админа: ${error.message}`);
-                        }
-                    });
-                });
-                
-                // ===== ВЫБОР ИГРОКА ПО НИКУ (награды, баны) =====
-                // Один список игроков на всю панель: грузится один раз.
-                const PICKER_LIST_LIMIT = 400;
-                let pickerUsers = null;
-                let pickerUsersLoading = null;
+            <div class="blk-h sep">🗑 Очистка<span class="line"></span></div>
+            <div class="row" style="margin-top:9px">
+                <button class="btn xs danger" id="clearUraganTopBtn">⚠️ Очистить весь топ</button>
+                <button class="btn xs danger" id="clearAdminBtn">👑 Очистить админа</button>
+            </div>
+            <div class="row" style="margin-top:8px">
+                <div class="picker" id="clearPicker">
+                    <input class="field" id="clearUserSearch" placeholder="Ник или ID игрока" autocomplete="off" spellcheck="false">
+                    <input type="hidden" id="clearUserId">
+                    <button type="button" class="caret" id="clearCaret" tabindex="-1">▾</button>
+                    <div class="plist" id="clearList"></div>
+                </div>
+                <button class="btn xs warn" id="clearPlayerBtn">Очистить игрока</button>
+            </div>
+        </div>
 
-                function pickerUserName(user) {
-                    return (user && user.settings && user.settings.displayName) || (user && user.username) || 'Игрок';
-                }
+        <div class="lg card">
+            <div class="card-h"><h3>🎡 Колесо фортуны</h3><span class="cmd">/start event wheel</span></div>
+            <div class="row">
+                <input class="field" id="wheelDays" type="number" value="150" min="1" max="365" style="max-width:90px">
+                <button class="btn xs ok" id="startWheelEventBtn">🚀 Запустить</button>
+                <button class="btn xs danger" id="stopWheelEventBtn">⏹ Остановить</button>
+            </div>
+            <div class="chips" id="wheelPresets" style="margin-top:9px">
+                <button class="chip" data-d="7">7д</button><button class="chip" data-d="30">30д</button>
+                <button class="chip" data-d="90">90д</button><button class="chip" data-d="150">150д</button>
+            </div>
+            <div class="cd" style="margin-top:11px">
+                <div><div class="lab">Осталось</div><div class="val" id="whLeft">—</div></div>
+                <div class="bar"><div class="fill" id="whBar"></div></div>
+            </div>
 
-                function loadPickerUsers(placeholderList) {
-                    if (pickerUsers) return Promise.resolve(pickerUsers);
-                    if (pickerUsersLoading) return pickerUsersLoading;
-                    if (placeholderList) placeholderList.innerHTML = '<div class="reward-picker-empty">Загрузка игроков...</div>';
-                    pickerUsersLoading = usersRef.once('value').then(snapshot => {
-                        const data = snapshot.val() || {};
-                        pickerUsers = Object.entries(data).map(([id, user]) => ({
-                            id: id,
-                            name: pickerUserName(user),
-                            username: (user && user.username) || ''
-                        })).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
-                        addDebugMessage(`👥 Игроков загружено: ${pickerUsers.length}`);
-                        return pickerUsers;
-                    }).catch(err => {
-                        pickerUsersLoading = null;
-                        if (placeholderList) placeholderList.innerHTML = '<div class="reward-picker-empty">Ошибка загрузки списка</div>';
-                        addDebugMessage(`❌ Ошибка загрузки игроков: ${err.message}`);
-                        throw err;
-                    });
-                    return pickerUsersLoading;
-                }
+            <div class="blk-h sep">💰 Цена крутки за дилики<span class="line"></span></div>
+            <div class="row" style="margin-top:9px">
+                <input class="field" id="spinCostInput" type="number" value="2500" min="1" placeholder="стоимость">
+                <button class="btn xs gold" id="setSpinCostBtn">💰 Установить</button>
+            </div>
+            <p class="hint" style="margin-top:8px">Сейчас в игре: <b id="spinCostNow">2 500</b> диликов за крутку</p>
+        </div>
 
-                // Возвращает объект с методами resolve()/reset() для конкретного поля.
-                function createUserPicker(opts) {
-                    const picker = document.getElementById(opts.pickerId);
-                    const search = document.getElementById(opts.searchId);
-                    const hidden = document.getElementById(opts.hiddenId);
-                    const list = document.getElementById(opts.listId);
-                    const caret = document.getElementById(opts.caretId);
-                    if (!picker || !search || !hidden || !list) return null;
+        <div class="lg card">
+            <div class="card-h"><h3>ℹ️ Как это связано с обной</h3></div>
+            <p class="hint">Ивенты живут отдельно от обнов. Обнова — это витрина: баннеры, декор вкладок и тема экрана работ.
+                Хэллоуин и Колесо запускаются здесь своими кнопками и могут стартовать позже обновы.</p>
+            <div class="grid g2" style="margin-top:11px;gap:9px">
+                <div class="lg tile" id="tileHw"><div class="t-n">хэллоуин</div><div class="t-v">—</div><div class="t-s">конфеты и топ</div></div>
+                <div class="lg tile" id="tileWh"><div class="t-n">колесо</div><div class="t-v">—</div><div class="t-s">крутка за дилики</div></div>
+            </div>
+        </div>
+    </div>
+</section>
 
-                    let highlight = -1;
-                    let filtered = [];
+<!-- ================= АНОНСЫ И ОПРОСЫ ================= -->
+<section class="view" data-view="social">
+    <div class="vhead"><div><h2>📢 Анонсы и опросы</h2><p>Уходит в игру в реальном времени</p></div></div>
+    <div class="grid g2">
+        <div class="lg card">
+            <div class="card-h"><h3>📢 Отправить анонс</h3><span class="cmd">/announce &lt;текст&gt;</span></div>
+            <textarea class="field" id="anText" rows="3" placeholder="Текст анонса..."></textarea>
+            <div class="row" style="margin-top:8px">
+                <button class="btn xs ok" id="anSend">📢 Отправить</button>
+                <div class="chips" id="anQuick">
+                    <button class="chip" data-t="🎃 Хэллоуин уже в игре!">🎃 Хэллоуин</button>
+                    <button class="chip" data-t="⚡ Обнова совсем скоро!">⚡ Обнова</button>
+                    <button class="chip" data-t="🔧 Идут техработы, вернёмся скоро">🔧 Работы</button>
+                </div>
+            </div>
+            <div class="blk-h sep">🗳 Создать опрос<span class="line"></span></div>
+            <textarea class="field" id="pollQuestion" rows="2" placeholder="Вопрос опроса..." style="margin-top:9px"></textarea>
+            <input class="field" id="pollOpt1" placeholder="Вариант 1" style="margin-top:7px">
+            <input class="field" id="pollOpt2" placeholder="Вариант 2" style="margin-top:7px">
+            <div class="row" style="margin-top:8px">
+                <button class="btn xs gold" id="pollCreateBtn">🗳 Опубликовать опрос</button>
+                <button class="btn xs danger" id="pollCloseBtn">⏹ Закрыть текущий</button>
+            </div>
+        </div>
+        <div class="lg card">
+            <div class="card-h"><h3>Активный опрос</h3><span class="cmd">/poll</span></div>
+            <div id="pollLive"></div>
+            <div class="blk-h sep">Последние анонсы<span class="line"></span></div>
+            <div class="list" id="anList" style="margin-top:9px"></div>
+        </div>
+    </div>
+</section>
 
-                    function render() {
-                        const query = search.value.trim().toLowerCase();
-                        filtered = (pickerUsers || []).filter(u =>
-                            !query ||
-                            u.name.toLowerCase().includes(query) ||
-                            u.username.toLowerCase().includes(query) ||
-                            u.id.toLowerCase().includes(query)
-                        );
-                        highlight = -1;
+<!-- ================= ИГРОКИ ================= -->
+<section class="view" data-view="players">
+    <div class="vhead"><div><h2>👥 Игроки, награды и баны</h2><p>Ник выбирается из списка, как в старой админке</p></div></div>
+    <div class="grid g2">
+        <div class="lg card">
+            <div class="card-h"><h3>🎁 Выдача награды</h3><span class="cmd">/give &lt;ник&gt; &lt;предмет&gt; &lt;кол-во&gt;</span></div>
+            <div class="row">
+                <div class="picker" id="rewardPicker">
+                    <input class="field" id="rewardUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
+                    <input type="hidden" id="rewardUserId">
+                    <button type="button" class="caret" id="rewardCaret" tabindex="-1">▾</button>
+                    <div class="plist" id="rewardList"></div>
+                </div>
+                <div class="pick" id="rewardTypePick">
+                    <button type="button" class="pick-btn"><span id="rewardTypeLbl">Дилики</span><span class="arw">▾</span></button>
+                    <div class="pop" id="rewardTypePop"></div>
+                </div>
+            </div>
+            <div class="row" style="margin-top:8px">
+                <input class="field" id="rewardAmount" placeholder="количество / ID скина">
+                <button class="btn xs ok" id="giveRewardBtn">Выдать</button>
+            </div>
+            <p class="hint" style="margin-top:8px">Скины: classic, neon, monsters_skin, dragon_skin, wheel_dragon_skin, halloween_pumpkin</p>
 
-                        if (!filtered.length) {
-                            list.innerHTML = '<div class="reward-picker-empty">Никого не нашли</div>';
-                            return;
-                        }
+            <div class="blk-h sep">⚠️ Выдать всем<span class="line"></span></div>
+            <div class="row" style="margin-top:9px">
+                <div class="pick" id="giveAllTypePick">
+                    <button type="button" class="pick-btn"><span id="giveAllTypeLbl">Дилики</span><span class="arw">▾</span></button>
+                    <div class="pop" id="giveAllTypePop"></div>
+                </div>
+                <input class="field" id="giveAllAmount" type="number" placeholder="количество">
+                <button class="btn xs warn" id="giveAllBtn">⚠️ Всем</button>
+            </div>
+        </div>
 
-                        const selectedId = hidden.value;
-                        const frag = document.createDocumentFragment();
-                        filtered.slice(0, PICKER_LIST_LIMIT).forEach((u, index) => {
-                            const row = document.createElement('div');
-                            row.className = 'reward-option' + (u.id === selectedId ? ' is-selected' : '');
-                            row.dataset.index = index;
+        <div class="lg card">
+            <div class="card-h"><h3>🔨 Баны</h3><span class="cmd">/ban &lt;ник&gt; [причина] [часы]</span></div>
+            <div class="ban-row">
+                <div class="picker" id="banPicker">
+                    <input class="field" id="banUserSearch" placeholder="Ник игрока" autocomplete="off" spellcheck="false">
+                    <input type="hidden" id="banUserId">
+                    <button type="button" class="caret" id="banCaret" tabindex="-1">▾</button>
+                    <div class="plist" id="banList"></div>
+                </div>
+                <input class="field" id="banReason" placeholder="Причина (опционально)">
+                <input class="field" id="banHours" type="number" value="0" min="0" placeholder="часы" title="0 = навсегда">
+                <button class="btn xs danger" id="banUserBtn">⛔ Забанить</button>
+            </div>
+            <div class="chips" id="banPresets" style="margin-top:9px">
+                <button class="chip" data-h="0">навсегда</button><button class="chip" data-h="1">1ч</button>
+                <button class="chip" data-h="24">1сут</button><button class="chip" data-h="168">7д</button><button class="chip" data-h="720">30д</button>
+            </div>
+            <div class="unb-row sep">
+                <div class="picker" id="unbanPicker">
+                    <input class="field" id="unbanUserSearch" placeholder="Ник для разбана" autocomplete="off" spellcheck="false">
+                    <input type="hidden" id="unbanUserId">
+                    <button type="button" class="caret" id="unbanCaret" tabindex="-1">▾</button>
+                    <div class="plist" id="unbanList"></div>
+                </div>
+                <button class="btn xs ok" id="unbanUserBtn">✅ Разбанить</button>
+            </div>
+            <div class="blk-h sep">Забаненные сейчас<span class="line"></span></div>
+            <div class="list" id="bannedList" style="margin-top:9px"></div>
+        </div>
+    </div>
+</section>
 
-                            const name = document.createElement('span');
-                            name.className = 'reward-option-name';
-                            name.textContent = u.name;
-                            row.appendChild(name);
-
-                            if (u.id === CREATOR_ID) {
-                                const crown = document.createElement('span');
-                                crown.className = 'reward-option-crown';
-                                crown.textContent = '👑';
-                                row.appendChild(crown);
-                            }
-                            const idSpan = document.createElement('span');
-                            idSpan.className = 'reward-option-id';
-                            idSpan.textContent = u.id;
-                            row.appendChild(idSpan);
-
-                            frag.appendChild(row);
-                        });
-                        list.innerHTML = '';
-                        list.appendChild(frag);
-                        if (filtered.length > PICKER_LIST_LIMIT) {
-                            const hint = document.createElement('div');
-                            hint.className = 'reward-picker-empty';
-                            hint.textContent = `Показаны первые ${PICKER_LIST_LIMIT} — уточните поиск`;
-                            list.appendChild(hint);
-                        }
-                    }
-
-                    function open() {
-                        picker.classList.add('open');
-                        loadPickerUsers(list).then(() => {
-                            if (picker.classList.contains('open')) render();
-                        }).catch(() => {});
-                    }
-
-                    function close() {
-                        picker.classList.remove('open');
-                        highlight = -1;
-                    }
-
-                    function pick(user) {
-                        hidden.value = user.id;
-                        search.value = user.name;
-                        close();
-                        addDebugMessage(`🎯 Выбран игрок: ${user.name} (${user.id})`);
-                    }
-
-                    function moveHighlight(next) {
-                        const rows = list.querySelectorAll('.reward-option');
-                        if (!rows.length) return;
-                        if (highlight >= 0 && rows[highlight]) rows[highlight].classList.remove('is-highlighted');
-                        highlight = (next + rows.length) % rows.length;
-                        rows[highlight].classList.add('is-highlighted');
-                        rows[highlight].scrollIntoView({ block: 'nearest' });
-                    }
-
-                    search.addEventListener('input', () => {
-                        hidden.value = '';
-                        if (!picker.classList.contains('open')) open();
-                        else render();
-                    });
-
-                    search.addEventListener('focus', () => open());
-                    caret?.addEventListener('click', () => {
-                        if (picker.classList.contains('open')) close();
-                        else { open(); search.focus(); }
-                    });
-
-                    list.addEventListener('mousedown', (e) => e.preventDefault());
-                    list.addEventListener('click', (e) => {
-                        const row = e.target.closest('.reward-option');
-                        if (!row) return;
-                        const user = filtered[parseInt(row.dataset.index)];
-                        if (user) pick(user);
-                    });
-
-                    search.addEventListener('keydown', (e) => {
-                        if (e.key === 'ArrowDown') {
-                            e.preventDefault();
-                            if (!picker.classList.contains('open')) open();
-                            else moveHighlight(highlight + 1);
-                        } else if (e.key === 'ArrowUp') {
-                            e.preventDefault();
-                            moveHighlight(highlight - 1);
-                        } else if (e.key === 'Enter') {
-                            e.preventDefault();
-                            if (highlight >= 0 && filtered[highlight]) pick(filtered[highlight]);
-                            else if (filtered.length === 1) pick(filtered[0]);
-                            else if (filtered.length > 1) moveHighlight(0);
-                        } else if (e.key === 'Escape') {
-                            close();
-                            search.blur();
-                        }
-                    });
-
-                    document.addEventListener('click', (e) => {
-                        if (!picker.contains(e.target)) close();
-                    });
-
-                    return {
-                        // ID выбранного игрока: из списка либо вставленный руками
-                        resolve() {
-                            const picked = hidden.value.trim();
-                            if (picked) return picked;
-                            const typed = search.value.trim();
-                            if (!typed) return '';
-                            const byId = (pickerUsers || []).find(u => u.id === typed);
-                            if (byId) return byId.id;
-                            const lower = typed.toLowerCase();
-                            const byName = (pickerUsers || []).find(u =>
-                                u.name.toLowerCase() === lower || u.username.toLowerCase() === lower
-                            );
-                            if (byName) return byName.id;
-                            return typed;
-                        },
-                        // Показать в поле сохранённое имя игрока
-                        setName(name) {
-                            if (!search.value.trim()) search.value = name || '';
-                        },
-                        reset() {
-                            hidden.value = '';
-                            search.value = '';
-                            close();
-                        }
-                    };
-                }
-
-                const rewardPickerApi = createUserPicker({
-                    pickerId: 'rewardPicker',
-                    searchId: 'rewardUserSearch',
-                    hiddenId: 'rewardUserId',
-                    listId: 'rewardPickerList',
-                    caretId: 'rewardPickerCaret'
-                });
-
-                const banPickerApi = createUserPicker({
-                    pickerId: 'banPicker',
-                    searchId: 'banUserSearch',
-                    hiddenId: 'banUserId',
-                    listId: 'banPickerList',
-                    caretId: 'banPickerCaret'
-                });
-
-                const unbanPickerApi = createUserPicker({
-                    pickerId: 'unbanPicker',
-                    searchId: 'unbanUserSearch',
-                    hiddenId: 'unbanUserId',
-                    listId: 'unbanPickerList',
-                    caretId: 'unbanPickerCaret'
-                });
+</div><!-- /wrap -->
 
 
-                // ===== ВЫДАЧА НАГРАД =====
-                document.getElementById('giveRewardBtn')?.addEventListener('click', async () => {
-                    const userId = rewardPickerApi ? rewardPickerApi.resolve() : '';
-                    const rewardType = document.getElementById('rewardType').value;
-                    const amount = document.getElementById('rewardAmount').value;
-                    if (!userId) {
-                        showToast('❌ Выберите игрока из списка', 'error');
-                        return;
-                    }
-                    try {
-                        const userSnapshot = await firebase.database().ref('users/' + userId).once('value');
-                        if (!userSnapshot.exists()) {
-                            showToast('❌ Игрок не найден', 'error');
-                            return;
-                        }
-                        const userData = userSnapshot.val();
-                        const username = userData.settings?.displayName || userData.username;
-                        if (rewardType === 'dilicks') {
-                            const dilicksAmount = parseInt(amount);
-                            if (isNaN(dilicksAmount) || dilicksAmount < 1) return showToast('❌ Введите количество', 'error');
-                            await firebase.database().ref('users/' + userId).update({ dilicks: (userData.dilicks || 0) + dilicksAmount });
-                            showToast(`✅ Выдано ${dilicksAmount.toLocaleString()} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"> игроку ${username}`, 'success');
-                        } else if (rewardType === 'money') {
-                            const moneyAmount = parseInt(amount);
-                            if (isNaN(moneyAmount) || moneyAmount < 1) return showToast('❌ Введите количество', 'error');
-                            await firebase.database().ref('users/' + userId).update({ money: (userData.money || 0) + moneyAmount });
-                            showToast(`✅ Выдано ${moneyAmount.toLocaleString()} <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"> игроку ${username}`, 'success');
-                        } else if (rewardType === 'skin') {
-                            const skinId = amount.trim();
-                            if (!skinId) return showToast('❌ Введите ID скина', 'error');
-                            const inventory = userData.inventory || [];
-                            if (!inventory.includes(skinId)) {
-                                inventory.push(skinId);
-                                await firebase.database().ref('users/' + userId).update({ inventory: inventory });
-                                showToast(`✅ Выдан скин "${skinId}" игроку ${username}`, 'success');
-                            } else {
-                                showToast(`⚠️ У игрока уже есть скин "${skinId}"`, 'warning');
-                            }
-                        }
-                        document.getElementById('rewardUserId').value = '';
-                        document.getElementById('rewardUserSearch').value = '';
-                        document.getElementById('rewardAmount').value = '';
-                        rewardPickerApi?.reset();
-                    } catch (error) {
-                        showToast('❌ Ошибка при выдаче', 'error');
-                    }
-                });
-                
-                document.getElementById('giveAllBtn')?.addEventListener('click', async () => {
-                    const type = document.getElementById('giveAllType').value;
-                    const amount = parseInt(document.getElementById('giveAllAmount').value);
-                    if (isNaN(amount) || amount < 1) return showToast('❌ Введите количество', 'error');
-                    if (!confirm(`⚠️ Выдать ВСЕМ ${amount.toLocaleString()} ${type === 'dilicks' ? 'диликов' : 'монет'}?`)) return;
-                    const snapshot = await usersRef.once('value');
-                    const users = snapshot.val();
-                    let count = 0;
-                    for (const [id, user] of Object.entries(users)) {
-                        if (type === 'dilicks') {
-                            await usersRef.child(id).update({ dilicks: (user.dilicks || 0) + amount });
-                        } else {
-                            await usersRef.child(id).update({ money: (user.money || 0) + amount });
-                        }
-                        count++;
-                        if (count % 10 === 0) await new Promise(r => setTimeout(r, 100));
-                    }
-                    showToast(`✅ Выдано ${count} игрокам`, 'success');
-                });
-                
-                // ===== КОЛЕСО ФОРТУНЫ =====
-                document.getElementById('startWheelEventBtn')?.addEventListener('click', async () => {
-                    const days = parseInt(document.getElementById('wheelDays').value) || 150;
-                    await eventsRef.child('wheelEvent').set({ active: true, startTime: Date.now(), endTime: Date.now() + days * 24 * 60 * 60 * 1000, duration: days, spinCost: 2500 });
-                    showToast(`🎡 Ивент запущен на ${days} дней!`, 'success');
-                });
-                
-                document.getElementById('stopWheelEventBtn')?.addEventListener('click', async () => {
-                    await eventsRef.child('wheelEvent').set({ active: false });
-                    showToast('⏹️ Ивент остановлен', 'success');
-                });
-                
-                document.getElementById('setSpinCostBtn')?.addEventListener('click', async () => {
-                    const cost = parseInt(document.getElementById('spinCostInput').value);
-                    if (!cost || cost < 1) return showToast('❌ Введите стоимость', 'error');
-                    await eventsRef.child('wheelEvent').update({ spinCost: cost });
-                    showToast(`🎡 Стоимость крутки: ${cost} <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики">`, 'success');
-                });
-                
-                document.getElementById('refreshStatusBtn')?.addEventListener('click', () => {
-                    showToast('📊 Статус обновлен', 'success');
-                });
-                
-                // ЗАПУСК ВСЕХ СЛУШАТЕЛЕЙ
-                initRealtimeAnnouncements();
-                initRealtimeBans();
-                initRealtimePolls();
-                updateStatusDisplay();
-                
-                addDebugMessage('✅ Админ-панель инициализирована с опросами и очисткой топа');
-                showToast('✅ Админ-панель загружена', 'success');
-            }
-        })();
-    </script>
+<!-- ================= ЛОГ — плашка в правом верхнем углу -->
+<div class="logbadge lg" id="logBadge">
+    <div class="lb-h">📟 Живой лог<button class="btn xs" id="logClear">Очистить</button></div>
+    <div class="log" id="logBox"></div>
+</div>
+
+<div class="modal" id="modal"><div class="modal-in" id="modalIn"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase грузится ПЕРЕД админкой и АСИНХРОННО: если сеть недоступна,
+     страница всё равно рисуется, а admin-preview.js работает на локальном кэше. -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>window.addEventListener("error", e => { if (String(e.message).toLowerCase().includes("firebase")) {
+  console.warn("Firebase SDK не загрузился — админка работает на локальном кэше"); } });</script>
+<script src="firebase-config.js" onerror="window.__noFirebase=1"></script>
+<script src="admin-preview.js"></script>
 </body>
 </html>

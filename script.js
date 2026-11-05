@@ -126,6 +126,8 @@ class ClickerGame {
             'uragan_holo_top10': { name: 'ДИЛИК ЛОРД', price: 0, image: 'https://i.pinimg.com/originals/6b/0c/79/6b0c79aaba43d9d2e3f2e59c98ed98b8.jpg?nii=t', description: '+100 множитель!', multiplier: 100, limited: true },
             'uragan_banana_top50': { name: 'ДИЛИК МАСТЕР', price: 0, image: 'https://thumbs.dreamstime.com/b/старый-колдун-символ-мастера-рисунков-пикселов-иллюстрация-вектора-242507131.jpg?w=768', description: '+55 множитель!', multiplier: 55, limited: true },
             'uragan_cursor_top100': { name: 'ДИЛИК', price: 0, image: 'https://th.bing.com/th/id/R.5493d8d74a695b06470e70593ca7419c?rik=gB7Dii9D3EP3YQ&pid=ImgRaw&r=0', description: '+15 множитель!', multiplier: 15, limited: true },
+            // Скин-призрак из колеса. Картинка — SVG прямо в коде (data URI):
+            'wheel_ghost_skin': { name: 'ПРИЗРАК КОЛЕСА', price: 0, image: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="26" fill="#101024"/><circle cx="60" cy="60" r="42" fill="#1c1c38" stroke="#f5f5ff" stroke-width="3"/><text x="60" y="82" font-size="56" text-anchor="middle">👻</text></svg>'), description: 'Скин призрака из колеса (×35)', multiplier: 35, limited: true },
             // Хэллоуинский скин. Картинка — SVG прямо в коде (data URI):
             // внешние файлы и папка assets в Telegram WebView на телефоне не грузятся.
             'halloween_pumpkin': { name: 'ТЫКВЕННЫЙ ДИЛИК', price: 0, image: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="26" fill="#140a1f"/><circle cx="60" cy="64" r="40" fill="#2a1038" stroke="#ff8c1a" stroke-width="3"/><text x="60" y="84" font-size="58" text-anchor="middle">🎃</text></svg>'), description: 'Хэллоуинский скин (×5)', multiplier: 5, limited: true }
@@ -140,6 +142,7 @@ class ClickerGame {
             'uragan_banana_top50':  { accent: '#ffd700', glow: 'rgba(255, 215, 0, 0.40)',   tint: 'rgba(255, 215, 0, 0.10)' },
             'uragan_cursor_top100': { accent: '#c0c0c0', glow: 'rgba(192, 192, 192, 0.40)', tint: 'rgba(192, 192, 192, 0.08)' },
             'wheel_dragon_skin':    { accent: '#a855f7', glow: 'rgba(168, 85, 247, 0.60)',  tint: 'rgba(168, 85, 247, 0.12)' },
+            'wheel_ghost_skin':     { accent: '#f5f5ff', glow: 'rgba(245, 245, 255, 0.65)', tint: 'rgba(245, 245, 255, 0.12)' },
             'halloween_pumpkin':    { accent: '#ff8c1a', glow: 'rgba(255, 140, 26, 0.60)',  tint: 'rgba(255, 140, 26, 0.12)' }
         };
 
@@ -235,6 +238,7 @@ class ClickerGame {
             'uragan_banana_top50': 55,
             'uragan_cursor_top100': 15,
             'wheel_dragon_skin': 250,
+            'wheel_ghost_skin': 35,
             'halloween_pumpkin': 5
         };
         return multipliers[skinId] || 1;
@@ -502,6 +506,8 @@ class ClickerGame {
         const perfCheckbox = document.getElementById('performanceMode');
         if (perfCheckbox) {
             perfCheckbox.checked = performanceMode;
+            if (window.syncLiquidToggles) window.syncLiquidToggles();
+
             perfCheckbox.addEventListener('change', (e) => {
                 if (e.target.checked) {
                     document.body.classList.add('no-liquid-animations');
@@ -2444,6 +2450,7 @@ class ClickerGame {
             if (skinId === 'uragan_banana_top50') extraClass = 'skin-uragan-top50';
             if (skinId === 'uragan_cursor_top100') extraClass = 'skin-uragan-top100';
             if (skinId === 'wheel_dragon_skin') extraClass = 'skin-wheel-dragon';
+            if (skinId === 'wheel_ghost_skin') extraClass = 'skin-ghost';
             if (skinId === 'halloween_pumpkin') extraClass = 'skin-halloween';
             if (extraClass) skinCard.classList.add(extraClass);
             skinCard.innerHTML = `<div class="skin-preview"><img src="${skin.image}" alt="${skin.name}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4366/4366891.png'"></div><h3>${skin.name}</h3><p class="skin-description">${skin.description}</p>${skin.multiplier > 1 ? `<p class="skin-multiplier">✨ x${skin.multiplier} множитель!</p>` : ''}${isCurrentSkin ? '<p class="skin-equipped">✅ ЭКИПИРОВАНО</p>' : '<button class="glass-btn equip-btn liquid-glass">ЭКИПИРОВАТЬ</button>'}`;
@@ -2470,7 +2477,7 @@ class ClickerGame {
     // на каждую итерацию автокликера — теперь создаётся один раз.
     getSkinMultipliers() {
         if (!this._skinMultipliers) {
-            this._skinMultipliers = { 'uragan_dragon_top3': 145, 'uragan_holo_top10': 100, 'uragan_banana_top50': 55, 'uragan_cursor_top100': 15, 'wheel_dragon_skin': 250, 'halloween_pumpkin': 5 };
+            this._skinMultipliers = { 'uragan_dragon_top3': 145, 'uragan_holo_top10': 100, 'uragan_banana_top50': 55, 'uragan_cursor_top100': 15, 'wheel_dragon_skin': 250, 'wheel_ghost_skin': 35, 'halloween_pumpkin': 5 };
         }
         return this._skinMultipliers;
     }
@@ -3453,6 +3460,7 @@ class ClickerGame {
                 if (skinId === 'uragan_banana_top50') skinTag.classList.add('skin-uragan-top50');
                 if (skinId === 'uragan_cursor_top100') skinTag.classList.add('skin-uragan-top100');
                 if (skinId === 'wheel_dragon_skin') skinTag.classList.add('skin-wheel-dragon');
+                if (skinId === 'wheel_ghost_skin') skinTag.classList.add('skin-ghost');
                 if (skinId === 'halloween_pumpkin') skinTag.classList.add('skin-halloween');
                 skinTag.innerHTML = `<img src="${skin.image}" alt="${skin.name}"><span>${skin.name}</span>`;
                 this.ownedSkinsList.appendChild(skinTag);
@@ -3626,7 +3634,10 @@ class Settings {
         if (languageSelect) languageSelect.value = this.game.userData.settings.language || 'ru';
         const perfCheckbox = document.getElementById('performanceMode');
         if (perfCheckbox) perfCheckbox.checked = this.game.userData.settings.performanceMode || false;
+        // Настройки применены программно — подтягиваем вид iOS-тумблеров.
+        if (window.syncLiquidToggles) window.syncLiquidToggles();
     }
+
     async saveDisplayName() {
         const input = document.getElementById('displayName');
         const newName = input.value.trim();
@@ -3769,13 +3780,16 @@ class Settings {
 class WheelOfFortune {
     constructor(game) {
         this.game = game;
+        // Хэллоуинская палитра секторов: тыква, ведьмин яд, ночь, кровь, слизь, проклятие.
+        // Два скиновых сектора: старый дракон (x250) и новый призрак (x35).
         this.PRIZES = [
-            { name: '2500 МОНЕТ', value: 2500, type: 'money', prob: 50, color: '#2e7d32' },
-            { name: '5500 МОНЕТ', value: 5500, type: 'money', prob: 35, color: '#f9a825' },
-            { name: '8500 МОНЕТ', value: 8500, type: 'money', prob: 25, color: '#ef6c00' },
-            { name: '11500 МОНЕТ', value: 11500, type: 'money', prob: 15, color: '#d32f2f' },
-            { name: '5000 ДИЛИКОВ', value: 5000, type: 'dilicks', prob: 5, color: '#7b1fa2' },
-            { name: 'ОСОБЕННЫЙ СКИН', value: 'skin', type: 'skin', prob: 2.5, color: '#c2185b' }
+            { name: '2500 МОНЕТ', value: 2500, type: 'money', prob: 50, color: '#5a2d0c' },
+            { name: '5500 МОНЕТ', value: 5500, type: 'money', prob: 35, color: '#ff8c1a' },
+            { name: '8500 МОНЕТ', value: 8500, type: 'money', prob: 25, color: '#7a2ecc' },
+            { name: '11500 МОНЕТ', value: 11500, type: 'money', prob: 15, color: '#8b0000' },
+            { name: '5000 ДИЛИКОВ', value: 5000, type: 'dilicks', prob: 5, color: '#4a1a6b' },
+            { name: 'ПРИЗРАК x35', value: 'ghost', type: 'skin_ghost', prob: 4.5, color: '#f5f5ff' },
+            { name: 'ОСОБЕННЫЙ СКИН', value: 'skin', type: 'skin', prob: 2.5, color: '#c86bff' }
         ];
         this.SPIN_COST = 2500;
         this.MONEY_ICON = GAME_LOCAL_ICONS.money; this.MONEY_ICON_REMOTE = GAME_REMOTE_ICONS.money;
@@ -3785,6 +3799,7 @@ class WheelOfFortune {
         this.DILICKS_ICON = GAME_LOCAL_ICONS.dilicks;
         
         this.SKIN_ID = 'wheel_dragon_skin';
+        this.GHOST_SKIN_ID = 'wheel_ghost_skin';
         this.rotation = 0;
         this.isSpinning = false;
         this.spinVelocity = 0;
@@ -3797,6 +3812,7 @@ class WheelOfFortune {
         this.canvas = document.getElementById('wheelCanvas');
         if (this.canvas) this.ctx = this.canvas.getContext('2d');
         this.spinBtn = document.getElementById('wheelSpinBtn');
+        this.skipBtn = document.getElementById('wheelSkipBtn');
         this.balanceSpan = document.getElementById('wheelBalance');
         this.resultDisplay = document.getElementById('wheelResultDisplay');
         this.costSpan = document.getElementById('wheelSpinCost');
@@ -3813,12 +3829,29 @@ class WheelOfFortune {
     }
     setupEventListeners() {
         if (this.spinBtn) this.spinBtn.addEventListener('click', () => this.spin());
-        const showSkinBtn = document.getElementById('showSkinBtn');
-        const closeModal = document.getElementById('closeModal');
-        if (showSkinBtn) showSkinBtn.addEventListener('click', () => { if (this.modal) this.modal.style.display = 'flex'; });
-        if (closeModal) closeModal.addEventListener('click', () => { if (this.modal) this.modal.style.display = 'none'; });
-        window.addEventListener('click', (e) => { if (e.target === this.modal && this.modal) this.modal.style.display = 'none'; });
+        if (this.skipBtn) this.skipBtn.addEventListener('click', () => this.skipSpin());
+        // Просмотр скинов-призов: кнопка с data-skin-modal открывает модалку с этим id.
+        document.querySelectorAll('[data-skin-modal]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const modal = document.getElementById(btn.getAttribute('data-skin-modal'));
+                if (modal) modal.style.display = 'flex';
+            });
+        });
+        document.querySelectorAll('.wheel-modal-close').forEach((btn) => {
+            btn.addEventListener('click', () => this._closeSkinModals());
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target && e.target.classList && e.target.classList.contains('wheel-skin-modal')) this._closeSkinModals();
+        });
+        // Картинка призрака — из skinsData (SVG data URI): внешние файлы в Telegram WebView не грузятся.
+        const ghostImg = document.getElementById('ghostSkinPreviewImg');
+        const ghostData = this.game.skinsData && this.game.skinsData[this.GHOST_SKIN_ID];
+        if (ghostImg && ghostData) ghostImg.src = ghostData.image;
     }
+    _closeSkinModals() {
+        document.querySelectorAll('.wheel-skin-modal').forEach((m) => { m.style.display = 'none'; });
+    }
+
     // Сумма вероятностей призов. Она НЕ равна 100 (сейчас 132.5), поэтому
     // делить на 100 нельзя: сектора занимали 477° вместо 360°, часть колеса
     // рисовалась дважды, и выпадал не тот приз, на который показывает указатель.
@@ -3836,12 +3869,13 @@ class WheelOfFortune {
         return (Number(prize.prob) || 0) / this.getPrizeTotal();
     }
 
+    // Рисование колеса: сплошные сектора во весь круг, без колышков и обода.
     drawWheel() {
         const w = this.canvas.width;
         const h = this.canvas.height;
         const cx = w / 2;
         const cy = h / 2;
-        const r = Math.min(w, h) * 0.4;
+        const r = Math.min(w, h) * 0.48;
         this.ctx.clearRect(0, 0, w, h);
         let startAngle = this.rotation - Math.PI / 2;
         for (let i = 0; i < this.PRIZES.length; i++) {
@@ -3865,7 +3899,7 @@ class WheelOfFortune {
         this.ctx.beginPath();
         this.ctx.arc(cx, cy, r * 0.15, 0, 2 * Math.PI);
         this.ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        this.ctx.shadowColor = 'rgba(255,215,0,0.5)';
+        this.ctx.shadowColor = 'rgba(255,140,26,0.6)';
         this.ctx.shadowBlur = 20;
         this.ctx.fill();
         this.ctx.shadowBlur = 0;
@@ -3873,7 +3907,10 @@ class WheelOfFortune {
         this.ctx.lineWidth = 2;
         this.ctx.stroke();
     }
+
+
     spin() {
+
         if (this.isSpinning) return;
         this.updateSpinCost();
         if (this.game.userData.dilicks < this.SPIN_COST) {
@@ -3889,21 +3926,37 @@ class WheelOfFortune {
         this.spinDeceleration = 0.982 + (Math.random() * 0.01);
         this.spinActive = true;
         this.isSpinning = true;
+        this._skipRequested = false;
         this.spinBtn.disabled = true;
+        if (this.skipBtn) this.skipBtn.style.display = 'inline-block';
+        // Анимация кручения самой карточки
+        const wrapper = this.canvas && this.canvas.closest('.wheel-wrapper');
+        if (wrapper) wrapper.classList.add('spinning');
         this.resultDisplay.innerHTML = '⏳ КРУТИТСЯ...';
         if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
         this.animationFrame = requestAnimationFrame(() => this.spinAnimation());
         if (navigator.vibrate) navigator.vibrate(30);
+    }
+    // Пропуск анимации: колесо мгновенно докручивается до результата
+    skipSpin() {
+        if (!this.isSpinning || this._skipRequested) return;
+        this._skipRequested = true;
+        this.spinVelocity = 0.35;   // быстрое затухание за ~0.5 сек
+        this.spinDeceleration = 0.88;
     }
     spinAnimation() {
         if (!this.spinActive) return;
         this.rotation += this.spinVelocity;
         this.spinVelocity *= this.spinDeceleration;
         this.drawWheel();
+
         if (this.spinVelocity < 0.002) {
             this.spinActive = false;
             this.isSpinning = false;
             this.spinBtn.disabled = false;
+            if (this.skipBtn) this.skipBtn.style.display = 'none';
+            const wrapper = this.canvas && this.canvas.closest('.wheel-wrapper');
+            if (wrapper) wrapper.classList.remove('spinning');
             // Определяем, на каком секторе остановился указатель.
             // Здесь было ДВЕ ошибки, из-за которых выпадал не тот приз:
             //  1) деление на 100, хотя сумма вероятностей 132.5 — сектора
@@ -3925,8 +3978,21 @@ class WheelOfFortune {
         this.animationFrame = requestAnimationFrame(() => this.spinAnimation());
     }
     givePrize(prize) {
+
         let resultHTML = '';
-        if (prize.type === 'skin') {
+        if (prize.type === 'skin_ghost') {
+            if (!this.game.userData.inventory.includes(this.GHOST_SKIN_ID)) {
+                this.game.userData.inventory.push(this.GHOST_SKIN_ID);
+                resultHTML = '👻 ПРИЗРАК КОЛЕСА 👻';
+                this.resultDisplay.style.color = '#f5f5ff';
+                this.resultDisplay.style.textShadow = '0 0 30px #f5f5ff';
+                this.game.showToast(`👻 Вы получили скин ПРИЗРАК КОЛЕСА x35!`, 'success');
+            } else {
+                this.game.userData.dilicks += 3000;
+                resultHTML = `<span>+3000</span><img src="${this.DILICKS_ICON}" class="wheel-result-icon"><span>(призрак уже был)</span>`;
+                this.game.showToast(`+3000 ${this.game.getDilicksIcon()}`, 'success');
+            }
+        } else if (prize.type === 'skin') {
             if (!this.game.userData.inventory.includes(this.SKIN_ID)) {
                 this.game.userData.inventory.push(this.SKIN_ID);
                 resultHTML = '✨ ОСОБЕННЫЙ СКИН ✨';
@@ -4003,10 +4069,17 @@ function renderAdminMaintenanceBadge(data) {
     const barEl = document.getElementById('adminMaintBar');
     const iconEl = document.getElementById('adminMaintIcon');
     const titleEl = document.getElementById('adminMaintTitle');
+    const noteEl = document.getElementById('adminMaintNote');
 
     const isUpdate = data.type === 'timer' && !!data.endTime;
-    if (iconEl) iconEl.textContent = isUpdate ? '🆙' : '🔧';
+    if (iconEl) iconEl.textContent = isUpdate ? '👻' : '🎃';
+    // Класс меняет свечение иконки: у обнова оно холодное, как на экране игроков.
+    badge.classList.toggle('is-update', isUpdate);
     if (titleEl) titleEl.textContent = isUpdate ? 'До обновы' : 'Технические работы';
+    if (noteEl) noteEl.textContent = isUpdate
+        ? 'Ведутся технические работы. Скоро обнова появится!'
+        : 'Ведутся технические работы. Скоро всё заработает!';
+
 
     badge.style.display = 'block';
 
@@ -4206,3 +4279,85 @@ else initScreens();
     window.addEventListener('resize', updateNavButtonsDisplay);
     updateNavButtonsDisplay();
 })();
+
+/* ============================================================
+   UPDATE REVEAL — витрина обновы.
+   Пока /updateState.activeId пуст, в игре нет НИЧЕГО из обновы:
+   ни декора вкладок, ни баннеров, ни конфетного бонуса,
+   ни хэллоуинского колеса, ни плашек ивента.
+
+   scheduledId = обнова «привязана к концу таймера» (СИНХРО).
+   Когда activeId появляется впервые И он был запланирован —
+   играем катсцену появления. Если обнова включена кнопкой без
+   таймера — контент просто появляется сразу, без анимаций.
+   ============================================================ */
+const UPDATE_HW_SELECTOR = [
+    '.hw-decor', '.halloween-banner', '#halloweenBanner', '#candyBonusBtn',
+    '.hw-wheel-decor', '#halloweenEventCard', '.halloween-progress-card',
+    '#halloweenTopSection', '.hw-event-tile'
+].join(', ');
+
+const UpdateReveal = {
+    state: null,
+    wasScheduled: false,
+    appliedId: null,
+    playing: false,
+
+    init() {
+        try {
+            firebase.database().ref('updateState').on('value', snap => this.onChange(snap.val()));
+        } catch (e) {
+            console.warn('updateState недоступен — оставляю игру без обновы', e);
+            this.apply('none', false);
+        }
+    },
+
+    onChange(v) {
+        this.state = v || {};
+        const activeId = this.state.activeId || null;
+        const scheduledId = this.state.scheduledId || null;
+        if (scheduledId) this.wasScheduled = true;
+
+        if (!activeId) { this.wasScheduled = false; this.apply('none', false); return; }
+
+        const isNew = activeId !== this.appliedId;
+        // катсцена — только когда обнова появилась впервые и была запланирована через СИНХРО
+        const cinematic = isNew && this.wasScheduled;
+        this.apply(activeId, cinematic);
+        if (isNew) this.wasScheduled = false;
+    },
+
+    apply(id, cinematic) {
+        const on = id && id !== 'none';
+        this.appliedId = on ? id : null;
+        document.body.classList.toggle('update-hw-on', !!on && id === 'halloween-2026');
+        document.body.classList.toggle('update-on', !!on);
+        if (on && cinematic && !this.playing) this.playCinematic();
+    },
+
+    playCinematic() {
+        this.playing = true;
+        const stage = document.createElement('div');
+        stage.className = 'upd-cine';
+        stage.innerHTML = '<div class="upd-cine-flash"></div>' +
+            '<div class="upd-cine-card"><div class="upd-cine-emoji">🎃</div>' +
+            '<div class="upd-cine-title">Диликовый Хэллоуин 2026</div>' +
+            '<div class="upd-cine-sub">обнова уже в игре</div></div>';
+        document.body.appendChild(stage);
+        document.body.classList.add('upd-cine-live');
+
+        // волной по вкладкам: декор и баннеры вспыхивают слева направо
+        const tabs = Array.prototype.slice.call(document.querySelectorAll('.content > .tab'));
+        tabs.forEach((tab, i) => { setTimeout(() => tab.classList.add('upd-swept'), i * 260); });
+
+        const total = 900 + tabs.length * 260;
+        setTimeout(() => {
+            stage.classList.add('upd-cine-out');
+            document.body.classList.remove('upd-cine-live');
+            setTimeout(() => { stage.remove(); this.playing = false; tabs.forEach(tb => tb.classList.remove('upd-swept')); }, 700);
+        }, total);
+    }
+};
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => UpdateReveal.init());
+else UpdateReveal.init();

@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Dilic Clicker - Игра с кликерами</title>
     <!-- ?v= — сброс кеша: Telegram Desktop подолгу держит старые style.css и script.js -->
-    <link rel="stylesheet" href="style.css?v=0.1.19">
+    <link rel="stylesheet" href="style.css?v=0.1.28">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="firebase-config.js?v=0.1.19"></script>
+    <script src="firebase-config.js?v=0.1.28"></script>
     <!-- Иконки валют встроены в код: на телефоне в Telegram WebView
          внешние картинки и файлы из assets не загружаются. -->
-    <script src="currency-icons.js?v=0.1.19"></script>
+    <script src="currency-icons.js?v=0.1.28"></script>
     <script>
         const telegram = window.Telegram.WebApp;
         telegram.ready();
@@ -73,9 +73,11 @@
         </div>
     </div>
 
-    <div id="techWorkOverlay" class="maintenance-overlay" style="display: none;">
+    <div id="techWorkOverlay" class="maintenance-overlay halloween-maint" style="display: none;">
         <div class="maintenance-card glass-card liquid-glass">
-            <div class="maintenance-icon">🔧</div>
+            <div class="hw-maint-decor" aria-hidden="true"><span>🎃</span><span>👻</span><span>🦇</span><span>🕸️</span><span>💀</span><span>🍬</span></div>
+            <div class="maintenance-icon">🎃</div>
+
             <h2 class="maintenance-title">Технические работы</h2>
             <p class="maintenance-text">Ведутся технические работы. Скоро всё заработает!</p>
             <div id="techWorkTimer" class="maintenance-timer" style="display: none;"></div>
@@ -83,9 +85,10 @@
         </div>
     </div>
 
-    <div id="updateOverlay" class="maintenance-overlay" style="display: none;">
+    <div id="updateOverlay" class="maintenance-overlay halloween-maint" style="display: none;">
         <div class="maintenance-card glass-card liquid-glass">
-            <div class="maintenance-icon">🆙</div>
+            <div class="hw-maint-decor" aria-hidden="true"><span>🎃</span><span>👻</span><span>🦇</span><span>🕸️</span><span>💀</span><span>🍬</span></div>
+            <div class="maintenance-icon">👻</div>
             <h2 class="maintenance-title">До обновы</h2>
             <p class="maintenance-text">Ведутся технические работы. Скоро обнова появится!</p>
             <div id="updateTimer" class="maintenance-timer" style="display: none;"></div>
@@ -93,19 +96,25 @@
         </div>
     </div>
 
-    <!-- Мини-плашка техработ для админа: не перекрывает игру -->
+
+    <!-- Мини-плашка техработ для админа: не перекрывает игру.
+         В развёрнутом виде — точная мини-копия экрана, который видят игроки. -->
     <div id="adminMaintenanceBadge" class="admin-maint-badge" style="display: none;">
+        <div class="hw-maint-decor" aria-hidden="true"><span>🎃</span><span>👻</span><span>🦇</span><span>🕸️</span><span>💀</span><span>🍬</span></div>
         <button class="admin-maint-toggle" id="adminMaintToggle" type="button" title="Свернуть">–</button>
         <div class="admin-maint-body">
             <div class="admin-maint-head">
-                <span class="admin-maint-icon" id="adminMaintIcon">🔧</span>
+                <span class="admin-maint-icon" id="adminMaintIcon">🎃</span>
                 <span class="admin-maint-title" id="adminMaintTitle">Технические работы</span>
             </div>
+            <div class="admin-maint-note" id="adminMaintNote">Ведутся технические работы. Скоро всё заработает!</div>
             <div class="admin-maint-timer" id="adminMaintTimer" style="display: none;"></div>
             <div class="admin-maint-progress"><div class="admin-maint-bar" id="adminMaintBar"></div></div>
             <div class="admin-maint-hint">Это видишь только ты</div>
         </div>
     </div>
+
+
 
 
     <div class="game-container">
@@ -486,8 +495,9 @@
                         <div class="settings-card glass-card liquid-glass">
                             <h3>🎨 Интерфейс</h3>
                             <div class="settings-field"><label>🌙 Тема</label><select id="themeSelect" class="glass-input"><option value="dark">Тёмная</option><option value="light">Светлая</option><option value="auto">Как в системе</option></select></div>
-                            <div class="settings-field"><label>🎮 Производительность</label><div class="settings-checkbox"><input type="checkbox" id="performanceMode"><label for="performanceMode">Режим экономии</label></div></div>
-                            <div class="settings-field"><label>🔔 Уведомления</label><div class="settings-checkbox"><input type="checkbox" id="notificationsEnabled" checked><label>Уведомления</label></div><div class="settings-checkbox"><input type="checkbox" id="soundEnabled" checked><label>Звук</label></div><div class="settings-checkbox"><input type="checkbox" id="animationsEnabled" checked><label>Анимации</label></div></div>
+                            <div class="settings-field"><label>🎮 Производительность</label><div class="settings-checkbox"><input type="checkbox" id="performanceMode"><div class="lg-track" data-toggle-for="performanceMode" role="switch" aria-label="Режим экономии"><div class="knob"><span class="gloss"></span><span class="top-glow"></span><span class="lens"></span><span class="inner-shadow"></span><span class="ripple-layer"></span></div></div><label for="performanceMode">Режим экономии</label></div></div>
+                            <div class="settings-field"><label>🔔 Уведомления</label><div class="settings-checkbox"><input type="checkbox" id="notificationsEnabled" checked><div class="lg-track" data-toggle-for="notificationsEnabled" role="switch" aria-label="Уведомления"><div class="knob"><span class="gloss"></span><span class="top-glow"></span><span class="lens"></span><span class="inner-shadow"></span><span class="ripple-layer"></span></div></div><label for="notificationsEnabled">Уведомления</label></div><div class="settings-checkbox"><input type="checkbox" id="soundEnabled" checked><div class="lg-track" data-toggle-for="soundEnabled" role="switch" aria-label="Звук"><div class="knob"><span class="gloss"></span><span class="top-glow"></span><span class="lens"></span><span class="inner-shadow"></span><span class="ripple-layer"></span></div></div><label for="soundEnabled">Звук</label></div><div class="settings-checkbox"><input type="checkbox" id="animationsEnabled" checked><div class="lg-track" data-toggle-for="animationsEnabled" role="switch" aria-label="Анимации"><div class="knob"><span class="gloss"></span><span class="top-glow"></span><span class="lens"></span><span class="inner-shadow"></span><span class="ripple-layer"></span></div></div><label for="animationsEnabled">Анимации</label></div></div>
+
                             <div class="settings-field"><label>🌐 Язык</label><select id="languageSelect" class="glass-input"><option value="ru">Русский</option><option value="en">English</option><option value="tr">Türkçe</option><option value="es">Español</option></select></div>
                         </div>
                         <div class="settings-card glass-card liquid-glass">
@@ -657,10 +667,11 @@
                 </div>
 
                 <div id="wheelContent" style="display: none;">
-                    <div class="wheel-card">
+                    <div class="wheel-card legacy-wheel" id="wheelCard">
+                        <div class="hw-wheel-decor" aria-hidden="true"><span>🎃</span><span>👻</span><span>🦇</span><span>🍬</span><span>🕸️</span><span>💀</span></div>
                         <div class="wheel-header">
-                            <h2>✦ КОЛЕСО ФОРТУНЫ ✦</h2>
-                            <p class="wheel-subtitle">Испытай удачу!</p>
+                            <h2 data-hw="🎃 КОЛЕСО ФОРТУНЫ 🎃" data-legacy="🎡 КОЛЕСО ФОРТУНЫ 🎡">🎃 КОЛЕСО ФОРТУНЫ 🎃</h2>
+                            <p class="wheel-subtitle" data-hw="Испытай удачу... если не боишься! 👻" data-legacy="Испытай удачу и забери награду!">Испытай удачу... если не боишься! 👻</p>
                             <div class="wheel-price">
                                 <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="wheel-price-icon">
                                 <span id="wheelSpinCost">2500</span> 
@@ -673,17 +684,21 @@
                             <div class="wheel-pointer-center"></div>
                         </div>
                         <div class="wheel-controls">
-                            <button class="wheel-spin-btn" id="wheelSpinBtn">🎡 КРУТИТЬ 🎡</button>
+                            <button class="wheel-spin-btn" id="wheelSpinBtn" data-hw="🎃 КРУТИТЬ 👻" data-legacy="🎡 КРУТИТЬ 🎡">🎃 КРУТИТЬ 👻</button>
+                            <button class="wheel-skip-btn" id="wheelSkipBtn" type="button" style="display: none;">⏭ СКИП</button>
                             <div class="wheel-balance">Твой баланс: <span id="wheelBalance">0</span> <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></div>
                         </div>
                         <div class="wheel-prizes">
-                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #2e7d32;"></span><span class="wheel-prize-text"><strong>50%</strong> 2.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
-                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #f9a825;"></span><span class="wheel-prize-text"><strong>35%</strong> 5.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
-                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #ef6c00;"></span><span class="wheel-prize-text"><strong>25%</strong> 8.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
-                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #d32f2f;"></span><span class="wheel-prize-text"><strong>15%</strong> 11.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
-                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #7b1fa2;"></span><span class="wheel-prize-text"><strong>5%</strong> 5k <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></span></div>
-                            <div class="wheel-prize-item skin-prize"><div class="wheel-prize-skin-content"><span class="wheel-prize-dot" style="background: #c2185b;"></span><span class="wheel-prize-text"><strong>2.5%</strong> СКИН ✨</span></div><div class="wheel-skin-btn" id="showSkinBtn">?</div></div>
+                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #5a2d0c;"></span><span class="wheel-prize-text"><strong>50%</strong> 2.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
+                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #ff8c1a;"></span><span class="wheel-prize-text"><strong>35%</strong> 5.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
+                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #7a2ecc;"></span><span class="wheel-prize-text"><strong>25%</strong> 8.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
+                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #8b0000;"></span><span class="wheel-prize-text"><strong>15%</strong> 11.5k <img src="assets/money.png" onerror="this.onerror=null;this.src='https://avatars.mds.yandex.net/i?id=d2747e92b4fb93d8cee0b3582cb46ea6_l-5332707-images-thumbs&n=13';" class="dilic-icon" alt="деньги"></span></div>
+                            <div class="wheel-prize-item"><span class="wheel-prize-dot" style="background: #4a1a6b;"></span><span class="wheel-prize-text"><strong>5%</strong> 5k <img src="assets/dilick.png" onerror="this.onerror=null;this.src='https://i.pinimg.com/736x/df/49/fd/df49fd562d564016dcc4070b5e83c521.jpg';" class="dilic-icon" alt="дилики"></span></div>
+                            <div class="wheel-prize-item skin-prize ghost-prize"><div class="wheel-prize-skin-content"><span class="wheel-prize-dot" style="background: #f5f5ff;"></span><span class="wheel-prize-text"><strong>4.5%</strong> 👻 ПРИЗРАК x35</span></div><div class="wheel-skin-btn ghost-skin-btn" id="showGhostSkinBtn" data-skin-modal="ghostSkinModal" title="Посмотреть скин">?</div></div>
+                            <div class="wheel-prize-item skin-prize"><div class="wheel-prize-skin-content"><span class="wheel-prize-dot" style="background: #c86bff;"></span><span class="wheel-prize-text"><strong>2.5%</strong> СКИН ✨</span></div><div class="wheel-skin-btn" id="showSkinBtn" data-skin-modal="skinModal" title="Посмотреть скин">?</div></div>
                         </div>
+
+
                         <div class="wheel-result" id="wheelResult">
                             <div class="wheel-result-label">ТВОЙ ВЫИГРЫШ</div>
                             <div class="wheel-result-value" id="wheelResultDisplay">НАЖМИ КРУТИТЬ</div>
@@ -698,6 +713,17 @@
                             <div class="wheel-multiplier">×250</div>
                         </div>
                     </div>
+                    <!-- Просмотр призрачного скина колеса -->
+                    <div class="wheel-skin-modal" id="ghostSkinModal">
+                        <div class="wheel-modal-content">
+                            <span class="wheel-modal-close" id="closeGhostModal">✕</span>
+                            <h2 class="wheel-modal-title">👻 ПРИЗРАК КОЛЕСА 👻</h2>
+                            <div class="wheel-skin-preview"><img id="ghostSkinPreviewImg" alt="Ghost Skin"></div>
+                            <p class="wheel-skin-description">👻 Призрачный скин из колеса<br><strong>×35 МНОЖИТЕЛЬ</strong></p>
+                            <div class="wheel-multiplier">×35</div>
+                        </div>
+                    </div>
+
                     <div style="text-align: center; margin-top: 20px;">
                         <button class="glass-btn" id="wheelBackBtn">← Назад</button>
                     </div>
@@ -779,6 +805,8 @@
         </div>
     </div>
     
-    <script src="script.js?v=0.1.19"></script>
+    <script src="liquid-glass-toggle.js?v=0.1.28"></script>
+    <script src="script.js?v=0.1.28"></script>
+
 </body>
 </html>
